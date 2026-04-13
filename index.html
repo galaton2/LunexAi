@@ -7,7 +7,7 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* --- DESIGN SYSTEM --- */
+        /* --- DESIGN SYSTEM: STAR.AI PREMIUM --- */
         :root {
             --bg-dark: #050508;
             --bg-card: rgba(25, 25, 30, 0.6);
@@ -22,32 +22,28 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
 
         body {
-            background: radial-gradient(circle at 50% 0%, #4a0d26 0%, var(--bg-dark) 45%);
+            background: radial-gradient(circle at 50% -10%, #4a0d26 0%, var(--bg-dark) 40%);
             background-color: var(--bg-dark);
             color: var(--text-main);
             min-height: 100vh;
-            padding-top: env(safe-area-inset-top);
-            padding-bottom: 110px;
+            overflow-y: auto;
             overflow-x: hidden;
-            background-attachment: fixed;
+            padding-bottom: 120px;
         }
 
-        /* --- SPLASH SCREEN (LOADER) --- */
-        #splash-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg-dark); z-index: 9999;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            transition: opacity 0.5s ease, visibility 0.5s;
-        }
-        .splash-logo { font-size: 50px; color: var(--pink-main); text-shadow: 0 0 20px var(--pink-glow); animation: pulse 1.5s infinite; margin-bottom: 20px; }
-        .splash-text { font-size: 24px; font-weight: 700; letter-spacing: 2px; }
-        @keyframes pulse { 0% { transform: scale(0.95); opacity: 0.8; } 50% { transform: scale(1.05); opacity: 1; } 100% { transform: scale(0.95); opacity: 0.8; } }
+        /* --- SPLASH SCREEN (LOADING) --- */
+        #splashScreen { position: fixed; inset: 0; background: var(--bg-dark); z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; transition: opacity 0.5s ease, visibility 0.5s; }
+        .splash-logo { font-size: 70px; color: var(--pink-main); text-shadow: 0 0 30px var(--pink-glow); animation: pulse 1.5s infinite alternate; }
+        .splash-text { margin-top: 20px; font-size: 20px; font-weight: 700; letter-spacing: 2px; }
+        @keyframes pulse { from { transform: scale(0.9); text-shadow: 0 0 10px var(--pink-glow); } to { transform: scale(1.1); text-shadow: 0 0 40px var(--pink-glow); } }
 
-        /* --- LAYOUT --- */
-        .top-bar { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px 10px; }
+        /* --- TOP BAR --- */
+        .top-bar { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px 10px; position: sticky; top: 0; background: rgba(5,5,8,0.8); backdrop-filter: blur(15px); z-index: 50; }
         .premium-badge { background: var(--pink-glow); color: #fff; font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: 20px; border: 1px solid var(--pink-main); box-shadow: 0 0 12px var(--pink-glow); display: flex; align-items: center; gap: 6px; }
         .avatar { width: 42px; height: 42px; border-radius: 50%; border: 2px solid var(--card-border); object-fit: cover; }
-        .greeting { padding: 10px 24px 20px; }
+
+        /* --- GREETING (Moved inside Tab) --- */
+        .greeting { padding: 10px 0 20px; }
         .greeting h1 { font-size: 28px; font-weight: 700; margin-bottom: 6px; }
         .greeting p { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
 
@@ -57,15 +53,15 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         /* --- UI COMPONENTS --- */
-        .section-title { font-size: 14px; font-weight: 700; color: var(--text-muted); margin: 25px 0 15px; text-transform: uppercase; letter-spacing: 1px; }
+        .section-title { font-size: 14px; font-weight: 700; color: var(--text-muted); margin: 25px 0 15px; text-transform: uppercase; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center; }
         
         .grid-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .card { background: var(--bg-card); border: 1px solid var(--card-border); border-radius: 20px; padding: 16px; min-height: 120px; display: flex; flex-direction: column; justify-content: space-between; backdrop-filter: blur(10px); transition: 0.2s; cursor: pointer; }
+        .card { background: var(--bg-card); border: 1px solid var(--card-border); border-radius: 20px; padding: 16px; min-height: 120px; display: flex; flex-direction: column; justify-content: space-between; backdrop-filter: blur(10px); transition: 0.2s; cursor: pointer; position: relative; overflow: hidden; }
         .card:active { transform: scale(0.96); border-color: var(--pink-main); }
-        .card-text { font-size: 14px; font-weight: 500; line-height: 1.4; word-break: break-word; }
-        .card-icon { margin-top: 15px; display: flex; justify-content: space-between; align-items: center; width: 100%; }
+        .card-text { font-size: 14px; font-weight: 500; line-height: 1.4; z-index: 2; word-wrap: break-word; }
+        .card-icon { font-size: 16px; color: var(--text-muted); z-index: 2; display: flex; justify-content: space-between; align-items: center; width: 100%; margin-top: 15px; }
         
-        .tag { font-size: 10px; padding: 4px 8px; border-radius: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .tag { font-size: 10px; padding: 4px 10px; border-radius: 12px; font-weight: 700; text-transform: uppercase; color: #fff; }
         
         .list-item { background: var(--bg-card); border: 1px solid var(--card-border); border-radius: 16px; padding: 16px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; backdrop-filter: blur(10px); cursor: pointer; transition: 0.2s; }
         .list-item:active { transform: scale(0.98); }
@@ -78,25 +74,30 @@
         .list-item.done .checkbox i { color: #fff; }
         .list-item.done .list-title { text-decoration: line-through; opacity: 0.5; }
 
-        /* --- CHART ANIMATED --- */
-        .chart { background: var(--bg-card); border: 1px solid var(--card-border); border-radius: 20px; padding: 20px; display: flex; align-items: flex-end; justify-content: space-between; height: 130px; margin-top: 10px; }
-        .bar { width: 12%; background: rgba(255,255,255,0.05); border-radius: 6px; position: relative; display: flex; justify-content: center; height: 100%; }
-        .fill { position: absolute; bottom: 0; width: 100%; background: var(--pink-main); border-radius: 6px; box-shadow: 0 0 10px var(--pink-glow); transition: height 1s cubic-bezier(0.175, 0.885, 0.32, 1.275); height: 0%; }
-        .day { position: absolute; bottom: -22px; font-size: 11px; color: var(--text-muted); font-weight: 600;}
+        /* --- CHART (Dynamic) --- */
+        .chart { background: var(--bg-card); border: 1px solid var(--card-border); border-radius: 20px; padding: 20px 15px 30px; display: flex; align-items: flex-end; justify-content: space-between; height: 160px; margin-top: 10px; }
+        .bar { width: 10%; background: rgba(255,255,255,0.05); border-radius: 6px; position: relative; display: flex; justify-content: center; height: 100%; transition: 0.3s; }
+        .fill { position: absolute; bottom: 0; width: 100%; background: var(--pink-main); border-radius: 6px; box-shadow: 0 0 10px var(--pink-glow); transition: height 1s cubic-bezier(0.175, 0.885, 0.32, 1); height: 0%; }
+        .bar.today .fill { background: #fff; box-shadow: 0 0 15px rgba(255,255,255,0.8); }
+        .day { position: absolute; bottom: -25px; font-size: 12px; color: var(--text-muted); font-weight: 600;}
+        .bar.today .day { color: #fff; }
+        .bar-count { position: absolute; top: -20px; font-size: 10px; font-weight: bold; color: var(--pink-main); opacity: 0; transition: 0.3s; }
+        .bar:hover .bar-count { opacity: 1; }
 
         /* --- BOTTOM INPUT & NAV --- */
-        .bottom-panel { position: fixed; bottom: 0; left: 0; width: 100%; padding: 10px 20px 25px; background: linear-gradient(0deg, #020203 80%, transparent 100%); display: flex; flex-direction: column; gap: 15px; z-index: 100; }
+        .bottom-panel { position: fixed; bottom: 0; left: 0; width: 100%; padding: 10px 20px 25px; background: linear-gradient(0deg, var(--bg-dark) 85%, transparent 100%); display: flex; flex-direction: column; gap: 15px; z-index: 100; }
         .input-bar { display: flex; align-items: center; gap: 10px; background: var(--bg-card); border: 1px solid var(--card-border); border-radius: 25px; padding: 5px 5px 5px 20px; backdrop-filter: blur(15px); }
         .input-bar input { flex-grow: 1; background: transparent; border: none; outline: none; color: white; font-size: 15px; }
         .input-bar input::placeholder { color: var(--text-muted); }
-        .add-btn { width: 40px; height: 40px; border-radius: 50%; background: var(--pink-main); color: white; display: flex; justify-content: center; align-items: center; border: none; box-shadow: 0 0 12px var(--pink-glow); cursor: pointer; }
+        .add-btn { width: 40px; height: 40px; border-radius: 50%; background: var(--pink-main); color: white; display: flex; justify-content: center; align-items: center; border: none; box-shadow: 0 0 12px var(--pink-glow); cursor: pointer; transition: 0.2s; }
+        .add-btn:active { transform: scale(0.9); }
         
         .nav-bar { display: flex; justify-content: space-around; width: 100%; padding-top: 5px; }
         .nav-item { color: var(--text-muted); font-size: 22px; padding: 10px; transition: 0.3s; cursor: pointer; }
         .nav-item.active { color: var(--pink-main); text-shadow: 0 0 15px var(--pink-glow); transform: translateY(-4px); }
 
         /* --- MODAL (BOTTOM SHEET) --- */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 999; display: none; opacity: 0; transition: 0.3s; }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); z-index: 999; display: none; opacity: 0; transition: 0.3s; }
         .modal-overlay.active { display: block; opacity: 1; }
         .modal-sheet { position: fixed; bottom: -100%; left: 0; width: 100%; background: var(--bg-modal); border-top: 1px solid var(--card-border); border-radius: 24px 24px 0 0; padding: 25px 20px 40px; z-index: 1000; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1); box-shadow: 0 -10px 40px rgba(0,0,0,0.5); }
         .modal-sheet.active { bottom: 0; }
@@ -104,12 +105,19 @@
         .modal-handle { width: 40px; height: 5px; background: rgba(255,255,255,0.2); border-radius: 10px; margin: 0 auto 20px; }
         .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
         
-        .form-group { margin-bottom: 15px; }
+        .form-group { margin-bottom: 20px; }
         .form-label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; font-weight: 600;}
-        .form-control { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--card-border); border-radius: 12px; padding: 12px 15px; color: white; font-size: 15px; outline: none; }
-        .form-control:focus { border-color: var(--pink-main); }
-        textarea.form-control { resize: none; height: 80px; }
+        .form-control { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--card-border); border-radius: 12px; padding: 12px 15px; color: white; font-size: 15px; outline: none; transition: 0.3s; }
+        .form-control:focus { border-color: var(--pink-main); background: rgba(255,255,255,0.1); }
+        textarea.form-control { resize: none; height: 90px; }
         
+        /* Custom Tags System */
+        .tags-container { display: flex; flex-wrap: wrap; gap: 8px; }
+        .tag-pill { padding: 8px 14px; border-radius: 20px; background: rgba(255,255,255,0.05); border: 1px solid var(--card-border); font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .tag-pill.selected { border-color: transparent; color: #fff; box-shadow: 0 0 10px rgba(255,255,255,0.2); }
+        .tag-add-btn { background: transparent; border: 1px dashed var(--text-muted); color: var(--text-muted); }
+        .tag-custom-input { display: none; width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--pink-main); color: white; padding: 5px; margin-top: 10px; font-size: 14px; outline: none; }
+
         .type-selector { display: flex; background: rgba(255,255,255,0.05); border-radius: 12px; padding: 4px; margin-bottom: 20px; }
         .type-btn { flex: 1; text-align: center; padding: 10px; border-radius: 10px; font-size: 14px; font-weight: 600; color: var(--text-muted); transition: 0.3s; cursor: pointer; }
         .type-btn.active { background: var(--pink-main); color: white; box-shadow: 0 0 10px var(--pink-glow); }
@@ -125,65 +133,65 @@
 </head>
 <body>
 
-    <div id="splash-screen">
+    <div id="splashScreen">
         <i class="fas fa-star splash-logo"></i>
-        <div class="splash-text">LUNEX.AI</div>
+        <div class="splash-text">LUNEX PRO</div>
     </div>
 
-    <div id="scroll-wrapper">
-        <div class="top-bar">
-            <div class="premium-badge">Lunex PRO <i class="fas fa-star"></i></div>
-            <img id="userAvatar" class="avatar" src="" alt="Avatar">
-        </div>
+    <div class="top-bar">
+        <div class="premium-badge">Lunex PRO <i class="fas fa-star"></i></div>
+        <img id="userAvatar" class="avatar" src="" alt="Avatar">
+    </div>
 
+    <main id="tab-dashboard" class="tab-content active">
         <div class="greeting">
-            <h1 id="userName">Hi User,</h1>
-            <p>Manage your custom tags, tasks, and schedules in one unified workspace.</p>
+            <h1 id="userName">Hi, User</h1>
+            <p>Your unified workspace for tasks, thoughts, and planning.</p>
         </div>
 
-        <main id="tab-dashboard" class="tab-content active">
-            <h2 class="section-title">Weekly Activity</h2>
-            <div class="chart">
-                <div class="bar"><div class="fill" id="bar-1"></div><span class="day">M</span></div>
-                <div class="bar"><div class="fill" id="bar-2"></div><span class="day">T</span></div>
-                <div class="bar"><div class="fill" id="bar-3"></div><span class="day">W</span></div>
-                <div class="bar"><div class="fill" id="bar-4"></div><span class="day">T</span></div>
-                <div class="bar"><div class="fill" id="bar-5"></div><span class="day">F</span></div>
-                <div class="bar"><div class="fill" id="bar-6"></div><span class="day">S</span></div>
-                <div class="bar"><div class="fill" id="bar-7"></div><span class="day" style="color:var(--pink-main);">S</span></div>
+        <h2 class="section-title">Tasks Activity <span style="font-size: 11px; font-weight: 500;">Next 7 Days</span></h2>
+        <div class="chart" id="activityChart">
             </div>
 
-            <h2 class="section-title">Active Reminders</h2>
-            <div id="dashReminders"></div>
-        </main>
+        <h2 class="section-title">Active Reminders</h2>
+        <div id="dashReminders"></div>
+    </main>
 
-        <main id="tab-notes" class="tab-content">
-            <div class="grid-cards" id="notesGrid"></div>
-        </main>
+    <main id="tab-notes" class="tab-content">
+        <div class="greeting"><h1>Second Brain</h1><p>All your saved ideas and notes.</p></div>
+        <div class="grid-cards" id="notesGrid"></div>
+    </main>
 
-        <main id="tab-tasks" class="tab-content">
-            <div id="tasksList"></div>
-        </main>
+    <main id="tab-tasks" class="tab-content">
+        <div class="greeting"><h1>Action Items</h1><p>Your scheduled tasks and to-dos.</p></div>
+        <div id="tasksList"></div>
+    </main>
 
-        <main id="tab-settings" class="tab-content">
-            <div class="list-item" style="flex-direction: column; align-items: flex-start; gap: 15px;">
-                <div style="display:flex; align-items:center; gap:15px;">
-                    <img id="setAvatar" src="" style="width:60px; height:60px; border-radius:50%; border:2px solid var(--pink-main); object-fit: cover;">
-                    <div>
-                        <h3 id="setName" style="font-size:18px;">Name</h3>
-                        <p style="color:var(--text-muted); font-size:13px;">ID: <span id="setID"></span></p>
-                    </div>
+    <main id="tab-settings" class="tab-content">
+        <div class="greeting"><h1>Settings</h1></div>
+        <div class="list-item" style="flex-direction: column; align-items: flex-start; gap: 15px;">
+            <div style="display:flex; align-items:center; gap:15px;">
+                <img id="setAvatar" src="" style="width:60px; height:60px; border-radius:50%; border:2px solid var(--pink-main); object-fit: cover;">
+                <div>
+                    <h3 id="setName" style="font-size:18px;">Name</h3>
+                    <p style="color:var(--text-muted); font-size:13px;">ID: <span id="setID"></span></p>
                 </div>
             </div>
-            <h2 class="section-title">System Data</h2>
-            <div class="list-item" onclick="tg.showAlert('Синхронизация работает в реальном времени!')">
-                <div class="list-info"><span class="list-title"><i class="fas fa-sync"></i> Sync Status</span></div>
-                <span style="color:var(--pink-main); font-size:12px; font-weight:bold;">ONLINE</span>
-            </div>
-        </main>
-    </div> <div class="bottom-panel">
+        </div>
+        <h2 class="section-title">System Information</h2>
+        <div class="list-item">
+            <div class="list-info"><span class="list-title"><i class="fas fa-database"></i> Database</span></div>
+            <span style="color:var(--pink-main); font-size:12px; font-weight:bold;" id="dbItemCount">0 Items</span>
+        </div>
+        <div class="list-item">
+            <div class="list-info"><span class="list-title"><i class="fas fa-sync fa-spin"></i> Live Sync</span></div>
+            <span style="color:#00ff88; font-size:12px; font-weight:bold;">CONNECTED</span>
+        </div>
+    </main>
+
+    <div class="bottom-panel">
         <div class="input-bar">
-            <input type="text" id="mainInput" placeholder="Add new note or task..." onkeypress="if(event.key === 'Enter') openAddModal()">
+            <input type="text" id="mainInput" placeholder="Write a task or thought..." onkeypress="if(event.key === 'Enter') openAddModal()">
             <button class="add-btn" onclick="openAddModal()"><i class="fas fa-plus"></i></button>
         </div>
         <div class="nav-bar">
@@ -197,27 +205,22 @@
     <div class="modal-overlay" id="modalOverlay" onclick="closeModal()"></div>
     <div class="modal-sheet" id="actionModal">
         <div class="modal-handle"></div>
-        <h2 class="modal-title" id="modalTitle">Add New Item</h2>
+        <h2 class="modal-title" id="modalTitle">Add New</h2>
         
         <div class="type-selector" id="typeSelector">
-            <div class="type-btn active" onclick="selectType('note')" id="btnTypeNote">Note</div>
-            <div class="type-btn" onclick="selectType('task')" id="btnTypeTask">Reminder</div>
+            <div class="type-btn active" onclick="selectType('note')" id="btnTypeNote">Idea / Note</div>
+            <div class="type-btn" onclick="selectType('task')" id="btnTypeTask">Task / Reminder</div>
         </div>
 
         <div class="form-group">
-            <label class="form-label">Content</label>
-            <textarea class="form-control" id="modalText" placeholder="Write your thoughts or tasks here..."></textarea>
+            <textarea class="form-control" id="modalText" placeholder="What's on your mind?"></textarea>
         </div>
 
         <div class="form-group">
-            <label class="form-label">Custom Category (Tag)</label>
-            <input type="text" id="modalCategory" list="categoryOptions" class="form-control" placeholder="Type custom tag or select...">
-            <datalist id="categoryOptions">
-                <option value="Personal">
-                <option value="Work">
-                <option value="Ideas">
-                <option value="Shopping">
-            </datalist>
+            <label class="form-label">Category</label>
+            <div class="tags-container" id="tagsContainer">
+                </div>
+            <input type="text" id="customTagInput" class="tag-custom-input" placeholder="Enter custom tag and press 'Save'..." oninput="updateCustomTagSelection()">
         </div>
 
         <div class="form-group" id="dateGroup" style="display: none;">
@@ -227,6 +230,7 @@
 
         <input type="hidden" id="editIndex" value="-1">
         <input type="hidden" id="editOriginalType" value="">
+        <input type="hidden" id="selectedTag" value="Personal">
 
         <div class="modal-actions">
             <button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
@@ -239,52 +243,50 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
         import { getFirestore, doc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
 
-        // 1. INIT TELEGRAM
+        // 1. INIT TELEGRAM & UI TWEAKS
         const tg = window.Telegram.WebApp;
+        
+        // Full-screen capability
         tg.expand();
-        tg.ready();
+        if (tg.requestFullscreen) { tg.requestFullscreen(); }
+
         tg.setHeaderColor('#4a0d26');
         tg.setBackgroundColor('#050508');
 
-        let userId = "8562313043"; // Default testing ID
-        
-        // 2. FETCH REAL AVATAR AND USER INFO
-        if (tg.initDataUnsafe.user) {
+        // Setup User Info & Avatar
+        let userId = "8562313043"; // fallback
+        if (tg.initDataUnsafe?.user) {
             userId = tg.initDataUnsafe.user.id.toString();
             const name = tg.initDataUnsafe.user.first_name;
-            document.getElementById('userName').innerText = "Hi " + name + ",";
+            document.getElementById('userName').innerText = "Hi, " + name;
             document.getElementById('setName').innerText = name;
             document.getElementById('setID').innerText = userId;
-
-            // Fetch Real TG Photo if available, else use fallback
-            let photoUrl = tg.initDataUnsafe.user.photo_url;
-            if (!photoUrl) {
-                photoUrl = `https://ui-avatars.com/api/?name=${name}&background=ff477e&color=fff&bold=true`;
+            
+            // Check for real telegram avatar photo_url
+            let avatarUrl = `https://ui-avatars.com/api/?name=${name}&background=ff477e&color=fff&bold=true`;
+            if (tg.initDataUnsafe.user.photo_url) {
+                avatarUrl = tg.initDataUnsafe.user.photo_url;
             }
-            document.getElementById('userAvatar').src = photoUrl;
-            document.getElementById('setAvatar').src = photoUrl;
+            document.getElementById('userAvatar').src = avatarUrl;
+            document.getElementById('setAvatar').src = avatarUrl;
+        } else {
+            // Setup fallback avatar
+            const fA = "https://ui-avatars.com/api/?name=AI&background=ff477e&color=fff";
+            document.getElementById('userAvatar').src = fA;
+            document.getElementById('setAvatar').src = fA;
         }
 
-        // Helper: Generate consistent colors from strings (for custom tags)
-        function stringToColor(str) {
-            let hash = 0;
-            for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
-            const h = Math.abs(hash) % 360;
-            return `hsl(${h}, 70%, 60%)`; // Generate bright distinct colors
-        }
-
-        // 3. TAB LOGIC
+        // 2. TAB LOGIC
         window.switchTab = function(tabId, btn) {
-            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-            document.getElementById(`tab-${tabId}`).style.display = 'block';
+            document.getElementById(`tab-${tabId}`).classList.add('active');
             btn.classList.add('active');
             tg.HapticFeedback.impactOccurred('light');
             window.scrollTo(0,0);
         };
-        document.getElementById('tab-dashboard').style.display = 'block';
 
-        // 4. FIREBASE SETUP
+        // 3. FIREBASE SETUP
         const firebaseConfig = {
             apiKey: "AIzaSyDY8g42qsSkoN36i-DIeptehoDWXSEUlU0",
             authDomain: "lunex-f5362.firebaseapp.com",
@@ -299,45 +301,40 @@
         const userDocRef = doc(db, "users", userId);
 
         onSnapshot(userDocRef, (docSnap) => {
-            // HIDE SPLASH SCREEN
-            const splash = document.getElementById('splash-screen');
-            if(splash) {
-                splash.style.opacity = '0';
-                setTimeout(() => splash.style.display = 'none', 500);
-            }
+            // Hide splash screen smoothly
+            const splash = document.getElementById('splashScreen');
+            splash.style.opacity = '0';
+            setTimeout(() => splash.style.visibility = 'hidden', 500);
 
             if (docSnap.exists()) {
                 window.currentUserData = docSnap.data();
                 renderUI();
-                animateChart(); // Animate chart based on loading data
+                renderChart();
             }
         });
 
-        function animateChart() {
-            // Realistic looking random heights for the weekly chart
-            const heights = [30, 60, 45, 80, 50, 90, 40];
-            heights.forEach((h, i) => {
-                setTimeout(() => {
-                    const bar = document.getElementById(`bar-${i+1}`);
-                    if(bar) bar.style.height = h + '%';
-                }, i * 100);
-            });
+        // 4. COLOR & TAGS SYSTEM
+        const defaultTags = ['Personal', 'Work', 'Ideas', 'Buy'];
+        
+        // Hashing string to generate consistent colors for custom tags
+        function getTagColor(tag) {
+            const predefined = { 'Personal': '#ff477e', 'Work': '#00f0ff', 'Ideas': '#ffd700', 'Buy': '#ff9900' };
+            if(predefined[tag]) return predefined[tag];
+            let hash = 0;
+            for (let i = 0; i < tag.length; i++) { hash = tag.charCodeAt(i) + ((hash << 5) - hash); }
+            const hue = Math.abs(hash % 360);
+            return `hsl(${hue}, 80%, 60%)`;
         }
 
-        // 5. PARSER HELPER
-        function parseItem(textObj) {
-            let rawText = typeof textObj === 'string' ? textObj : textObj.text || "";
+        function parseItem(rawText) {
             let category = "Personal";
             let content = rawText;
             const match = rawText.match(/^\[(.*?)\]\s*(.*)/);
-            if (match) {
-                category = match[1];
-                content = match[2];
-            }
+            if (match) { category = match[1]; content = match[2]; }
             return { category, content, rawText };
         }
 
-        // 6. RENDER UI
+        // 5. RENDER UI
         function renderUI() {
             const data = window.currentUserData;
             if(!data) return;
@@ -345,44 +342,45 @@
             const notes = data.notes || [];
             const reminders = data.reminders || [];
             
-            // Render Notes
+            document.getElementById('dbItemCount').innerText = `${notes.length + reminders.length + (data.tasks_short?.length || 0)} Items`;
+
+            // Render Notes Grid
             const nGrid = document.getElementById('notesGrid');
-            if(notes.length === 0) nGrid.innerHTML = '<p style="color:var(--text-muted); grid-column: span 2;">No notes yet.</p>';
+            if(notes.length === 0) nGrid.innerHTML = '<p style="color:var(--text-muted); grid-column: span 2; text-align:center; padding: 20px;">No saved ideas yet.</p>';
             else {
                 nGrid.innerHTML = notes.map((n, i) => {
                     const parsed = parseItem(n);
-                    const tagColor = stringToColor(parsed.category);
+                    const tCol = getTagColor(parsed.category);
                     return `
                     <div class="card" onclick="openEditModal('note', ${i})">
-                        <div class="card-text">${parsed.content.length > 70 ? parsed.content.substring(0, 70) + '...' : parsed.content}</div>
+                        <div class="card-text">${parsed.content.length > 75 ? parsed.content.substring(0, 75) + '...' : parsed.content}</div>
                         <div class="card-icon">
-                            <span class="tag" style="background: ${tagColor}33; color: ${tagColor};">${parsed.category}</span> 
-                            <i class="fas fa-pen" style="font-size:12px; opacity:0.5;"></i>
+                            <span class="tag" style="background: ${tCol}40; color: ${tCol}; border: 1px solid ${tCol}">${parsed.category}</span> 
                         </div>
                     </div>`;
                 }).join('');
             }
 
-            // Render Tasks
+            // Render Reminders/Tasks
             const tList = document.getElementById('tasksList');
             const dReminders = document.getElementById('dashReminders');
             
             if(reminders.length === 0) {
-                tList.innerHTML = '<p style="color:var(--text-muted); text-align:center; margin-top:20px;">All clear! ✨</p>';
-                dReminders.innerHTML = '<div class="card" style="min-height:auto;"><div class="card-text" style="color:var(--text-muted);">No active timers.</div></div>';
+                tList.innerHTML = '<p style="color:var(--text-muted); text-align:center; margin-top:20px;">All caught up! ✨</p>';
+                dReminders.innerHTML = '<div class="card" style="min-height:auto;"><div class="card-text" style="color:var(--text-muted); text-align:center;">Relax, nothing planned.</div></div>';
             } else {
                 const renderHTML = reminders.map((r, i) => {
-                    const parsed = parseItem(r);
-                    const tagColor = stringToColor(parsed.category);
-                    const d = new Date(r.datetime);
-                    const dateStr = d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    const parsed = parseItem(r.text);
+                    const d = new Date(r.datetime.replace(' ', 'T'));
+                    const dateStr = d.toLocaleDateString([], {month:'short', day:'numeric'}) + ', ' + d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    const tCol = getTagColor(parsed.category);
                     
                     return `
                     <div class="list-item" onclick="openEditModal('task', ${i})">
                         <div class="list-info">
                             <span class="list-title">${parsed.content}</span>
                             <div class="list-meta">
-                                <span class="tag" style="background: ${tagColor}33; color: ${tagColor};">${parsed.category}</span> 
+                                <span class="tag" style="background: ${tCol}40; color: ${tCol}; padding: 2px 6px; font-size:9px;">${parsed.category}</span> 
                                 <span style="color: var(--text-muted);"><i class="far fa-clock"></i> ${dateStr}</span>
                             </div>
                         </div>
@@ -394,7 +392,58 @@
             }
         }
 
-        // 7. MODAL LOGIC
+        // 6. DYNAMIC CHART
+        function renderChart() {
+            const data = window.currentUserData;
+            const reminders = data?.reminders || [];
+            
+            // Build next 7 days array
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            let days = [];
+            let counts = [0,0,0,0,0,0,0];
+
+            for(let i=0; i<7; i++) {
+                let d = new Date(today);
+                d.setDate(d.getDate() + i);
+                days.push({
+                    dateObj: d,
+                    label: d.toLocaleDateString('en-US', {weekday: 'short'}).charAt(0) // M, T, W, etc
+                });
+            }
+
+            // Count tasks per day
+            reminders.forEach(r => {
+                let rd = new Date(r.datetime.replace(' ', 'T'));
+                rd.setHours(0,0,0,0);
+                
+                let diffTime = rd - today;
+                let diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                if(diffDays >= 0 && diffDays < 7) {
+                    counts[diffDays]++;
+                }
+            });
+
+            // Calculate heights (max 100%)
+            const maxCount = Math.max(...counts, 1); // Avoid div by zero
+            
+            const chartDiv = document.getElementById('activityChart');
+            chartDiv.innerHTML = days.map((day, i) => {
+                let heightPct = (counts[i] / maxCount) * 100;
+                if(heightPct < 5 && counts[i] > 0) heightPct = 15; // Minimum visible height
+                
+                let isToday = i === 0 ? 'today' : '';
+                return `
+                <div class="bar ${isToday}">
+                    <div class="bar-count">${counts[i]}</div>
+                    <div class="fill" style="height: ${heightPct}%;"></div>
+                    <span class="day">${day.label}</span>
+                </div>`;
+            }).join('');
+        }
+
+        // 7. MODAL LOGIC & TAG UI
         window.currentType = 'note';
         
         window.selectType = function(type) {
@@ -406,21 +455,56 @@
             tg.HapticFeedback.impactOccurred('light');
         }
 
+        // Rebuild Tag Pills UI
+        window.buildTagsUI = function(selected) {
+            document.getElementById('selectedTag').value = selected;
+            const container = document.getElementById('tagsContainer');
+            
+            let html = defaultTags.map(tag => {
+                const isSel = tag === selected ? 'selected' : '';
+                const col = getTagColor(tag);
+                const bg = tag === selected ? col : 'rgba(255,255,255,0.05)';
+                return `<div class="tag-pill ${isSel}" style="background:${bg};" onclick="buildTagsUI('${tag}')">${tag}</div>`;
+            }).join('');
+            
+            // Add custom button
+            html += `<div class="tag-pill tag-add-btn" onclick="toggleCustomTagInput()"><i class="fas fa-plus"></i> New</div>`;
+            container.innerHTML = html;
+        }
+
+        window.toggleCustomTagInput = function() {
+            const inp = document.getElementById('customTagInput');
+            inp.style.display = 'block';
+            inp.focus();
+        }
+
+        window.updateCustomTagSelection = function() {
+            const val = document.getElementById('customTagInput').value.trim();
+            if(val) document.getElementById('selectedTag').value = val;
+        }
+
         window.openAddModal = function() {
             tg.HapticFeedback.impactOccurred('medium');
             const inputVal = document.getElementById('mainInput').value;
             
             document.getElementById('modalTitle').innerText = "Add New Item";
             document.getElementById('modalText').value = inputVal;
-            document.getElementById('modalCategory').value = "Personal";
             document.getElementById('editIndex').value = "-1";
             document.getElementById('btnDelete').style.display = "none";
             document.getElementById('mainInput').value = ""; 
+            document.getElementById('customTagInput').style.display = 'none';
+            document.getElementById('customTagInput').value = "";
+            
+            buildTagsUI('Personal');
             
             const tomorrow = new Date();
             tomorrow.setDate(tomorrow.getDate() + 1);
             tomorrow.setHours(10, 0, 0, 0);
-            document.getElementById('modalDate').value = tomorrow.toISOString().slice(0,16);
+            
+            // Format to local ISO string for datetime-local
+            const offset = tomorrow.getTimezoneOffset() * 60000;
+            const localISOTime = (new Date(tomorrow - offset)).toISOString().slice(0, 16);
+            document.getElementById('modalDate').value = localISOTime;
 
             selectType('note');
             
@@ -435,23 +519,33 @@
             document.getElementById('editIndex').value = index;
             document.getElementById('editOriginalType').value = type;
             document.getElementById('btnDelete').style.display = "block";
+            document.getElementById('customTagInput').style.display = 'none';
 
+            let parsed;
             if(type === 'note') {
                 selectType('note');
-                const parsed = parseItem(data.notes[index]);
-                document.getElementById('modalText').value = parsed.content;
-                document.getElementById('modalCategory').value = parsed.category;
+                parsed = parseItem(data.notes[index]);
             } else {
                 selectType('task');
                 const item = data.reminders[index];
-                const parsed = parseItem(item);
-                document.getElementById('modalText').value = parsed.content;
-                document.getElementById('modalCategory').value = parsed.category;
-                
+                parsed = parseItem(item.text);
                 if(item.datetime) {
-                    const dt = item.datetime.replace(' ', 'T');
-                    document.getElementById('modalDate').value = dt.slice(0,16);
+                    const dt = new Date(item.datetime.replace(' ', 'T'));
+                    const offset = dt.getTimezoneOffset() * 60000;
+                    document.getElementById('modalDate').value = (new Date(dt - offset)).toISOString().slice(0, 16);
                 }
+            }
+
+            document.getElementById('modalText').value = parsed.content;
+            
+            // Check if tag is custom
+            if(!defaultTags.includes(parsed.category)) {
+                buildTagsUI('');
+                toggleCustomTagInput();
+                document.getElementById('customTagInput').value = parsed.category;
+                document.getElementById('selectedTag').value = parsed.category;
+            } else {
+                buildTagsUI(parsed.category);
             }
 
             document.getElementById('modalOverlay').classList.add('active');
@@ -463,7 +557,7 @@
             document.getElementById('actionModal').classList.remove('active');
         }
 
-        // 8. CRUD
+        // 8. CRUD LOGIC
         window.saveItem = async function() {
             const data = window.currentUserData;
             if(!data) return;
@@ -471,16 +565,13 @@
             const text = document.getElementById('modalText').value.trim();
             if(!text) { tg.showAlert("Please enter content."); return; }
             
-            let category = document.getElementById('modalCategory').value.trim();
-            if(!category) category = "Personal"; // Default if left blank
-            
+            const category = document.getElementById('selectedTag').value || 'Personal';
             const formattedText = `[${category}] ${text}`;
             
             const isEdit = document.getElementById('editIndex').value !== "-1";
             const idx = parseInt(document.getElementById('editIndex').value);
             const origType = document.getElementById('editOriginalType').value;
 
-            let updates = {};
             let notes = [...(data.notes || [])];
             let reminders = [...(data.reminders || [])];
 
@@ -500,14 +591,12 @@
                 reminders.push({ text: formattedText, datetime: formattedDate });
             }
 
-            updates = { notes, reminders };
-
             try {
-                await updateDoc(userDocRef, updates);
+                await updateDoc(userDocRef, { notes, reminders });
                 closeModal();
             } catch (e) {
                 console.error(e);
-                tg.showAlert("Error saving data.");
+                tg.showAlert("Error saving to database.");
             }
         }
 
