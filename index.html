@@ -52,11 +52,15 @@
         @keyframes pulse { from { transform: scale(0.9); text-shadow: 0 0 10px var(--pink-glow); } to { transform: scale(1.1); text-shadow: 0 0 40px var(--pink-glow); } }
 
         /* --- TOP BAR (Исправлен сдвиг на +25px) --- */
+      /* --- TOP BAR (Исправлен фон и отступ) --- */
         .top-bar { 
             display: flex; justify-content: space-between; align-items: center; 
-            padding: 75px 24px 10px; /* Было 20px, стало 45px сверху */
+            padding: 75px 24px 10px; /* Увеличен отступ сверху до 75px */
             position: sticky; top: 0; 
-            background: rgba(5,5,8,0.8); backdrop-filter: blur(15px); z-index: 50; 
+            background: transparent; /* Полностью прозрачный фон */
+            backdrop-filter: blur(15px); /* Эффект размытия (стекло) */
+            -webkit-backdrop-filter: blur(15px); /* Для поддержки на iOS/Safari */
+            z-index: 50; 
         }
         .premium-badge { background: var(--pink-glow); color: #fff; font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: 20px; border: 1px solid var(--pink-main); box-shadow: 0 0 12px var(--pink-glow); display: flex; align-items: center; gap: 6px; }
         .avatar { width: 42px; height: 42px; border-radius: 50%; border: 2px solid var(--card-border); object-fit: cover; }
