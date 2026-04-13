@@ -7,7 +7,7 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
    <style>
-        /* --- DESIGN SYSTEM: STAR.AI PREMIUM --- */
+     /* --- DESIGN SYSTEM: STAR.AI PREMIUM --- */
         :root {
             --bg-dark: #050508;
             --bg-card: rgba(25, 25, 30, 0.6);
@@ -32,47 +32,46 @@
             background-color: var(--bg-dark);
             color: var(--text-main);
             min-height: 100vh;
+            
+            /* Настройки для плавного скролла большого количества заметок */
             overflow-y: auto;
             overflow-x: hidden;
-            padding-bottom: 120px;
+            padding-bottom: 130px; /* Увеличен отступ снизу, чтобы контент не прятался за меню */
+            -webkit-overflow-scrolling: touch; 
         }
 
         /* --- SPLASH SCREEN (LOADING) --- */
-        #splashScreen { position: fixed; inset: 0; background: var(--bg-dark); z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; transition: opacity 0.5s ease, visibility 0.5s; }
+        #splashScreen { 
+            position: fixed; inset: 0; background: var(--bg-dark); z-index: 9999; 
+            display: flex; justify-content: center; align-items: center; flex-direction: column; 
+            transition: opacity 0.5s ease, visibility 0.5s; 
+            padding-top: 25px; /* Сдвиг загрузочного экрана из-за челки */
+        }
         .splash-logo { font-size: 70px; color: var(--pink-main); text-shadow: 0 0 30px var(--pink-glow); animation: pulse 1.5s infinite alternate; }
         .splash-text { margin-top: 20px; font-size: 20px; font-weight: 700; letter-spacing: 2px; }
         @keyframes pulse { from { transform: scale(0.9); text-shadow: 0 0 10px var(--pink-glow); } to { transform: scale(1.1); text-shadow: 0 0 40px var(--pink-glow); } }
 
-        /* --- TOP BAR (ИСПРАВЛЕНО: Сдвиг вниз от кнопок Telegram) --- */
+        /* --- TOP BAR (Исправлен сдвиг на +25px) --- */
         .top-bar { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            /* Добавлен большой отступ + учет системной "челки" айфона */
-            padding: calc(45px + env(safe-area-inset-top, 0px)) 24px 10px; 
-            position: sticky; 
-            top: 0; 
-            background: rgba(5,5,8,0.85); 
-            backdrop-filter: blur(20px); 
-            -webkit-backdrop-filter: blur(20px);
-            z-index: 50; 
-            /* Плавный переход тени */
-            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 45px 24px 10px; /* Было 20px, стало 45px сверху */
+            position: sticky; top: 0; 
+            background: rgba(5,5,8,0.8); backdrop-filter: blur(15px); z-index: 50; 
         }
         .premium-badge { background: var(--pink-glow); color: #fff; font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: 20px; border: 1px solid var(--pink-main); box-shadow: 0 0 12px var(--pink-glow); display: flex; align-items: center; gap: 6px; }
         .avatar { width: 42px; height: 42px; border-radius: 50%; border: 2px solid var(--card-border); object-fit: cover; }
 
         /* --- GREETING --- */
-        .greeting { padding: 15px 0 20px; }
+        .greeting { padding: 10px 0 20px; }
         .greeting h1 { font-size: 28px; font-weight: 700; margin-bottom: 6px; }
         .greeting p { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
 
         /* --- TABS --- */
-        .tab-content { display: none; animation: fadeIn 0.3s ease; padding: 0 20px; }
+        .tab-content { display: none; animation: fadeIn 0.3s ease; padding: 0 20px 20px; }
         .tab-content.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- UI COMPONENTS --- */
+        /* --- UI COMPONENTS (Карточки и списки) --- */
         .section-title { font-size: 14px; font-weight: 700; color: var(--text-muted); margin: 25px 0 15px; text-transform: uppercase; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center; }
         
         .grid-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -105,7 +104,7 @@
         .bar:hover .bar-count { opacity: 1; }
 
         /* --- BOTTOM INPUT & NAV --- */
-        .bottom-panel { position: fixed; bottom: 0; left: 0; width: 100%; padding: 10px 20px calc(25px + env(safe-area-inset-bottom, 0px)); background: linear-gradient(0deg, var(--bg-dark) 85%, transparent 100%); display: flex; flex-direction: column; gap: 15px; z-index: 100; }
+        .bottom-panel { position: fixed; bottom: 0; left: 0; width: 100%; padding: 10px 20px 25px; background: linear-gradient(0deg, var(--bg-dark) 85%, transparent 100%); display: flex; flex-direction: column; gap: 15px; z-index: 100; }
         .input-bar { display: flex; align-items: center; gap: 10px; background: var(--bg-card); border: 1px solid var(--card-border); border-radius: 25px; padding: 5px 5px 5px 20px; backdrop-filter: blur(15px); }
         .input-bar input { flex-grow: 1; background: transparent; border: none; outline: none; color: white; font-size: 15px; }
         .input-bar input::placeholder { color: var(--text-muted); }
@@ -119,7 +118,7 @@
         /* --- MODAL (BOTTOM SHEET) --- */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); z-index: 999; display: none; opacity: 0; transition: 0.3s; }
         .modal-overlay.active { display: block; opacity: 1; }
-        .modal-sheet { position: fixed; bottom: -100%; left: 0; width: 100%; background: var(--bg-modal); border-top: 1px solid var(--card-border); border-radius: 24px 24px 0 0; padding: 25px 20px calc(40px + env(safe-area-inset-bottom, 0px)); z-index: 1000; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1); box-shadow: 0 -10px 40px rgba(0,0,0,0.5); }
+        .modal-sheet { position: fixed; bottom: -100%; left: 0; width: 100%; background: var(--bg-modal); border-top: 1px solid var(--card-border); border-radius: 24px 24px 0 0; padding: 25px 20px 40px; z-index: 1000; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1); box-shadow: 0 -10px 40px rgba(0,0,0,0.5); }
         .modal-sheet.active { bottom: 0; }
         
         .modal-handle { width: 40px; height: 5px; background: rgba(255,255,255,0.2); border-radius: 10px; margin: 0 auto 20px; }
@@ -148,7 +147,8 @@
         .btn-danger { background: rgba(255, 50, 50, 0.2); color: #ff4d4d; border: 1px solid rgba(255, 50, 50, 0.5); }
         .btn-cancel { background: transparent; color: var(--text-main); border: 1px solid var(--card-border); }
 
-        ::-webkit-scrollbar { width: 0px; }
+        /* Скрываем стандартный скроллбар для эстетики, но оставляем функционал скролла */
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
     </style>
 </head>
 <body>
