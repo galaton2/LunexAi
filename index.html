@@ -17,7 +17,13 @@
             const splash = document.getElementById('splashScreen');
             if(splash && splash.style.display !== 'none') {
                 splash.style.opacity = '0';
-                setTimeout(() => splash.style.display = 'none', 500);
+                setTimeout(() => { 
+                    splash.style.display = 'none'; 
+                    // Если основной скрипт упал, принудительно показываем логин
+                    if(document.getElementById('tab-dashboard').style.display !== 'block') {
+                        document.getElementById('loginScreen').style.display = 'flex';
+                    }
+                }, 500);
             }
         }, 2500);
     </script>
@@ -28,12 +34,18 @@
             <h1 class="login-title">Lunex Premium</h1>
             <p class="login-subtitle">Connect your Telegram account to access your Vault from any browser.</p>
             
-            <script async src="https://telegram.org/js/telegram-widget.js?22" 
-                    data-telegram-login="test2813913dddbot" 
-                    data-size="large" 
-                    data-radius="16"
-                    data-onauth="onTelegramAuth(user)" 
-                    data-request-access="write"></script>
+            <div id="telegramWidgetContainer" style="min-height: 40px; display: flex; justify-content: center; align-items: center; width: 100%;">
+                <script async src="https://telegram.org/js/telegram-widget.js?22" 
+                        data-telegram-login="test2813913dddbot" 
+                        data-size="large" 
+                        data-radius="16"
+                        data-onauth="onTelegramAuth(user)" 
+                        data-request-access="write"></script>
+            </div>
+            
+            <p id="widgetErrorMsg" style="font-size: 11px; color: var(--pink-main); margin-top: 15px; display: none;">
+                Button not loading? Connect your domain in @BotFather via /setdomain
+            </p>
         </div>
     </div>
 
@@ -139,7 +151,7 @@
 
     <div id="zenEditor" class="zen-editor">
         <div class="ze-header" id="zeHeader">
-            <button class="ze-close-btn" onclick="saveAndCloseZenEditor()"><i class="fas fa-times"></i></button>
+            <button class="ze-close-btn" onclick="saveAndCloseZenEditor()"><i class="fas fa-chevron-left"></i></button>
             <div class="ze-meta" onclick="openCategorySelector()"><span id="zeCategory">Personal</span> <i class="fas fa-caret-down"></i></div>
             <div style="width: 36px;"></div> 
         </div>
@@ -183,16 +195,14 @@
         <h2 class="section-title" style="margin-top:0;">Rename Category</h2>
         <div class="form-group"><input type="text" class="form-control" id="catEditName" placeholder="Category Name"></div>
         <input type="hidden" id="oldCatName" value="">
-        <div class="modal-actions">
-            <button class="btn btn-primary" onclick="saveCategorySettings()" style="width: 100%;">Apply & Save</button>
-        </div>
+        <div class="modal-actions"><button class="btn btn-primary" onclick="saveCategorySettings()" style="width: 100%;">Apply & Save</button></div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
         import { getFirestore, doc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
 
-        // --- БЕЗОПАСНАЯ ИНИЦИАЛИЗАЦИЯ TELEGRAM WEB APP ---
+        // --- ИНИЦИАЛИЗАЦИЯ TELEGRAM WEB APP ---
         const tg = window.Telegram?.WebApp || {};
         try {
             if (tg.expand) tg.expand();
@@ -216,7 +226,6 @@
             });
         }
 
-        // --- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ---
         let userId = null; 
         let userName = "User";
         window.userDocRef = null;
@@ -226,7 +235,6 @@
         let currentFontSize = 16; 
         let typingTimer;
 
-        // Ручное скрытие сплэша
         function forceHideSplash() {
             const splash = document.getElementById('splashScreen');
             if(splash && splash.style.display !== 'none') {
@@ -235,7 +243,16 @@
             }
         }
 
-        // Инициализация Firebase ТОЛЬКО ПОСЛЕ ПОЛУЧЕНИЯ ID
+        // Проверка: загрузился ли виджет Телеграма в браузере
+        setTimeout(() => {
+            if (document.getElementById('loginScreen').style.display === 'flex') {
+                const iframe = document.querySelector('#telegramWidgetContainer iframe');
+                if (!iframe) {
+                    document.getElementById('widgetErrorMsg').style.display = 'block';
+                }
+            }
+        }, 3000);
+
         function initFirebase(uid) {
             try {
                 const firebaseConfig = {
@@ -291,29 +308,24 @@
 
         // --- УМНАЯ АВТОРИЗАЦИЯ ---
         if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-            // Зашли из Телеграма
             applyUserDataToUI(tg.initDataUnsafe.user);
             initFirebase(userId);
         } else if (localStorage.getItem('lunexWebUser')) {
-            // Зашли из браузера (Уже логинились)
             const savedUser = JSON.parse(localStorage.getItem('lunexWebUser'));
             applyUserDataToUI(savedUser);
             document.getElementById('logoutBtn').style.display = 'flex'; 
             initFirebase(userId);
         } else {
-            // Зашли из браузера впервые -> Показываем логин
             forceHideSplash();
             document.getElementById('loginScreen').style.display = 'flex';
         }
 
-        // Вызывается виджетом Telegram после входа в браузере
         window.onTelegramAuth = function(user) {
             localStorage.setItem('lunexWebUser', JSON.stringify(user));
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('splashScreen').style.opacity = '1';
             document.getElementById('splashScreen').style.display = 'flex';
             document.getElementById('logoutBtn').style.display = 'flex';
-            
             applyUserDataToUI(user);
             initFirebase(userId);
         };
@@ -351,7 +363,6 @@
             });
         }, 30000);
 
-        // --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ---
         window.switchTab = function(tabId, btn) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
@@ -417,7 +428,6 @@
             if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
         }
 
-        // --- РЕНДЕРИНГ ИНТЕРФЕЙСА ---
         function renderUI() {
             const data = window.currentUserData; if(!data) return;
             const notes = data.notes || []; let reminders = data.reminders || [];
@@ -522,7 +532,6 @@
             document.getElementById('activityPct').innerText = `${Math.floor(pct)}%`;
         }
 
-        // --- МОДАЛЬНЫЕ ОКНА И ДЕЙСТВИЯ ---
         window.closeAllModals = function() {
             document.querySelectorAll('.modal-sheet').forEach(m => m.classList.remove('active'));
             document.getElementById('modalOverlay').classList.remove('active');
@@ -538,7 +547,6 @@
             if(tg.BackButton) tg.BackButton.show();
         }
 
-        // ZEN EDITOR
         window.openZenEditor = function(index) {
             closeAllModals();
             if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
@@ -621,7 +629,6 @@
             document.getElementById('contextOptionsMenu').classList.add('active');
             if(tg.BackButton) tg.BackButton.show();
         }
-        
         window.closeContextMenu = function() {
             document.getElementById('contextOptionsMenu').classList.remove('active');
             document.getElementById('modalOverlay').classList.remove('active');
