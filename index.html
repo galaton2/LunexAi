@@ -106,7 +106,6 @@
         </div>
         <input type="hidden" id="remEditIndex" value="-1">
         <div class="modal-actions">
-            <button class="btn btn-cancel" onclick="closeAllModals()">Cancel</button>
             <button class="btn btn-danger" id="remBtnDelete" style="display:none;" onclick="deleteReminder()">Delete</button>
             <button class="btn btn-primary" onclick="saveReminder()">Save</button>
         </div>
@@ -114,8 +113,7 @@
 
     <div id="zenEditor" class="zen-editor">
         <div class="ze-header">
-            <button class="ze-back" onclick="saveAndCloseZenEditor()"><i class="fas fa-chevron-left"></i> Vault</button>
-            <div class="ze-meta" onclick="openCategorySelector()"><span id="zeCategory">Personal</span> <i class="fas fa-caret-down"></i></div>
+            <div style="width: 24px;"></div> <div class="ze-meta" onclick="openCategorySelector()"><span id="zeCategory">Personal</span> <i class="fas fa-caret-down"></i></div>
             <button class="ze-menu-btn-small" onclick="openContextOptions()"><i class="fas fa-ellipsis-v"></i></button>
         </div>
         <div class="ze-body">
@@ -152,8 +150,7 @@
         <div class="form-group"><input type="text" class="form-control" id="catEditName" placeholder="Category Name"></div>
         <input type="hidden" id="oldCatName" value="">
         <div class="modal-actions">
-            <button class="btn btn-cancel" onclick="closeCategoryModal()">Cancel</button>
-            <button class="btn btn-primary" onclick="saveCategorySettings()">Apply</button>
+            <button class="btn btn-primary" onclick="saveCategorySettings()" style="width: 100%;">Apply & Save</button>
         </div>
     </div>
 
@@ -164,6 +161,26 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
         if (tg.requestFullscreen) { tg.requestFullscreen(); }
+
+        // --- ИНТЕГРАЦИЯ НАТИВНОЙ КНОПКИ "НАЗАД" ТЕЛЕГРАМА ---
+        tg.BackButton.onClick(function() {
+            // Проверяем, что именно сейчас открыто, и закрываем это
+            if (document.getElementById('catSelectorMenu').classList.contains('active') || 
+                document.getElementById('contextOptionsMenu').classList.contains('active')) {
+                // Если открыто меню внутри редактора - закрываем только меню
+                document.getElementById('catSelectorMenu').classList.remove('active');
+                document.getElementById('contextOptionsMenu').classList.remove('active');
+                document.getElementById('modalOverlay').classList.remove('active');
+            } else if (document.getElementById('zenEditor').classList.contains('active')) {
+                // Если открыт сам редактор - сохраняем и выходим
+                saveAndCloseZenEditor();
+            } else if (document.getElementById('categoryModal').classList.contains('active')) {
+                closeCategoryModal();
+            } else {
+                // Иначе закрываем любые другие шторки (создание, напоминания)
+                closeAllModals();
+            }
+        });
 
         let userId = "8562313043"; 
         let userName = "User";
@@ -219,7 +236,7 @@
             }
         });
 
-        // --- SWIPE TO DISMISS LOGIC ---
+        // --- СВАЙП ДЛЯ ЗАКРЫТИЯ (Адаптировано под Telegram Back Button) ---
         function enableSwipeToClose() {
             document.querySelectorAll('.modal-sheet').forEach(sheet => {
                 const handle = sheet.querySelector('.modal-handle');
@@ -237,7 +254,11 @@
                 handle.addEventListener('touchend', (e) => {
                     sheet.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), bottom 0.4s';
                     sheet.style.transform = ''; 
-                    if (currentY - startY > 60) closeAllModals();
+                    if (currentY - startY > 60) {
+                        // Эмуляция нажатия на кнопку "Назад"
+                        if(sheet.id === 'categoryModal') closeCategoryModal();
+                        else closeAllModals();
+                    }
                 });
             });
         }
@@ -421,12 +442,18 @@
         window.closeAllModals = function() {
             document.querySelectorAll('.modal-sheet').forEach(m => m.classList.remove('active'));
             document.getElementById('modalOverlay').classList.remove('active');
+            
+            // Скрываем кнопку "Назад", если редактор тоже закрыт
+            if (!document.getElementById('zenEditor').classList.contains('active')) {
+                tg.BackButton.hide();
+            }
         }
 
         window.openCreationRouter = function() {
             tg.HapticFeedback.impactOccurred('medium');
             document.getElementById('modalOverlay').classList.add('active');
             document.getElementById('creationRouterModal').classList.add('active');
+            tg.BackButton.show(); // Показываем нативную кнопку
         }
 
         // --- ZEN EDITOR (ПОЛНОЭКРАННЫЕ ЗАМЕТКИ) ---
@@ -455,6 +482,8 @@
             
             updateWordCount();
             document.getElementById('zenEditor').classList.add('active');
+            tg.BackButton.show(); // Показываем кнопку "Назад"
+
             if (index === -1) { setTimeout(() => document.getElementById('zeTextarea').focus(), 350); }
         }
 
@@ -472,9 +501,10 @@
             document.getElementById('zeWordCount').innerText = `${words} words`;
         }
 
-        // Авто-сохранение при закрытии
+        // Авто-сохранение при выходе из редактора
         window.saveAndCloseZenEditor = async function() {
             document.getElementById('zenEditor').classList.remove('active');
+            tg.BackButton.hide(); // Скрываем нативную кнопку
             tg.HapticFeedback.impactOccurred('medium');
 
             const data = window.currentUserData; if(!data) return;
@@ -502,11 +532,11 @@
             await updateDoc(userDocRef, { notes, category_colors: newCategoryColors });
         }
 
-        // Контекстное меню
         window.openContextOptions = function() {
             tg.HapticFeedback.impactOccurred('light');
             document.getElementById('modalOverlay').classList.add('active');
             document.getElementById('contextOptionsMenu').classList.add('active');
+            tg.BackButton.show();
         }
 
         window.changeFontSize = function(delta) {
@@ -548,6 +578,7 @@
             }
             closeAllModals();
             document.getElementById('zenEditor').classList.remove('active');
+            tg.BackButton.hide();
             tg.HapticFeedback.impactOccurred('heavy');
         }
 
@@ -566,11 +597,12 @@
             
             document.getElementById('modalOverlay').classList.add('active');
             document.getElementById('catSelectorMenu').classList.add('active');
+            tg.BackButton.show();
         }
 
         window.applyCat = function(cat) {
             document.getElementById('zeCategory').innerText = cat;
-            closeAllModals();
+            closeAllModals(); // Это закроет шторку, но оставит Back Button, т.к. Zen Editor еще открыт
         }
         window.applyNewCategory = function() {
             const val = document.getElementById('zeCustomTagInput').value.trim();
@@ -607,6 +639,7 @@
 
             document.getElementById('modalOverlay').classList.add('active');
             document.getElementById('reminderModal').classList.add('active');
+            tg.BackButton.show();
         }
 
         window.setQuickTime = function(type) {
@@ -637,6 +670,7 @@
 
             await updateDoc(userDocRef, { reminders });
             closeAllModals();
+            tg.BackButton.hide();
             tg.HapticFeedback.impactOccurred('heavy');
         }
 
@@ -647,6 +681,7 @@
             reminders.splice(idx, 1);
             await updateDoc(userDocRef, { reminders });
             closeAllModals();
+            tg.BackButton.hide();
             tg.HapticFeedback.impactOccurred('medium');
         }
 
@@ -668,11 +703,13 @@
             document.getElementById('catEditName').value = category;
             document.getElementById('modalOverlay').classList.add('active');
             document.getElementById('categoryModal').classList.add('active');
+            tg.BackButton.show();
         }
         
         window.closeCategoryModal = function() {
             document.getElementById('categoryModal').classList.remove('active');
             document.getElementById('modalOverlay').classList.remove('active');
+            tg.BackButton.hide();
         }
 
         window.saveCategorySettings = async function() {
