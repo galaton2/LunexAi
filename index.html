@@ -3,182 +3,155 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Lunex OS</title>
+    <title>Lunex Premium</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div id="splashScreen">
-        <i class="fas fa-star splash-logo"></i>
-    </div>
+    <div id="splashScreen"><i class="fas fa-star splash-logo"></i></div>
 
     <div class="top-bar">
-        <div class="premium-badge"><span></span> LUNEX OS</div>
-        <img id="userAvatar" class="avatar" src="" alt="Avatar">
+        <div class="premium-btn">Try Premium <i class="fas fa-star"></i></div>
+        <div class="avatar-container"><img id="userAvatar" src="" alt="Avatar"></div>
     </div>
 
     <main id="tab-dashboard" class="tab-content active">
         <div class="greeting">
-            <h1 id="greetingText">Welcome</h1>
-            <p id="dateText">Loading...</p>
+            <h1 id="userName">Hi User,</h1>
+            <p>Your unified digital intelligence system.</p>
         </div>
 
-        <h2 class="section-title">Weekly Pulse</h2>
-        <div class="pulse-widget">
-            <div class="pulse-score">
-                <h2 id="pulseScore">100%</h2>
-                <p>Score</p>
-            </div>
-            <div class="pulse-stats">
-                <div class="stat-line">
-                    <i class="fas fa-check-circle" style="color: #00f0ff;"></i>
-                    <div class="stat-bar-bg"><div class="stat-bar-fill" style="width: 80%; background: #00f0ff;"></div></div>
+        <h2 class="section-title">Today's Activity</h2>
+        <div class="ring-container">
+            <svg viewBox="0 0 36 36" class="circular-chart">
+                <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                <path class="circle" id="activityRing" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                <text x="18" y="20.35" class="percentage" id="activityPct">0%</text>
+            </svg>
+            <div class="ring-stats">
+                <div class="ring-stat-item">
+                    <span class="ring-stat-value" id="statCompleted">0</span>
+                    <span class="ring-stat-label">Tasks Done</span>
                 </div>
-                <div class="stat-line">
-                    <i class="fas fa-pen" style="color: #ff477e;"></i>
-                    <div class="stat-bar-bg"><div class="stat-bar-fill" style="width: 50%; background: #ff477e;"></div></div>
+                <div class="ring-stat-item">
+                    <span class="ring-stat-value" id="statPending">0</span>
+                    <span class="ring-stat-label">Pending Today</span>
                 </div>
             </div>
         </div>
 
-        <h2 class="section-title" style="margin-top: 30px;">Upcoming Agenda</h2>
+        <h2 class="section-title" style="margin-top: 30px;">Active Reminders</h2>
         <div id="dashReminders"></div>
     </main>
 
     <main id="tab-notes" class="tab-content">
-        <div class="greeting" style="padding-bottom: 5px;"><h1>The Vault</h1><p>Organized Knowledge Base</p></div>
-        
+        <div class="greeting" style="padding-bottom: 5px;"><h1>The Vault</h1><p>Structured knowledge base.</p></div>
         <div class="search-bar">
             <i class="fas fa-search" style="color: var(--text-muted);"></i>
             <input type="text" id="searchInput" placeholder="Search records..." oninput="filterNotes()">
         </div>
-
         <div id="notesVault"></div>
     </main>
 
     <main id="tab-tasks" class="tab-content">
-        <div class="greeting" style="padding-bottom: 5px;"><h1>Action Items</h1><p>Task Management</p></div>
-
+        <div class="greeting" style="padding-bottom: 5px;"><h1>To-Do List</h1><p>Manage your schedule.</p></div>
         <div class="filter-tabs">
             <div class="filter-btn active" id="fltAll" onclick="setTaskFilter('all')">All Tasks</div>
             <div class="filter-btn" id="fltToday" onclick="setTaskFilter('today')">Today Only</div>
         </div>
-
         <div id="tasksList"></div>
     </main>
 
     <main id="tab-settings" class="tab-content">
-        <div class="greeting"><h1>Preferences</h1></div>
-        <div class="list-item" style="background: transparent; border: none; padding: 0;">
+        <div class="greeting"><h1>Settings</h1></div>
+        <div class="list-item" style="background: transparent; border: none;">
             <div style="display:flex; align-items:center; gap:15px;">
-                <img id="setAvatar" src="" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
-                <div>
-                    <h3 id="setName" style="font-size:18px;">Name</h3>
-                    <p style="color:var(--text-muted); font-size:13px;">ID: <span id="setID"></span></p>
-                </div>
+                <div class="avatar-container" style="width: 60px; height: 60px;"><img id="setAvatar" src=""></div>
+                <div><h3 id="setName" style="font-size:18px;">Name</h3><p style="color:var(--text-muted); font-size:13px;">ID: <span id="setID"></span></p></div>
             </div>
         </div>
-        
         <h2 class="section-title">System Data</h2>
-        <div class="list-item">
-            <div class="list-info"><span class="list-title"><i class="fas fa-database"></i> Storage Records</span></div>
-            <span style="font-size:14px; font-weight:bold;" id="dbItemCount">0</span>
-        </div>
-        <div class="list-item">
-            <div class="list-info"><span class="list-title"><i class="fas fa-sync fa-spin"></i> Live Sync</span></div>
-            <span style="color:#00f0ff; font-size:12px; font-weight:bold;">ACTIVE</span>
-        </div>
+        <div class="list-item"><div class="list-info"><span class="list-title"><i class="fas fa-database"></i> Database Items</span></div><span style="font-size:14px; font-weight:bold;" id="dbItemCount">0</span></div>
+        <div class="list-item" onclick="exportData()"><div class="list-info"><span class="list-title"><i class="fas fa-file-download"></i> Export Backup</span></div><i class="fas fa-chevron-right" style="color: var(--text-muted);"></i></div>
     </main>
 
     <div class="bottom-panel">
         <div class="nav-bar">
-            <div class="nav-item active" onclick="switchTab('dashboard', this)"><i class="fas fa-layer-group"></i></div>
+            <div class="nav-item active" onclick="switchTab('dashboard', this)"><i class="fas fa-home"></i></div>
             <div class="nav-item" onclick="switchTab('notes', this)"><i class="fas fa-folder-open"></i></div>
             <button class="fab-btn" onclick="openAddModal()"><i class="fas fa-plus"></i></button>
-            <div class="nav-item" onclick="switchTab('tasks', this)"><i class="fas fa-check"></i></div>
-            <div class="nav-item" onclick="switchTab('settings', this)"><i class="fas fa-sliders-h"></i></div>
+            <div class="nav-item" onclick="switchTab('tasks', this)"><i class="fas fa-check-circle"></i></div>
+            <div class="nav-item" onclick="switchTab('settings', this)"><i class="fas fa-cog"></i></div>
         </div>
-    </div>
-
-    <div class="full-reader" id="fullReader">
-        <div class="reader-header">
-            <div class="tag" id="readerTag" style="background: var(--pink-main);">Category</div>
-            <div>
-                <i class="fas fa-copy reader-close" onclick="copyReaderText()"></i>
-                <i class="fas fa-times reader-close" onclick="closeReader()"></i>
-            </div>
-        </div>
-        <textarea class="reader-content" id="readerContent" readonly></textarea>
     </div>
 
     <div class="modal-overlay" id="modalOverlay" onclick="closeModal()"></div>
     <div class="modal-sheet" id="actionModal">
         <div class="modal-handle"></div>
+        <h2 class="section-title" id="modalTitle" style="margin-top:0;">Add Item</h2>
         
         <div class="type-selector" id="typeSelector">
-            <div class="type-btn active" onclick="selectType('quick')" id="btnTypeQuick">Quick Note</div>
-            <div class="type-btn" onclick="selectType('deep')" id="btnTypeDeep">Deep Note</div>
+            <div class="type-btn active" onclick="selectType('note')" id="btnTypeNote">Fast Note</div>
+            <div class="type-btn" onclick="selectType('large_note')" id="btnTypeLarge">Large Note</div>
             <div class="type-btn" onclick="selectType('task')" id="btnTypeTask">Reminder</div>
         </div>
 
-        <div class="form-group">
-            <textarea class="form-control" id="modalText" placeholder="Start typing..."></textarea>
+        <div class="form-group" style="flex-grow: 1;">
+            <textarea class="form-control" id="modalText" placeholder="Write here..."></textarea>
         </div>
 
         <div class="form-group" id="dateGroup" style="display: none;">
-            <label class="form-label">Schedule For:</label>
-            <div class="quick-time-grid">
-                <div class="time-chip" onclick="setQuickTime(1)"><i class="fas fa-clock"></i> +1 Hour</div>
-                <div class="time-chip" onclick="setQuickTime('tonight')"><i class="fas fa-moon"></i> Tonight</div>
-                <div class="time-chip" onclick="setQuickTime('tomorrow')"><i class="fas fa-sun"></i> Tomorrow</div>
-                <div class="time-chip" onclick="toggleNativeDate()"><i class="fas fa-calendar"></i> Custom</div>
-            </div>
-            <div class="native-date-wrapper" id="nativeDateWrapper">
-                <input type="datetime-local" class="form-control" id="modalDate">
+            <input type="datetime-local" class="form-control" id="modalDate">
+        </div>
+
+        <div class="form-group" id="tagsGroup">
+            <div class="tags-container" id="tagsContainer"></div>
+            <input type="text" id="customTagInput" class="tag-custom-input" placeholder="Type category name..." oninput="updateCustomTagSelection()">
+            <div class="color-palette" id="colorPalette">
+                <div class="color-dot" style="background: #ff477e" onclick="selectColor('#ff477e')"></div>
+                <div class="color-dot" style="background: #00f0ff" onclick="selectColor('#00f0ff')"></div>
+                <div class="color-dot" style="background: #ffd700" onclick="selectColor('#ffd700')"></div>
+                <div class="color-dot" style="background: #00ff88" onclick="selectColor('#00ff88')"></div>
+                <div class="color-dot" style="background: #b554ff" onclick="selectColor('#b554ff')"></div>
+                <div class="color-dot" style="background: #ffffff" onclick="selectColor('#ffffff')"></div>
             </div>
         </div>
 
         <input type="hidden" id="editIndex" value="-1">
         <input type="hidden" id="editOriginalType" value="">
+        <input type="hidden" id="selectedTag" value="Personal">
         <input type="hidden" id="selectedColor" value="">
 
         <div class="modal-actions">
-            <button class="btn btn-danger" id="btnDelete" style="display:none;" onclick="deleteItem()">Delete</button>
             <button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-danger" id="btnDelete" style="display:none;" onclick="deleteItem()">Delete</button>
             <button class="btn btn-primary" onclick="saveItem()">Save</button>
         </div>
     </div>
 
-    <div class="modal-overlay" id="catModalOverlay" onclick="closeCatModal()"></div>
-    <div class="modal-sheet" id="catModal">
+    <div class="modal-sheet" id="categoryModal" style="z-index: 1001;">
         <div class="modal-handle"></div>
-        <h2 class="section-title">Folder Settings</h2>
-        
+        <h2 class="section-title" style="margin-top:0;">Edit Category</h2>
         <div class="form-group">
-            <label class="form-label">Folder Name</label>
-            <input type="text" class="form-control" id="catEditName">
+            <input type="text" class="form-control" id="catEditName" placeholder="Category Name">
         </div>
-        
         <div class="form-group">
-            <label class="form-label">Folder Color</label>
-            <div class="color-palette" id="catColorPalette">
-                <div class="color-dot" style="background: #ff477e" onclick="selectCatColor('#ff477e')"></div>
-                <div class="color-dot" style="background: #00f0ff" onclick="selectCatColor('#00f0ff')"></div>
-                <div class="color-dot" style="background: #ffd700" onclick="selectCatColor('#ffd700')"></div>
-                <div class="color-dot" style="background: #00ff88" onclick="selectCatColor('#00ff88')"></div>
-                <div class="color-dot" style="background: #b554ff" onclick="selectCatColor('#b554ff')"></div>
-                <div class="color-dot random-color" onclick="selectCatColor('random')"><i class="fas fa-dice"></i></div>
+            <div class="color-palette" style="display: flex;">
+                <div class="color-dot cat-color-dot" style="background: #ff477e" onclick="selectCatColor('#ff477e')"></div>
+                <div class="color-dot cat-color-dot" style="background: #00f0ff" onclick="selectCatColor('#00f0ff')"></div>
+                <div class="color-dot cat-color-dot" style="background: #ffd700" onclick="selectCatColor('#ffd700')"></div>
+                <div class="color-dot cat-color-dot" style="background: #00ff88" onclick="selectCatColor('#00ff88')"></div>
+                <div class="color-dot cat-color-dot" style="background: #b554ff" onclick="selectCatColor('#b554ff')"></div>
+                <div class="color-dot cat-color-dot" style="background: #ffffff" onclick="selectCatColor('#ffffff')"></div>
             </div>
         </div>
-        
         <input type="hidden" id="oldCatName" value="">
-        <input type="hidden" id="catSelectedColor" value="">
-        
+        <input type="hidden" id="newCatColor" value="">
         <div class="modal-actions">
-            <button class="btn btn-cancel" onclick="closeCatModal()">Cancel</button>
-            <button class="btn btn-primary" onclick="saveCategory()">Apply</button>
+            <button class="btn btn-cancel" onclick="closeCategoryModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="saveCategorySettings()">Apply</button>
         </div>
     </div>
 
@@ -196,21 +169,14 @@
         if (tg.initDataUnsafe?.user) {
             userId = tg.initDataUnsafe.user.id.toString();
             userName = tg.initDataUnsafe.user.first_name;
+            document.getElementById('userName').innerText = "Hi " + userName + ",";
             document.getElementById('setName').innerText = userName;
             document.getElementById('setID').innerText = userId;
-            let avatarUrl = `https://ui-avatars.com/api/?name=${userName}&background=141418&color=fff`;
+            let avatarUrl = `https://ui-avatars.com/api/?name=${userName}&background=ff477e&color=fff&bold=true`;
             if (tg.initDataUnsafe.user.photo_url) avatarUrl = tg.initDataUnsafe.user.photo_url;
             document.getElementById('userAvatar').src = avatarUrl;
             document.getElementById('setAvatar').src = avatarUrl;
         }
-
-        // Dynamic Time/Greeting
-        const hour = new Date().getHours();
-        let greeting = "Good evening";
-        if(hour >= 5 && hour < 12) greeting = "Good morning";
-        else if(hour >= 12 && hour < 18) greeting = "Good afternoon";
-        document.getElementById('greetingText').innerText = `${greeting}, ${userName}.`;
-        document.getElementById('dateText').innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 
         window.switchTab = function(tabId, btn) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
@@ -234,35 +200,33 @@
         window.currentUserData = null;
         const userDocRef = doc(db, "users", userId);
 
+        // Память открытых секций
+        let openSections = JSON.parse(localStorage.getItem('lunexOpenSections')) || {};
+
         onSnapshot(userDocRef, (docSnap) => {
-            document.getElementById('splashScreen').style.opacity = '0';
-            setTimeout(() => document.getElementById('splashScreen').style.visibility = 'hidden', 500);
+            const splash = document.getElementById('splashScreen');
+            splash.style.opacity = '0';
+            setTimeout(() => splash.style.visibility = 'hidden', 500);
 
             if (docSnap.exists()) {
                 window.currentUserData = docSnap.data();
                 if (!window.currentUserData.category_colors) window.currentUserData.category_colors = {};
                 renderUI();
-                updatePulseWidget();
+                renderActivityRing();
             }
         });
 
         const defaultTags = ['Personal', 'Work', 'Finance', 'Ideas'];
-        const sectionIcons = { 'Personal': 'fa-user', 'Work': 'fa-briefcase', 'Finance': 'fa-wallet', 'Ideas': 'fa-lightbulb' };
-        
-        function getRandomNeonColor() {
-            const hues = [0, 60, 180, 280, 320]; 
-            return `hsl(${hues[Math.floor(Math.random() * hues.length)] + Math.floor(Math.random() * 20)}, 100%, 65%)`;
-        }
-
         function getCategoryColor(category) {
-            if (window.currentUserData?.category_colors?.[category]) return window.currentUserData.category_colors[category];
             const predefined = { 'Personal': '#ff477e', 'Work': '#00f0ff', 'Finance': '#ffd700', 'Ideas': '#b554ff' };
-            return predefined[category] || '#a0a0b0'; 
+            if (window.currentUserData?.category_colors?.[category]) return window.currentUserData.category_colors[category];
+            if (predefined[category]) return predefined[category];
+            return '#ffffff';
         }
 
         function parseItem(rawText) {
-            let category = "Draft"; let content = rawText;
-            const match = rawText.match(/^\[(.*?)\]\s*([\s\S]*)/); // Поддержка переносов строк [\s\S]*
+            let category = "Personal"; let content = rawText;
+            const match = rawText.match(/^\[(.*?)\]\s*(.*)/);
             if (match) { category = match[1]; content = match[2]; }
             return { category, content, rawText };
         }
@@ -275,49 +239,45 @@
             tg.HapticFeedback.impactOccurred('light');
             renderUI();
         }
+
         window.filterNotes = function() { renderUI(); }
 
         window.copyToClipboard = function(event, text) {
-            event.stopPropagation(); 
+            event.stopPropagation();
             navigator.clipboard.writeText(text).then(() => {
                 tg.HapticFeedback.impactOccurred('success');
-                tg.showAlert("Text copied!");
-            });
-        }
-        window.copyReaderText = function() {
-            navigator.clipboard.writeText(document.getElementById('readerContent').value).then(() => {
-                tg.HapticFeedback.impactOccurred('success');
-                tg.showAlert("Text copied!");
+                tg.showAlert("Copied to clipboard!");
             });
         }
 
-        // --- ACCORDION MEMORY ---
-        window.toggleCategory = function(catName) {
-            const content = document.getElementById(`content_${catName}`);
-            const icon = document.getElementById(`icon_${catName}`);
+        window.exportData = function() {
+            if(!window.currentUserData) return;
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(window.currentUserData, null, 2));
+            const dlAnchorElem = document.createElement('a');
+            dlAnchorElem.setAttribute("href", dataStr);
+            dlAnchorElem.setAttribute("download", "lunex_backup.json");
+            dlAnchorElem.click();
+            tg.HapticFeedback.impactOccurred('success');
+        }
+
+        window.toggleSection = function(category) {
+            const sec = document.getElementById(`section-${category}`);
+            sec.classList.toggle('open');
+            openSections[category] = sec.classList.contains('open');
+            localStorage.setItem('lunexOpenSections', JSON.stringify(openSections));
             tg.HapticFeedback.impactOccurred('light');
-            if (content.style.display === 'none') {
-                content.style.display = 'grid';
-                icon.className = 'fas fa-chevron-up';
-                localStorage.setItem(`vault_open_${catName}`, 'true');
-            } else {
-                content.style.display = 'none';
-                icon.className = 'fas fa-chevron-down';
-                localStorage.setItem(`vault_open_${catName}`, 'false');
-            }
         }
 
-        // --- RENDER UI ---
         function renderUI() {
             const data = window.currentUserData; if(!data) return;
             const notes = data.notes || []; let reminders = data.reminders || [];
             document.getElementById('dbItemCount').innerText = `${notes.length + reminders.length}`;
 
-            // VAULT RENDER
+            // --- THE VAULT (ACCORDIONS) ---
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const vault = document.getElementById('notesVault');
-            const groupedNotes = {};
             
+            const groupedNotes = {};
             notes.forEach((n, i) => {
                 const parsed = parseItem(n);
                 if (parsed.content.toLowerCase().includes(searchTerm)) {
@@ -327,7 +287,7 @@
             });
 
             if (Object.keys(groupedNotes).length === 0) {
-                vault.innerHTML = '<p class="empty-state">Folder is empty.</p>';
+                vault.innerHTML = '<p class="empty-state">No records found.</p>';
             } else {
                 const sortedKeys = Object.keys(groupedNotes).sort((a, b) => {
                     if (a === 'Personal') return -1; if (b === 'Personal') return 1;
@@ -338,43 +298,36 @@
                 let vaultHTML = '';
                 sortedKeys.forEach(category => {
                     const color = getCategoryColor(category);
-                    const icon = sectionIcons[category] || 'fa-folder';
-                    // Читаем из памяти, открыта ли папка (по умолчанию закрыты - false)
-                    const isOpen = localStorage.getItem(`vault_open_${category}`) === 'true';
-                    const displayStyle = isOpen ? 'grid' : 'none';
-                    const chevron = isOpen ? 'fa-chevron-up' : 'fa-chevron-down';
+                    // Если поиск активен - принудительно открываем все
+                    const isOpen = (searchTerm !== "" || openSections[category]) ? "open" : "";
                     
                     vaultHTML += `
-                    <div class="category-section">
-                        <div class="category-header">
-                            <div class="cat-title-area" style="color: ${color}" onclick="toggleCategory('${category}')">
-                                <i class="fas ${chevron}" id="icon_${category}"></i>
-                                <span><i class="fas ${icon}"></i> ${category}</span>
-                            </div>
-                            <div class="cat-settings-btn" onclick="openCatSettings('${category}', '${color}')">
-                                <i class="fas fa-ellipsis-h"></i>
+                    <div class="category-section ${isOpen}" id="section-${category}">
+                        <div class="category-header" onclick="toggleSection('${category}')">
+                            <div class="category-title" style="color: ${color}"><i class="fas fa-folder"></i> ${category}</div>
+                            <div class="category-controls">
+                                <div class="category-settings-btn" onclick="openCategorySettings(event, '${category}')"><i class="fas fa-cog"></i></div>
+                                <i class="fas fa-chevron-down chevron"></i>
                             </div>
                         </div>
-                        <div class="grid-cards" id="content_${category}" style="display: ${displayStyle};">
-                            ${groupedNotes[category].map(nObj => {
-                                const isDeep = nObj.content.length > 100 || nObj.content.includes('\n');
-                                const displayContent = nObj.content.length > 60 ? nObj.content.substring(0, 60) + '...' : nObj.content;
-                                return `
-                                <div class="card" onclick="viewNote(${nObj.origIndex})">
-                                    <div class="card-text">${displayContent}</div>
-                                    <div class="card-footer">
-                                        ${isDeep ? '<i class="fas fa-align-left" style="font-size:10px; opacity:0.5;"></i>' : '<span></span>'}
-                                        <div class="copy-btn" onclick="copyToClipboard(event, '${nObj.content.replace(/'/g, "\\'").replace(/\n/g, "\\n")}')"><i class="fas fa-copy"></i></div>
+                        <div class="category-content">
+                            <div class="grid-cards">
+                                ${groupedNotes[category].map(nObj => `
+                                    <div class="card" onclick="openEditModal('note', ${nObj.origIndex})">
+                                        <div class="card-text">${nObj.content.length > 150 ? nObj.content.substring(0, 150) + '...' : nObj.content}</div>
+                                        <div class="card-icon">
+                                            <div class="copy-btn" onclick="copyToClipboard(event, '${nObj.content.replace(/'/g, "\\'")}')"><i class="fas fa-copy"></i></div>
+                                        </div>
                                     </div>
-                                </div>`;
-                            }).join('')}
+                                `).join('')}
+                            </div>
                         </div>
                     </div>`;
                 });
                 vault.innerHTML = vaultHTML;
             }
 
-            // TASKS RENDER
+            // --- TASKS ---
             const tList = document.getElementById('tasksList');
             const dReminders = document.getElementById('dashReminders');
             const todayStr = new Date().toLocaleDateString();
@@ -385,8 +338,8 @@
             }
 
             if(displayReminders.length === 0) {
-                tList.innerHTML = '<p class="empty-state">No pending actions.</p>';
-                dReminders.innerHTML = '<p class="empty-state">Clear schedule.</p>';
+                tList.innerHTML = '<p class="empty-state">No pending tasks.</p>';
+                dReminders.innerHTML = '<p class="empty-state">No active timers.</p>';
             } else {
                 const renderHTML = displayReminders.map((r, i) => {
                     const parsed = parseItem(r.text);
@@ -398,9 +351,7 @@
                     <div class="list-item" onclick="openEditModal('task', ${i})">
                         <div class="list-info">
                             <span class="list-title">${parsed.content}</span>
-                            <div class="list-meta">
-                                <span class="cat-dot" style="color: ${color};"><i class="fas fa-circle" style="font-size:6px;"></i> ${parsed.category}</span> • <span>${dateStr}</span>
-                            </div>
+                            <div class="list-meta"><span style="color: ${color};"><i class="fas fa-circle" style="font-size:8px;"></i> ${parsed.category}</span> • <span>${dateStr}</span></div>
                         </div>
                         <div class="checkbox" onclick="event.stopPropagation(); completeReminder(${i})"><i class="fas fa-check"></i></div>
                     </div>`;
@@ -410,64 +361,89 @@
             }
         }
 
-        // PULSE WIDGET (Replaces Chart)
-        function updatePulseWidget() {
-            const reminders = window.currentUserData?.reminders || [];
-            let totalTasks = reminders.length;
-            // Условный Score: если задач мало, значит продуктивность высокая. (Формула-заглушка для красоты)
-            let score = totalTasks === 0 ? 100 : Math.max(10, 100 - (totalTasks * 5));
+        // --- ACTIVITY RING ---
+        function renderActivityRing() {
+            const data = window.currentUserData; if(!data) return;
+            const reminders = data.reminders || [];
+            const completedToday = data.completed_tasks_today || 0; // Для демки: если бы мы сохраняли выполненные за сегодня
             
-            document.getElementById('pulseScore').innerText = `${score}%`;
+            const todayStr = new Date().toLocaleDateString();
+            const pendingToday = reminders.filter(r => new Date(r.datetime.replace(' ', 'T')).toLocaleDateString() === todayStr).length;
+            
+            document.getElementById('statPending').innerText = pendingToday;
+            document.getElementById('statCompleted').innerText = data.completed_tasks || 0; // Общее кол-во
+            
+            // Если дел на сегодня нет, кольцо полное
+            let pct = 100;
+            if (pendingToday > 0) {
+                // Имитация: если есть дела, кольцо показывает, сколько осталось сделать. 
+                // В реале нужно хранить кол-во выполненных именно сегодня.
+                pct = Math.max(5, 100 - (pendingToday * 15)); 
+            }
+            
+            document.getElementById('activityRing').style.strokeDasharray = `${pct}, 100`;
+            document.getElementById('activityPct').innerText = `${Math.floor(pct)}%`;
         }
 
-        // --- FULLSCREEN READER ---
-        window.viewNote = function(index) {
-            const data = window.currentUserData;
-            const parsed = parseItem(data.notes[index]);
-            const color = getCategoryColor(parsed.category);
-            
-            document.getElementById('readerTag').innerText = parsed.category;
-            document.getElementById('readerTag').style.background = `${color}40`;
-            document.getElementById('readerTag').style.color = color;
-            document.getElementById('readerContent').value = parsed.content;
-            
-            document.getElementById('fullReader').classList.add('active');
-            tg.HapticFeedback.impactOccurred('light');
-        }
-        window.closeReader = function() {
-            document.getElementById('fullReader').classList.remove('active');
-        }
-
-        // --- MAIN ADD/EDIT MODAL ---
-        window.currentType = 'quick';
+        // --- MODAL LOGIC (Zen Editor & Setup) ---
+        window.currentType = 'note';
         window.selectType = function(type) {
             window.currentType = type;
-            document.getElementById('btnTypeQuick').classList.remove('active');
-            document.getElementById('btnTypeDeep').classList.remove('active');
-            document.getElementById('btnTypeTask').classList.remove('active');
+            document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
             
-            if(type === 'quick') { document.getElementById('btnTypeQuick').classList.add('active'); document.getElementById('modalText').className = "form-control"; }
-            else if(type === 'deep') { document.getElementById('btnTypeDeep').classList.add('active'); document.getElementById('modalText').className = "form-control deep-note"; }
-            else { document.getElementById('btnTypeTask').classList.add('active'); document.getElementById('modalText').className = "form-control"; }
+            const isLarge = (type === 'large_note');
+            const isTask = (type === 'task');
             
-            document.getElementById('dateGroup').style.display = type === 'task' ? 'block' : 'none';
+            if (type === 'large_note') { document.getElementById('btnTypeLarge').classList.add('active'); window.currentType = 'note'; }
+            else if (type === 'task') { document.getElementById('btnTypeTask').classList.add('active'); }
+            else { document.getElementById('btnTypeNote').classList.add('active'); }
+            
+            document.getElementById('dateGroup').style.display = isTask ? 'block' : 'none';
+            document.getElementById('tagsGroup').style.display = isLarge ? 'none' : 'block';
+            
+            // Zen Mode
+            if (isLarge) {
+                document.getElementById('actionModal').classList.add('fullscreen-mode');
+            } else {
+                document.getElementById('actionModal').classList.remove('fullscreen-mode');
+            }
+            
             tg.HapticFeedback.impactOccurred('light');
         }
 
-        // Smart Time Chips
-        window.setQuickTime = function(mode) {
-            const d = new Date();
-            if(mode === 1) d.setHours(d.getHours() + 1);
-            else if(mode === 'tonight') { d.setHours(20, 0, 0, 0); if(d < new Date()) d.setDate(d.getDate() + 1); }
-            else if(mode === 'tomorrow') { d.setDate(d.getDate() + 1); d.setHours(10, 0, 0, 0); }
+        window.buildTagsUI = function(selected) {
+            document.getElementById('selectedTag').value = selected;
+            const container = document.getElementById('tagsContainer');
+            const customTags = Object.keys(window.currentUserData?.category_colors || {});
+            const allTags = [...new Set([...defaultTags, ...customTags])];
             
-            const offset = d.getTimezoneOffset() * 60000;
-            document.getElementById('modalDate').value = (new Date(d - offset)).toISOString().slice(0, 16);
-            tg.HapticFeedback.impactOccurred('light');
+            let html = allTags.map(tag => {
+                const isSel = tag === selected ? 'selected' : '';
+                const color = getCategoryColor(tag);
+                const borderStyle = isSel ? `border-color: ${color}; color: ${color}; box-shadow: 0 0 10px ${color}50;` : '';
+                return `<div class="tag-pill ${isSel}" style="${borderStyle}" onclick="buildTagsUI('${tag}')">${tag}</div>`;
+            }).join('');
+            
+            html += `<div class="tag-pill" style="border-style: dashed;" onclick="toggleCustomTagInput()">+ NEW</div>`;
+            container.innerHTML = html;
         }
-        window.toggleNativeDate = function() {
-            const wrap = document.getElementById('nativeDateWrapper');
-            wrap.style.display = wrap.style.display === 'block' ? 'none' : 'block';
+
+        window.toggleCustomTagInput = function() { 
+            document.getElementById('customTagInput').style.display = 'block'; 
+            document.getElementById('colorPalette').style.display = 'flex';
+            document.getElementById('customTagInput').focus(); 
+            document.getElementById('selectedColor').value = "";
+            document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('selected'));
+        }
+        window.updateCustomTagSelection = function() { 
+            const val = document.getElementById('customTagInput').value.trim(); 
+            if(val) document.getElementById('selectedTag').value = val; 
+        }
+        window.selectColor = function(color) {
+            document.querySelectorAll('#colorPalette .color-dot').forEach(d => d.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+            document.getElementById('selectedColor').value = color;
+            tg.HapticFeedback.impactOccurred('light');
         }
 
         window.openAddModal = function() {
@@ -475,10 +451,18 @@
             document.getElementById('modalText').value = "";
             document.getElementById('editIndex').value = "-1";
             document.getElementById('btnDelete').style.display = "none";
-            document.getElementById('nativeDateWrapper').style.display = 'none';
+            document.getElementById('customTagInput').style.display = 'none';
+            document.getElementById('colorPalette').style.display = 'none';
+            document.getElementById('customTagInput').value = "";
+            document.getElementById('selectedColor').value = "";
             
-            setQuickTime(1); // Default to +1 hour
-            selectType('quick');
+            buildTagsUI('Personal');
+            
+            const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1); tomorrow.setHours(10, 0, 0, 0);
+            const offset = tomorrow.getTimezoneOffset() * 60000;
+            document.getElementById('modalDate').value = (new Date(tomorrow - offset)).toISOString().slice(0, 16);
+
+            selectType('note');
             document.getElementById('modalOverlay').classList.add('active');
             document.getElementById('actionModal').classList.add('active');
         }
@@ -489,11 +473,14 @@
             document.getElementById('editIndex').value = index;
             document.getElementById('editOriginalType').value = type;
             document.getElementById('btnDelete').style.display = "block";
+            document.getElementById('customTagInput').style.display = 'none';
+            document.getElementById('colorPalette').style.display = 'none';
 
             let parsed;
             if(type === 'note') {
                 parsed = parseItem(data.notes[index]);
-                selectType(parsed.content.length > 100 || parsed.content.includes('\n') ? 'deep' : 'quick');
+                // Авто-выбор Large Note если текст длинный
+                selectType(parsed.content.length > 200 ? 'large_note' : 'note');
             } else {
                 selectType('task');
                 const item = data.reminders[index];
@@ -504,8 +491,15 @@
                     document.getElementById('modalDate').value = (new Date(dt - offset)).toISOString().slice(0, 16);
                 }
             }
+
             document.getElementById('modalText').value = parsed.content;
-            document.getElementById('selectedTag').value = parsed.category;
+            
+            const allKnownTags = [...defaultTags, ...Object.keys(data.category_colors || {})];
+            if(!allKnownTags.includes(parsed.category)) {
+                buildTagsUI(''); toggleCustomTagInput();
+                document.getElementById('customTagInput').value = parsed.category;
+                document.getElementById('selectedTag').value = parsed.category;
+            } else { buildTagsUI(parsed.category); }
 
             document.getElementById('modalOverlay').classList.add('active');
             document.getElementById('actionModal').classList.add('active');
@@ -514,69 +508,77 @@
         window.closeModal = function() {
             document.getElementById('modalOverlay').classList.remove('active');
             document.getElementById('actionModal').classList.remove('active');
+            document.getElementById('categoryModal').classList.remove('active');
         }
 
-        // --- CATEGORY SETTINGS MODAL ---
-        window.openCatSettings = function(catName, color) {
+        // --- CATEGORY SETTINGS ---
+        window.openCategorySettings = function(event, category) {
+            event.stopPropagation();
             tg.HapticFeedback.impactOccurred('medium');
-            document.getElementById('oldCatName').value = catName;
-            document.getElementById('catEditName').value = catName;
-            document.getElementById('catSelectedColor').value = color;
+            document.getElementById('oldCatName').value = category;
+            document.getElementById('catEditName').value = category;
             
-            // Highlight color
-            document.querySelectorAll('#catColorPalette .color-dot').forEach(d => {
-                d.classList.remove('selected');
-                if (d.style.background === color || d.style.backgroundColor === color) d.classList.add('selected');
-            });
+            const currentColor = getCategoryColor(category);
+            document.getElementById('newCatColor').value = currentColor;
+            document.querySelectorAll('.cat-color-dot').forEach(d => d.classList.remove('selected'));
             
-            document.getElementById('catModalOverlay').classList.add('active');
-            document.getElementById('catModal').classList.add('active');
+            document.getElementById('modalOverlay').classList.add('active');
+            document.getElementById('categoryModal').classList.add('active');
         }
-
-        window.closeCatModal = function() {
-            document.getElementById('catModalOverlay').classList.remove('active');
-            document.getElementById('catModal').classList.remove('active');
+        
+        window.closeCategoryModal = function() {
+            document.getElementById('categoryModal').classList.remove('active');
+            document.getElementById('modalOverlay').classList.remove('active');
         }
-
+        
         window.selectCatColor = function(color) {
-            document.querySelectorAll('#catColorPalette .color-dot').forEach(d => d.classList.remove('selected'));
+            document.querySelectorAll('.cat-color-dot').forEach(d => d.classList.remove('selected'));
             event.currentTarget.classList.add('selected');
-            if (color === 'random') { color = getRandomNeonColor(); event.currentTarget.style.background = color; }
-            document.getElementById('catSelectedColor').value = color;
+            document.getElementById('newCatColor').value = color;
             tg.HapticFeedback.impactOccurred('light');
         }
 
-        window.saveCategory = async function() {
+        window.saveCategorySettings = async function() {
             const data = window.currentUserData; if(!data) return;
             const oldName = document.getElementById('oldCatName').value;
-            const newName = document.getElementById('catEditName').value.trim();
-            const newColor = document.getElementById('catSelectedColor').value;
+            const newName = document.getElementById('catEditName').value.trim() || oldName;
+            const newColor = document.getElementById('newCatColor').value;
             
-            if(!newName) return;
-            
-            let newCategoryColors = { ...data.category_colors };
-            newCategoryColors[newName] = newColor;
-            
-            // Mass rename in notes and tasks
-            let notes = (data.notes || []).map(n => n.startsWith(`[${oldName}]`) ? n.replace(`[${oldName}]`, `[${newName}]`) : n);
-            let reminders = (data.reminders || []).map(r => ({...r, text: r.text.startsWith(`[${oldName}]`) ? r.text.replace(`[${oldName}]`, `[${newName}]`) : r.text}));
+            let newColors = { ...data.category_colors };
+            if (oldName !== newName) { delete newColors[oldName]; }
+            newColors[newName] = newColor;
 
-            tg.HapticFeedback.impactOccurred('heavy');
-            await updateDoc(userDocRef, { notes, reminders, category_colors: newCategoryColors });
-            closeCatModal();
+            let notes = [...(data.notes || [])];
+            if (oldName !== newName) {
+                // Массовое переименование
+                notes = notes.map(n => n.startsWith(`[${oldName}]`) ? n.replace(`[${oldName}]`, `[${newName}]`) : n);
+            }
+            
+            // Если переименовали секцию, переносим состояние аккордеона
+            if (oldName !== newName && openSections[oldName]) {
+                openSections[newName] = true;
+                delete openSections[oldName];
+                localStorage.setItem('lunexOpenSections', JSON.stringify(openSections));
+            }
+
+            await updateDoc(userDocRef, { notes: notes, category_colors: newColors });
+            closeCategoryModal();
         }
 
-        // --- DB SAVE / DELETE ---
+        // --- CRUD LOGIC ---
         window.saveItem = async function() {
             const data = window.currentUserData; if(!data) return;
-            const text = document.getElementById('modalText').value.trim();
-            if(!text) return;
+            const text = document.getElementById('modalText').value; // Без trim, чтобы сохранить пробелы
+            if(!text.trim()) return;
             
-            // Если тег не выбран явно (новый айтем), кидаем в Draft
-            let category = document.getElementById('selectedTag').value;
-            if(document.getElementById('editIndex').value === "-1") category = "Draft";
+            const category = document.getElementById('selectedTag').value || 'Personal';
+            const formattedText = `[${category}] ${text}`;
             
-            const formattedText = `[${category}]\n${text}`; // Используем \n чтобы отделить заголовок от контента
+            let newCategoryColors = { ...data.category_colors };
+            const pickedColor = document.getElementById('selectedColor').value;
+            if (!defaultTags.includes(category) && !newCategoryColors[category] && pickedColor) {
+                newCategoryColors[category] = pickedColor;
+            }
             
             const isEdit = document.getElementById('editIndex').value !== "-1";
             const idx = parseInt(document.getElementById('editIndex').value);
@@ -587,15 +589,14 @@
 
             if(isEdit) { if(origType === 'note') notes.splice(idx, 1); else reminders.splice(idx, 1); }
 
-            if(window.currentType === 'quick' || window.currentType === 'deep') {
-                notes.unshift(formattedText);
-            } else {
+            if(window.currentType === 'note') notes.unshift(formattedText);
+            else {
                 const dateVal = document.getElementById('modalDate').value;
                 if(!dateVal) return;
                 reminders.push({ text: formattedText, datetime: dateVal.replace('T', ' ') + ":00" });
             }
 
-            await updateDoc(userDocRef, { notes, reminders });
+            await updateDoc(userDocRef, { notes, reminders, category_colors: newCategoryColors });
             closeModal();
         }
 
@@ -604,13 +605,12 @@
             const idx = parseInt(document.getElementById('editIndex').value);
             const origType = document.getElementById('editOriginalType').value;
             
-            tg.showConfirm("Permanently delete this record?", async function(confirm) {
+            tg.showConfirm("Delete permanently?", async function(confirm) {
                 if(!confirm) return;
                 let notes = [...(data.notes || [])]; let reminders = [...(data.reminders || [])];
                 if(origType === 'note') notes.splice(idx, 1); else reminders.splice(idx, 1);
                 await updateDoc(userDocRef, { notes, reminders });
                 closeModal();
-                closeReader();
                 tg.HapticFeedback.impactOccurred('medium');
             });
         }
@@ -621,7 +621,11 @@
             document.querySelectorAll('#tasksList .list-item')[index].classList.add('done');
             let reminders = [...(data.reminders || [])];
             reminders.splice(index, 1);
-            setTimeout(async () => { await updateDoc(userDocRef, { reminders }); }, 300);
+            
+            // Накручиваем счетчик выполненных для кольца
+            const completed = (data.completed_tasks || 0) + 1;
+            
+            setTimeout(async () => { await updateDoc(userDocRef, { reminders, completed_tasks: completed }); }, 300);
         }
     </script>
 </body>
