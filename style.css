@@ -32,9 +32,13 @@ body {
 @keyframes pulse { from { transform: scale(0.9); text-shadow: 0 0 10px var(--pink-glow); } to { transform: scale(1.1); text-shadow: 0 0 40px var(--pink-glow); } }
 
 #loginScreen { position: fixed; inset: 0; background: var(--bg-dark); z-index: 10000; display: none; flex-direction: column; justify-content: center; align-items: center; padding: 20px; text-align: center; }
-.login-card { background: var(--bg-card); border: 1px solid var(--card-border); border-radius: 24px; padding: 40px 20px; width: 100%; max-width: 350px; backdrop-filter: blur(20px); box-shadow: 0 15px 40px rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; }
-.login-title { font-size: 24px; font-weight: 700; margin-top: 20px; margin-bottom: 10px; }
+.login-card { background: var(--bg-card); border: 1px solid var(--card-border); border-radius: 24px; padding: 40px 20px; width: 100%; max-width: 380px; backdrop-filter: blur(20px); box-shadow: 0 15px 40px rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; }
+.login-title { font-size: 26px; font-weight: 800; margin-top: 20px; margin-bottom: 10px; }
 .login-subtitle { font-size: 14px; color: var(--text-muted); line-height: 1.5; margin-bottom: 30px; }
+
+/* NEW NATIVE TELEGRAM BUTTON */
+.telegram-login-btn { background: #2AABEE; color: #ffffff; border: none; border-radius: 16px; padding: 16px 24px; font-size: 16px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; cursor: pointer; box-shadow: 0 4px 20px rgba(42, 171, 238, 0.4); transition: 0.2s; }
+.telegram-login-btn:active { transform: scale(0.96); background: #229ED9; }
 
 /* --- TOP BAR --- */
 .top-bar { display: flex; justify-content: center; align-items: center; padding: max(60px, env(safe-area-inset-top)) 24px 10px; position: sticky; top: 0; background: transparent; backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); z-index: 50; }
@@ -109,7 +113,7 @@ body {
 .fab-btn { width: 48px; height: 48px; border-radius: 50%; background: var(--pink-main); color: white; display: flex; justify-content: center; align-items: center; border: none; box-shadow: 0 4px 15px var(--pink-glow); cursor: pointer; font-size: 18px; transition: 0.2s; }
 .fab-btn:active { transform: scale(0.9); }
 
-/* --- MODALS & CLOSE BUTTONS (NO SWIPE) --- */
+/* --- MODALS & CLOSE BUTTONS --- */
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); z-index: 999; display: none; opacity: 0; transition: 0.3s; }
 .modal-overlay.active { display: block; opacity: 1; }
 .modal-sheet { position: fixed; bottom: -100%; left: 0; width: 100%; background: var(--bg-modal); border-top: 1px solid var(--card-border); border-radius: 24px 24px 0 0; padding: 30px 24px max(30px, env(safe-area-inset-bottom)); z-index: 1000; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), bottom 0.4s; max-height: 90vh; overflow-y: auto; }
@@ -120,7 +124,7 @@ body {
 
 /* Creation Buttons */
 .creation-grid { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
-.creation-btn { background: rgba(255,255,255,0.05); border: 1px solid var(--card-border); border-radius: 16px; padding: 18px; display: flex; align-items: center; gap: 15px; color: white; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+.creation-btn { background: rgba(255,255,255,0.05); border: 1px solid var(--card-border); border-radius: 16px; padding: 18px; display: flex; align-items: center; justify-content: center; gap: 15px; color: white; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.2s; }
 .creation-btn:active { background: var(--pink-glow); border-color: var(--pink-main); }
 .creation-btn i { font-size: 20px; color: var(--pink-main); width: 25px; text-align: center; }
 
@@ -138,7 +142,7 @@ body {
 
 /* Ze-Body & Black Paper */
 .ze-body { flex-grow: 1; padding: 20px 10px 0; overflow-y: auto; display: flex; flex-direction: column; align-items: center; }
-.ze-paper { background: var(--paper-bg); width: 100%; max-width: 750px; border-radius: 24px 24px 0 0; padding: 25px 20px; flex-grow: 1; display: flex; flex-direction: column; box-shadow: 0 -10px 40px rgba(0,0,0,0.5); border: 1px solid var(--card-border); border-bottom: none; transition: 0.3s background, 0.3s color; }
+.ze-paper { background: var(--paper-bg); width: 100%; max-width: 750px; border-radius: 24px 24px 0 0; padding: 25px 20px; flex-grow: 1; display: flex; flex-direction: column; box-shadow: 0 -10px 40px rgba(0,0,0,0.5); border: 1px solid var(--card-border); border-bottom: none; transition: 0.3s background, 0.3s color, 0.3s max-width; }
 
 /* INVERTED MODE */
 .ze-paper.inverted { background: #fdfdfd; color: #111111; box-shadow: 0 -10px 40px rgba(255,255,255,0.1); border-color: #e0e0e0; }
@@ -154,9 +158,9 @@ body {
 .ze-words { font-size: 12px; color: var(--text-muted); font-weight: 500; margin-left: 10px; }
 
 /* ENDLESS SCROLL & TEXTAREA */
-#zeTextarea { flex-grow: 1; background: transparent; border: none; color: #ffffff; outline: none; font-size: 16px; line-height: 1.6; resize: none; white-space: pre-wrap; font-weight: 400; transition: font-size 0.2s, color 0.3s; padding-bottom: 70vh; }
+#zeTextarea { flex-grow: 1; background: transparent; border: none; color: #ffffff; outline: none; font-size: 16px; line-height: 1.6; resize: none; white-space: pre-wrap; font-weight: 400; transition: font-size 0.2s, color 0.3s, font-family 0.3s; padding-bottom: 70vh; }
 
-/* Forms & Quick Time Chips */
+/* Forms & Chips */
 .form-group { margin-bottom: 20px; display: flex; flex-direction: column; }
 .form-control { width: 100%; background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); border-radius: 16px; padding: 16px; color: white; font-size: 15px; outline: none; transition: 0.3s; }
 .form-control:focus { border-color: var(--pink-main); background: rgba(255,255,255,0.05); }
@@ -176,7 +180,7 @@ body {
 
 /* Menu List (3 dots) */
 .menu-list { display: flex; flex-direction: column; gap: 5px; }
-.menu-item { display: flex; align-items: center; gap: 15px; padding: 15px; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+.menu-item { display: flex; align-items: center; gap: 15px; padding: 15px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; transition: 0.2s; }
 .menu-item:active { background: rgba(255,255,255,0.05); }
 .menu-item.danger { color: #ff4d4d; }
 .menu-item i { width: 20px; text-align: center; }
