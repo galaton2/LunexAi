@@ -59,6 +59,21 @@ body {
 .category-content { display: none; padding: 0 15px 15px; }
 .category-section.open .category-content { display: block; animation: fadeIn 0.3s ease; }
 
+/* --- LOGIN SCREEN FOR BROWSER --- */
+#loginScreen {
+    position: fixed; inset: 0; background: var(--bg-dark); z-index: 10000;
+    display: none; flex-direction: column; justify-content: center; align-items: center;
+    padding: 20px; text-align: center;
+}
+.login-card {
+    background: var(--bg-card); border: 1px solid var(--card-border);
+    border-radius: 24px; padding: 40px 20px; width: 100%; max-width: 350px;
+    backdrop-filter: blur(20px); box-shadow: 0 15px 40px rgba(0,0,0,0.5);
+    display: flex; flex-direction: column; align-items: center;
+}
+.login-title { font-size: 24px; font-weight: 700; margin-top: 20px; margin-bottom: 10px; }
+.login-subtitle { font-size: 14px; color: var(--text-muted); line-height: 1.5; margin-bottom: 30px; }
+
 /* Grid & Cards */
 .grid-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .card { background: var(--bg-card); border: 1px solid var(--card-border); border-radius: 16px; padding: 16px; height: 135px; display: flex; flex-direction: column; justify-content: space-between; backdrop-filter: blur(10px); transition: 0.2s; cursor: pointer; overflow: hidden; }
