@@ -28,34 +28,39 @@
         <h2 class="section-title">Weekly Activity</h2>
         <div class="chart" id="activityChart"></div>
 
-        <h2 class="section-title">Urgent Reminders</h2>
+        <h2 class="section-title">Active Reminders</h2>
         <div id="dashReminders"></div>
     </main>
 
     <main id="tab-notes" class="tab-content">
-        <div class="greeting" style="padding-bottom: 5px;"><h1>Your Vault</h1><p>Structured knowledge base.</p></div>
+        <div class="greeting" style="padding-bottom: 5px;"><h1>The Vault</h1><p>Structured knowledge base.</p></div>
         
         <div class="search-bar">
             <i class="fas fa-search" style="color: var(--text-muted);"></i>
             <input type="text" id="searchInput" placeholder="Search records..." oninput="filterNotes()">
         </div>
 
-        <div id="notesContainer"></div>
+        <div id="notesVault"></div>
     </main>
 
     <main id="tab-tasks" class="tab-content">
-        <div class="greeting" style="padding-bottom: 5px;"><h1>Action Plan</h1><p>Manage your schedule.</p></div>
+        <div class="greeting" style="padding-bottom: 5px;"><h1>To-Do List</h1><p>Manage your schedule.</p></div>
 
         <div class="filter-tabs">
             <div class="filter-btn active" id="fltAll" onclick="setTaskFilter('all')">All Tasks</div>
             <div class="filter-btn" id="fltToday" onclick="setTaskFilter('today')">Today Only</div>
         </div>
 
-        <div id="tasksContainer"></div>
+        <div style="margin-bottom: 20px;">
+            <div class="progress-text"><span id="progText">Daily Progress</span><span id="progPct">0%</span></div>
+            <div class="progress-container"><div class="progress-fill" id="progFill" style="width: 0%;"></div></div>
+        </div>
+
+        <div id="tasksList"></div>
     </main>
 
     <main id="tab-settings" class="tab-content">
-        <div class="greeting"><h1>System Panel</h1></div>
+        <div class="greeting"><h1>Settings</h1></div>
         <div class="list-item" style="background: transparent; border: none;">
             <div style="display:flex; align-items:center; gap:15px;">
                 <div class="avatar-container" style="width: 60px; height: 60px;"><img id="setAvatar" src=""></div>
@@ -65,14 +70,19 @@
                 </div>
             </div>
         </div>
-        <h2 class="section-title">Data Management</h2>
+        
+        <h2 class="section-title">System Data</h2>
         <div class="list-item">
-            <div class="list-info"><span class="list-title"><i class="fas fa-database"></i> Total Records</span></div>
+            <div class="list-info"><span class="list-title"><i class="fas fa-database"></i> Database Items</span></div>
             <span style="font-size:14px; font-weight:bold;" id="dbItemCount">0</span>
         </div>
-        <div class="list-item" onclick="exportData()" style="border-color: var(--pink-main); background: rgba(255, 71, 126, 0.05);">
-            <div class="list-info"><span class="list-title" style="color: var(--pink-main);"><i class="fas fa-download"></i> Export Backup</span></div>
-            <i class="fas fa-chevron-right" style="color: var(--pink-main);"></i>
+        <div class="list-item" onclick="exportData()">
+            <div class="list-info"><span class="list-title"><i class="fas fa-file-download"></i> Export Data (Backup)</span></div>
+            <i class="fas fa-chevron-right" style="color: var(--text-muted);"></i>
+        </div>
+        <div class="list-item">
+            <div class="list-info"><span class="list-title"><i class="fas fa-sync fa-spin"></i> Live Sync</span></div>
+            <span style="color:#00f0ff; font-size:12px; font-weight:bold;">ONLINE</span>
         </div>
     </main>
 
@@ -101,37 +111,38 @@
         </div>
 
         <div class="form-group" id="dateGroup" style="display: none;">
-            <input type="datetime-local" class="form-control" id="modalDate" style="color: var(--text-muted);">
+            <input type="datetime-local" class="form-control" id="modalDate">
         </div>
 
         <div class="form-group">
-            <div style="font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px;">CATEGORY / SECTION</div>
             <div class="tags-container" id="tagsContainer"></div>
+            <input type="text" id="customTagInput" class="tag-custom-input" placeholder="Type category name..." oninput="updateCustomTagSelection()">
             
-            <div id="customTagWrapper" class="custom-tag-wrapper">
-                <input type="text" id="customTagInput" class="form-control" style="padding: 10px;" placeholder="New section name...">
-                <div class="color-picker-row">
-                    <span style="font-size: 12px; color: var(--text-muted);">Section Color:</span>
-                    <input type="color" id="customTagColor" class="color-picker" value="#00f0ff">
-                    <button class="btn" style="padding: 6px 12px; font-size: 12px; margin-left: auto; border: 1px solid var(--card-border); background: rgba(255,255,255,0.1); color: white;" onclick="applyCustomTag()">Apply</button>
-                </div>
+            <div class="color-palette" id="colorPalette">
+                <div class="color-dot" style="background: #ff477e" onclick="selectColor('#ff477e')"></div>
+                <div class="color-dot" style="background: #00f0ff" onclick="selectColor('#00f0ff')"></div>
+                <div class="color-dot" style="background: #ffd700" onclick="selectColor('#ffd700')"></div>
+                <div class="color-dot" style="background: #00ff88" onclick="selectColor('#00ff88')"></div>
+                <div class="color-dot" style="background: #b554ff" onclick="selectColor('#b554ff')"></div>
+                <div class="color-dot random-color" onclick="selectColor('random')"><i class="fas fa-dice"></i></div>
             </div>
         </div>
 
         <input type="hidden" id="editIndex" value="-1">
         <input type="hidden" id="editOriginalType" value="">
         <input type="hidden" id="selectedTag" value="Personal">
+        <input type="hidden" id="selectedColor" value="">
 
         <div class="modal-actions">
             <button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
-            <button class="btn btn-danger" id="btnDelete" style="display:none;" onclick="deleteItem()"><i class="fas fa-trash"></i> Delete</button>
-            <button class="btn btn-primary" onclick="saveItem()"><i class="fas fa-save"></i> Save</button>
+            <button class="btn btn-danger" id="btnDelete" style="display:none;" onclick="deleteItem()">Delete</button>
+            <button class="btn btn-primary" onclick="saveItem()">Save</button>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
-        import { getFirestore, doc, onSnapshot, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
 
         const tg = window.Telegram.WebApp;
         tg.expand();
@@ -146,10 +157,8 @@
             document.getElementById('userName').innerText = "Hi " + userName + ",";
             document.getElementById('setName').innerText = userName;
             document.getElementById('setID').innerText = userId;
-            
             let avatarUrl = `https://ui-avatars.com/api/?name=${userName}&background=ff477e&color=fff&bold=true`;
             if (tg.initDataUnsafe.user.photo_url) avatarUrl = tg.initDataUnsafe.user.photo_url;
-            
             document.getElementById('userAvatar').src = avatarUrl;
             document.getElementById('setAvatar').src = avatarUrl;
         }
@@ -183,29 +192,31 @@
 
             if (docSnap.exists()) {
                 window.currentUserData = docSnap.data();
+                // Убеждаемся, что есть объект с цветами категорий
+                if (!window.currentUserData.category_colors) window.currentUserData.category_colors = {};
                 renderUI();
                 renderChart();
             }
         });
 
-        // БАЗОВЫЕ КАТЕГОРИИ
-        const defaultTags = ['Personal', 'Work', 'Ideas', 'Buy'];
-        const iconsArr = ['fa-star', 'fa-bolt', 'fa-fire', 'fa-rocket', 'fa-gem'];
+        // Базовые категории
+        const defaultTags = ['Personal', 'Work', 'Finance', 'Ideas'];
+        const sectionIcons = { 'Personal': 'fa-user', 'Work': 'fa-briefcase', 'Finance': 'fa-wallet', 'Ideas': 'fa-lightbulb' };
         
-        // COLOR ENGINE: Берет цвет из БД (custom_colors), либо из пресетов, либо генерирует по хешу
-        function getTagColor(tag) {
-            const dbColors = window.currentUserData?.category_colors || {};
-            if (dbColors[tag]) return dbColors[tag];
-
-            const predefined = { 'Personal': '#ff477e', 'Work': '#00f0ff', 'Ideas': '#ffd700', 'Buy': '#ff9900' };
-            if(predefined[tag]) return predefined[tag];
-            
-            // Random Neon HASH
-            let hash = 0; for (let i = 0; i < tag.length; i++) { hash = tag.charCodeAt(i) + ((hash << 5) - hash); }
-            return `hsl(${Math.abs(hash % 360)}, 85%, 65%)`;
+        // Генератор неоновых цветов
+        function getRandomNeonColor() {
+            const hues = [0, 60, 180, 280, 320]; // Яркие цвета (красный, желтый, циан, фиолетовый, розовый)
+            const randomHue = hues[Math.floor(Math.random() * hues.length)] + Math.floor(Math.random() * 20);
+            return `hsl(${randomHue}, 100%, 60%)`;
         }
 
-        // Парсер строк ИИ ("[Work] Купить билеты")
+        function getCategoryColor(category) {
+            const predefined = { 'Personal': '#ff477e', 'Work': '#00f0ff', 'Finance': '#ffd700', 'Ideas': '#b554ff' };
+            if (window.currentUserData?.category_colors?.[category]) return window.currentUserData.category_colors[category];
+            if (predefined[category]) return predefined[category];
+            return '#a0a0b0'; // Fallback
+        }
+
         function parseItem(rawText) {
             let category = "Personal"; let content = rawText;
             const match = rawText.match(/^\[(.*?)\]\s*(.*)/);
@@ -213,23 +224,10 @@
             return { category, content, rawText };
         }
 
-        // ГРУППИРОВКА ДАННЫХ ПО СЕКЦИЯМ
-        function groupDataByCategory(itemsArray, isNotes = true) {
-            const grouped = {};
-            itemsArray.forEach((item, index) => {
-                const text = isNotes ? item.text : item.text;
-                const parsed = parseItem(text);
-                if (!grouped[parsed.category]) grouped[parsed.category] = [];
-                grouped[parsed.category].push({ ...item, parsed, origIndex: isNotes ? item.origIndex : index });
-            });
-            return grouped;
-        }
-
         window.currentTaskFilter = 'all';
         window.setTaskFilter = function(filter) {
             window.currentTaskFilter = filter;
-            document.getElementById('fltAll').classList.remove('active');
-            document.getElementById('fltToday').classList.remove('active');
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById(filter === 'all' ? 'fltAll' : 'fltToday').classList.add('active');
             tg.HapticFeedback.impactOccurred('light');
             renderUI();
@@ -237,97 +235,130 @@
 
         window.filterNotes = function() { renderUI(); }
 
-        // MAIN RENDER ENGINE
+        // ФИЧА: Быстрое копирование
+        window.copyToClipboard = function(event, text) {
+            event.stopPropagation(); // Не открываем модалку
+            navigator.clipboard.writeText(text).then(() => {
+                tg.HapticFeedback.impactOccurred('success');
+                tg.showAlert("Copied to clipboard!");
+            });
+        }
+
+        // ФИЧА: Экспорт данных
+        window.exportData = function() {
+            if(!window.currentUserData) return;
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(window.currentUserData, null, 2));
+            const dlAnchorElem = document.createElement('a');
+            dlAnchorElem.setAttribute("href", dataStr);
+            dlAnchorElem.setAttribute("download", "lunex_backup.json");
+            dlAnchorElem.click();
+            tg.HapticFeedback.impactOccurred('success');
+        }
+
         function renderUI() {
             const data = window.currentUserData; if(!data) return;
             const notes = data.notes || []; let reminders = data.reminders || [];
             document.getElementById('dbItemCount').innerText = `${notes.length + reminders.length}`;
 
-            // --- RENDER NOTES (WITH SECTIONS) ---
+            // --- СЕКЦИИ ДЛЯ ЗАМЕТОК (Categorized Vault) ---
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const filteredNotes = notes.map((n, i) => ({ text: n, origIndex: i }))
-                                     .filter(n => n.text.toLowerCase().includes(searchTerm));
+            const vault = document.getElementById('notesVault');
+            
+            // Группируем заметки
+            const groupedNotes = {};
+            notes.forEach((n, i) => {
+                const parsed = parseItem(n);
+                if (parsed.content.toLowerCase().includes(searchTerm)) {
+                    if (!groupedNotes[parsed.category]) groupedNotes[parsed.category] = [];
+                    groupedNotes[parsed.category].push({ ...parsed, origIndex: i });
+                }
+            });
 
-            const nContainer = document.getElementById('notesContainer');
-            if(filteredNotes.length === 0) {
-                nContainer.innerHTML = '<p class="empty-state">No notes found.</p>';
+            if (Object.keys(groupedNotes).length === 0) {
+                vault.innerHTML = '<p class="empty-state">No records found.</p>';
             } else {
-                const groupedNotes = groupDataByCategory(filteredNotes, true);
-                nContainer.innerHTML = Object.keys(groupedNotes).map(category => {
-                    const color = getTagColor(category);
-                    const itemsHTML = groupedNotes[category].map(nObj => {
-                        const icon = iconsArr[nObj.origIndex % iconsArr.length];
-                        return `
-                        <div class="card" id="note-${nObj.origIndex}" onclick="openEditModal('note', ${nObj.origIndex})">
-                            <div class="card-text">${nObj.parsed.content.length > 80 ? nObj.parsed.content.substring(0, 80) + '...' : nObj.parsed.content}</div>
-                            <div class="card-icon" style="color: ${color}; opacity: 0.8;"><i class="fas ${icon}"></i></div>
-                        </div>`;
-                    }).join('');
+                // Сортируем: Personal и Work всегда сверху
+                const sortedKeys = Object.keys(groupedNotes).sort((a, b) => {
+                    if (a === 'Personal') return -1; if (b === 'Personal') return 1;
+                    if (a === 'Work') return -1; if (b === 'Work') return 1;
+                    return a.localeCompare(b);
+                });
 
-                    return `
+                let vaultHTML = '';
+                sortedKeys.forEach(category => {
+                    const color = getCategoryColor(category);
+                    const icon = sectionIcons[category] || 'fa-folder';
+                    
+                    vaultHTML += `
                     <div class="category-section">
-                        <div class="category-header" style="color: ${color};">
-                            <div class="category-dot" style="background-color: ${color};"></div>
-                            <div class="category-title">${category}</div>
-                            <div class="category-count">${groupedNotes[category].length}</div>
+                        <div class="category-header" style="color: ${color}">
+                            <i class="fas ${icon}"></i> ${category}
                         </div>
-                        <div class="grid-cards">${itemsHTML}</div>
+                        <div class="grid-cards">
+                            ${groupedNotes[category].map(nObj => `
+                                <div class="card" onclick="openEditModal('note', ${nObj.origIndex})">
+                                    <div class="card-text">${nObj.content.length > 60 ? nObj.content.substring(0, 60) + '...' : nObj.content}</div>
+                                    <div class="card-icon">
+                                        <span class="tag" style="background: ${color}20; color: ${color}; border: 1px solid ${color}50">${category}</span>
+                                        <div class="copy-btn" onclick="copyToClipboard(event, '${nObj.content.replace(/'/g, "\\'")}')"><i class="fas fa-copy"></i></div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
                     </div>`;
-                }).join('');
+                });
+                vault.innerHTML = vaultHTML;
             }
 
-            // --- RENDER TASKS (WITH SECTIONS) ---
-            const tContainer = document.getElementById('tasksContainer');
+            // --- ЗАДАЧИ И ПРОГРЕСС БАР ---
+            const tList = document.getElementById('tasksList');
             const dReminders = document.getElementById('dashReminders');
             const todayStr = new Date().toLocaleDateString();
             
+            // Считаем прогресс (выполненные за сегодня)
+            let todayTotal = 0; let todayDone = 0; // Для этого нужна история выполненных, пока сделаем заглушку или визуальную логику
+
+            let displayReminders = reminders;
             if(window.currentTaskFilter === 'today') {
-                reminders = reminders.filter(r => new Date(r.datetime.replace(' ', 'T')).toLocaleDateString() === todayStr);
+                displayReminders = reminders.filter(r => new Date(r.datetime.replace(' ', 'T')).toLocaleDateString() === todayStr);
             }
 
-            if(reminders.length === 0) {
-                tContainer.innerHTML = '<p class="empty-state">No pending tasks. Great job!</p>';
-                dReminders.innerHTML = '<p class="empty-state">No urgent timers.</p>';
+            // Визуальный прогресс-бар (зависит от оставшихся задач на сегодня)
+            const todayRemindersCount = reminders.filter(r => new Date(r.datetime.replace(' ', 'T')).toLocaleDateString() === todayStr).length;
+            const progFill = document.getElementById('progFill');
+            const progPct = document.getElementById('progPct');
+            // Простая логика: чем меньше задач осталось, тем больше прогресс. Допустим, мы берем базу в 5 задач.
+            let pct = todayRemindersCount === 0 ? 100 : Math.max(0, 100 - (todayRemindersCount * 20));
+            progFill.style.width = `${pct}%`;
+            progPct.innerText = `${pct}%`;
+
+            if(displayReminders.length === 0) {
+                tList.innerHTML = '<p class="empty-state">No pending tasks.</p>';
+                dReminders.innerHTML = '<p class="empty-state">No active timers.</p>';
             } else {
-                const groupedTasks = groupDataByCategory(reminders, false);
-                let allTasksFlat = ""; // Для дашборда
-
-                tContainer.innerHTML = Object.keys(groupedTasks).map(category => {
-                    const color = getTagColor(category);
-                    const itemsHTML = groupedTasks[category].map(rObj => {
-                        const d = new Date(rObj.datetime.replace(' ', 'T'));
-                        const dateStr = d.toLocaleDateString([], {month:'short', day:'numeric'}) + ', ' + d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                        
-                        const html = `
-                        <div class="list-item" id="task-${rObj.origIndex}" onclick="openEditModal('task', ${rObj.origIndex})">
-                            <div class="list-info">
-                                <span class="list-title">${rObj.parsed.content}</span>
-                                <div class="list-meta" style="color: ${color};">
-                                    <span><i class="far fa-clock"></i> ${dateStr}</span>
-                                </div>
-                            </div>
-                            <div class="checkbox" onclick="event.stopPropagation(); completeReminder(${rObj.origIndex})"><i class="fas fa-check"></i></div>
-                        </div>`;
-                        allTasksFlat += html;
-                        return html;
-                    }).join('');
-
+                const renderHTML = displayReminders.map((r, i) => {
+                    const parsed = parseItem(r.text);
+                    const d = new Date(r.datetime.replace(' ', 'T'));
+                    const dateStr = d.toLocaleDateString([], {month:'short', day:'numeric'}) + ', ' + d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    const color = getCategoryColor(parsed.category);
+                    
                     return `
-                    <div class="category-section">
-                        <div class="category-header" style="color: ${color};">
-                            <div class="category-dot" style="background-color: ${color};"></div>
-                            <div class="category-title">${category}</div>
-                            <div class="category-count">${groupedTasks[category].length}</div>
+                    <div class="list-item" onclick="openEditModal('task', ${i})">
+                        <div class="list-info">
+                            <span class="list-title">${parsed.content}</span>
+                            <div class="list-meta">
+                                <span style="color: ${color};"><i class="fas fa-circle" style="font-size:8px;"></i> ${parsed.category}</span> • <span>${dateStr}</span>
+                            </div>
                         </div>
-                        <div>${itemsHTML}</div>
+                        <div class="checkbox" onclick="event.stopPropagation(); completeReminder(${i})"><i class="fas fa-check"></i></div>
                     </div>`;
                 }).join('');
-
-                if(window.currentTaskFilter === 'all') dReminders.innerHTML = allTasksFlat; 
+                tList.innerHTML = renderHTML;
+                if(window.currentTaskFilter === 'all') dReminders.innerHTML = renderHTML; 
             }
         }
 
-        // CHART CALCULATION
+        // CHART
         function renderChart() {
             const reminders = window.currentUserData?.reminders || [];
             const today = new Date(); today.setHours(0,0,0,0);
@@ -352,7 +383,7 @@
             }).join('');
         }
 
-        // MODAL & CUSTOM CATEGORY LOGIC
+        // MODAL & TAGS LOGIC
         window.currentType = 'note';
         window.selectType = function(type) {
             window.currentType = type;
@@ -367,39 +398,44 @@
             document.getElementById('selectedTag').value = selected;
             const container = document.getElementById('tagsContainer');
             
-            // Собираем все уникальные теги пользователя + дефолтные
-            const userColors = window.currentUserData?.category_colors || {};
-            const allTags = [...new Set([...defaultTags, ...Object.keys(userColors)])];
-
+            // Собираем все теги, включая пользовательские из БД
+            const customTags = Object.keys(window.currentUserData?.category_colors || {});
+            const allTags = [...new Set([...defaultTags, ...customTags])];
+            
             let html = allTags.map(tag => {
                 const isSel = tag === selected ? 'selected' : '';
-                const color = getTagColor(tag);
-                return `<div class="tag-pill ${isSel}" style="${isSel ? `color: #fff; background: ${color}; border-color: ${color};` : ''}" onclick="buildTagsUI('${tag}')">${tag}</div>`;
+                const color = getCategoryColor(tag);
+                const borderStyle = isSel ? `border-color: ${color}; color: ${color}; box-shadow: 0 0 10px ${color}50;` : '';
+                return `<div class="tag-pill ${isSel}" style="${borderStyle}" onclick="buildTagsUI('${tag}')">${tag}</div>`;
             }).join('');
             
-            html += `<div class="tag-pill" style="border-style: dashed;" onclick="toggleCustomTagInput()">+ NEW SECTION</div>`;
+            html += `<div class="tag-pill" style="border-style: dashed;" onclick="toggleCustomTagInput()">+ NEW</div>`;
             container.innerHTML = html;
         }
 
         window.toggleCustomTagInput = function() { 
-            document.getElementById('customTagWrapper').style.display = 'block'; 
+            document.getElementById('customTagInput').style.display = 'block'; 
+            document.getElementById('colorPalette').style.display = 'flex';
             document.getElementById('customTagInput').focus(); 
+            document.getElementById('selectedColor').value = ""; // Сброс цвета
+            document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('selected'));
+        }
+        
+        window.updateCustomTagSelection = function() { 
+            const val = document.getElementById('customTagInput').value.trim(); 
+            if(val) document.getElementById('selectedTag').value = val; 
         }
 
-        window.applyCustomTag = function() {
-            const val = document.getElementById('customTagInput').value.trim();
-            const col = document.getElementById('customTagColor').value;
-            if(val) {
-                // Если юзер создал новый тег, сразу выделяем его
-                document.getElementById('selectedTag').value = val;
-                // Сохраняем во временный объект (в БД запишется при SaveItem)
-                if(!window.currentUserData.category_colors) window.currentUserData.category_colors = {};
-                window.currentUserData.category_colors[val] = col;
-                
-                document.getElementById('customTagWrapper').style.display = 'none';
-                buildTagsUI(val);
-                tg.HapticFeedback.impactOccurred('medium');
+        window.selectColor = function(color) {
+            document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+            
+            if (color === 'random') {
+                color = getRandomNeonColor();
+                event.currentTarget.style.background = color; // Показываем сгенерированный цвет на кнопке кубиков
             }
+            document.getElementById('selectedColor').value = color;
+            tg.HapticFeedback.impactOccurred('light');
         }
 
         window.openAddModal = function() {
@@ -407,8 +443,10 @@
             document.getElementById('modalText').value = "";
             document.getElementById('editIndex').value = "-1";
             document.getElementById('btnDelete').style.display = "none";
-            document.getElementById('customTagWrapper').style.display = 'none';
+            document.getElementById('customTagInput').style.display = 'none';
+            document.getElementById('colorPalette').style.display = 'none';
             document.getElementById('customTagInput').value = "";
+            document.getElementById('selectedColor').value = "";
             
             buildTagsUI('Personal');
             
@@ -427,7 +465,8 @@
             document.getElementById('editIndex').value = index;
             document.getElementById('editOriginalType').value = type;
             document.getElementById('btnDelete').style.display = "block";
-            document.getElementById('customTagWrapper').style.display = 'none';
+            document.getElementById('customTagInput').style.display = 'none';
+            document.getElementById('colorPalette').style.display = 'none';
 
             let parsed;
             if(type === 'note') {
@@ -445,7 +484,16 @@
             }
 
             document.getElementById('modalText').value = parsed.content;
-            buildTagsUI(parsed.category);
+            
+            // Если тег кастомный, показываем инпут
+            const allKnownTags = [...defaultTags, ...Object.keys(data.category_colors || {})];
+            if(!allKnownTags.includes(parsed.category)) {
+                buildTagsUI(''); toggleCustomTagInput();
+                document.getElementById('customTagInput').value = parsed.category;
+                document.getElementById('selectedTag').value = parsed.category;
+            } else {
+                buildTagsUI(parsed.category);
+            }
 
             document.getElementById('modalOverlay').classList.add('active');
             document.getElementById('actionModal').classList.add('active');
@@ -465,13 +513,23 @@
             const category = document.getElementById('selectedTag').value || 'Personal';
             const formattedText = `[${category}] ${text}`;
             
+            // Сохранение нового цвета (если выбран)
+            let newCategoryColors = { ...data.category_colors };
+            const pickedColor = document.getElementById('selectedColor').value;
+            
+            // Если юзер ввел новый тег, но не выбрал цвет - генерируем рандомный
+            if (!defaultTags.includes(category) && !newCategoryColors[category]) {
+                newCategoryColors[category] = pickedColor || getRandomNeonColor();
+            } else if (pickedColor) {
+                // Если юзер явно выбрал цвет для старого тега - обновляем
+                newCategoryColors[category] = pickedColor;
+            }
+            
             const isEdit = document.getElementById('editIndex').value !== "-1";
             const idx = parseInt(document.getElementById('editIndex').value);
             const origType = document.getElementById('editOriginalType').value;
 
             let notes = [...(data.notes || [])]; let reminders = [...(data.reminders || [])];
-            let colors = data.category_colors || {}; // Сохраняем новые цвета
-
             tg.HapticFeedback.impactOccurred('heavy');
 
             if(isEdit) { if(origType === 'note') notes.splice(idx, 1); else reminders.splice(idx, 1); }
@@ -483,7 +541,7 @@
                 reminders.push({ text: formattedText, datetime: dateVal.replace('T', ' ') + ":00" });
             }
 
-            await updateDoc(userDocRef, { notes, reminders, category_colors: colors });
+            await updateDoc(userDocRef, { notes, reminders, category_colors: newCategoryColors });
             closeModal();
         }
 
@@ -492,21 +550,12 @@
             const idx = parseInt(document.getElementById('editIndex').value);
             const origType = document.getElementById('editOriginalType').value;
             
-            tg.showConfirm("Are you sure you want to delete this?", async function(confirm) {
+            tg.showConfirm("Delete this item?", async function(confirm) {
                 if(!confirm) return;
-                
-                // Плавная анимация удаления
-                const elId = origType === 'note' ? `note-${idx}` : `task-${idx}`;
-                const el = document.getElementById(elId);
-                if(el) el.classList.add('fade-out');
-
                 let notes = [...(data.notes || [])]; let reminders = [...(data.reminders || [])];
                 if(origType === 'note') notes.splice(idx, 1); else reminders.splice(idx, 1);
-                
-                setTimeout(async () => {
-                    await updateDoc(userDocRef, { notes, reminders });
-                    closeModal();
-                }, 300); // Ждем анимацию
+                await updateDoc(userDocRef, { notes, reminders });
+                closeModal();
                 tg.HapticFeedback.impactOccurred('medium');
             });
         }
@@ -514,37 +563,10 @@
         window.completeReminder = async function(index) {
             const data = window.currentUserData;
             tg.HapticFeedback.impactOccurred('medium');
-            
-            // Анимация зачеркивания и выцветания
-            const el = document.getElementById(`task-${index}`);
-            if(el) {
-                el.classList.add('done');
-                setTimeout(() => el.classList.add('fade-out'), 400);
-            }
-            
+            document.querySelectorAll('#tasksList .list-item')[index].classList.add('done');
             let reminders = [...(data.reminders || [])];
             reminders.splice(index, 1);
-            setTimeout(async () => { await updateDoc(userDocRef, { reminders }); }, 700);
-        }
-
-        // NEW FEATURE: DATA EXPORT (BACKUP)
-        window.exportData = function() {
-            if(!window.currentUserData) return;
-            tg.HapticFeedback.impactOccurred('light');
-            
-            const dataStr = JSON.stringify(window.currentUserData, null, 2);
-            const blob = new Blob([dataStr], { type: "application/json" });
-            const url = URL.createObjectURL(blob);
-            
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `Lunex_Backup_${new Date().toISOString().split('T')[0]}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            
-            tg.showAlert("✅ Backup successfully downloaded.");
+            setTimeout(async () => { await updateDoc(userDocRef, { reminders }); }, 300);
         }
     </script>
 </body>
