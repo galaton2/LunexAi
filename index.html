@@ -82,8 +82,10 @@
 
     <div class="modal-overlay" id="modalOverlay" onclick="closeAllModals()"></div>
     <div class="modal-sheet" id="creationRouterModal">
-        <div class="modal-close-btn" onclick="closeAllModals()"><i class="fas fa-times"></i></div>
-        <h2 class="section-title" style="margin-top:0;">Create New</h2>
+        <div class="modal-header">
+            <h2>Create New</h2>
+            <button class="close-btn" onclick="closeAllModals()"><i class="fas fa-times"></i></button>
+        </div>
         <div class="creation-grid">
             <div class="creation-btn" onclick="openZenEditor(-1)"><i class="fas fa-pen-nib"></i> New Note</div>
             <div class="creation-btn" onclick="openReminderModal(-1)"><i class="fas fa-clock"></i> New Reminder</div>
@@ -91,8 +93,10 @@
     </div>
 
     <div class="modal-sheet" id="reminderModal" style="z-index: 1001;">
-        <div class="modal-close-btn" onclick="closeAllModals()"><i class="fas fa-times"></i></div>
-        <h2 class="section-title" id="remModalTitle" style="margin-top:0;">Set Reminder</h2>
+        <div class="modal-header">
+            <h2 id="remModalTitle">Set Reminder</h2>
+            <button class="close-btn" onclick="closeAllModals()"><i class="fas fa-times"></i></button>
+        </div>
         <div class="form-group"><input type="text" class="form-control" id="remText" placeholder="What to do?"></div>
         <div class="form-group">
             <input type="datetime-local" class="form-control" id="remDate">
@@ -105,61 +109,70 @@
         </div>
         <input type="hidden" id="remEditIndex" value="-1">
         <div class="modal-actions">
-            <button class="btn btn-danger" id="remBtnDelete" style="display:none;" onclick="deleteReminder()">Delete</button>
-            <button class="btn btn-primary" onclick="saveReminder()">Save Timer</button>
+            <button class="btn btn-danger" id="remBtnDelete" style="display:none;" onclick="deleteReminder()"><i class="fas fa-trash"></i> Delete</button>
+            <button class="btn btn-primary" onclick="saveReminder()"><i class="fas fa-check"></i> Save Task</button>
         </div>
     </div>
 
     <div id="zenEditor" class="zen-editor">
         <div class="ze-header">
-            <div class="ze-meta" onclick="openCategorySelector()"><span id="zeCategory">Personal</span> <i class="fas fa-caret-down"></i></div>
+            <div class="ze-header-left">
+                <i class="fas fa-times ze-close-icon" onclick="saveAndCloseZenEditor()"></i>
+                <div class="ze-meta" onclick="openCategorySelector()"><span id="zeCategory">Personal</span> <i class="fas fa-caret-down"></i></div>
+            </div>
+            <button class="ze-menu-btn-small" onclick="openContextOptions()"><i class="fas fa-ellipsis-v"></i></button>
         </div>
-        <div class="ze-body" onclick="focusTextarea(event)">
-            <div class="ze-paper" id="zePaper">
+        
+        <div class="ze-body" onclick="document.getElementById('zeEditorCanvas').focus()">
+            <div class="ze-paper">
                 <div class="ze-paper-header">
                     <div class="ze-date"><span id="zeDate">17 Apr 2026</span> <span id="zeSaveStatus">Saving...</span></div>
-                    <button class="ze-menu-btn-small" onclick="openContextOptions(event)"><i class="fas fa-ellipsis-h"></i></button>
+                    <div class="ze-words" id="zeWordCount" style="color:var(--text-muted); font-size:12px;">0 words</div>
                 </div>
-                <textarea id="zeTextarea" placeholder="Write anything..." oninput="handleTyping(this)"></textarea>
-                <div class="ze-metrics">
-                    <span id="zeWordCount">0 words</span>
-                    <span>•</span>
-                    <span id="zeReadTime">1 min read</span>
-                </div>
+                
+                <div id="zeEditorCanvas" contenteditable="true" placeholder="Start typing anywhere..." oninput="handleTyping()"></div>
             </div>
         </div>
-        <div class="ze-footer">
-            <button class="tool-btn" onclick="insertFormat('- [ ] ')"><i class="far fa-check-square"></i> Task</button>
-            <button class="tool-btn" onclick="insertFormat('• ')"><i class="fas fa-list-ul"></i> Bullet</button>
-            <button class="tool-btn" onclick="insertTime()"><i class="far fa-clock"></i> Date</button>
-            <button class="tool-btn" onclick="toggleFocusMode()"><i class="fas fa-eye"></i> Focus</button>
+
+        <div class="ze-toolbar">
+            <button class="toolbar-btn" onclick="formatText('bold')"><i class="fas fa-bold"></i></button>
+            <button class="toolbar-btn" onclick="formatText('italic')"><i class="fas fa-italic"></i></button>
+            <button class="toolbar-btn" onclick="formatText('underline')"><i class="fas fa-underline"></i></button>
+            <button class="toolbar-btn" onclick="formatText('insertUnorderedList')"><i class="fas fa-list-ul"></i></button>
         </div>
+
         <input type="hidden" id="zeEditIndex" value="-1">
     </div>
 
     <div class="modal-sheet" id="contextOptionsMenu" style="z-index: 2005;">
-        <div class="modal-close-btn" onclick="closeAllModals()"><i class="fas fa-times"></i></div>
+        <div class="modal-header">
+            <h2>Note Options</h2>
+            <button class="close-btn" onclick="document.getElementById('contextOptionsMenu').classList.remove('active'); document.getElementById('modalOverlay').classList.remove('active');"><i class="fas fa-times"></i></button>
+        </div>
         <div class="menu-list">
-            <div class="menu-item" onclick="changeFontSize(2)"><i class="fas fa-search-plus"></i> Zoom In (A+)</div>
-            <div class="menu-item" onclick="changeFontSize(-2)"><i class="fas fa-search-minus"></i> Zoom Out (A-)</div>
-            <div class="menu-item" onclick="printNote()"><i class="fas fa-print"></i> Print Note</div>
+            <div class="menu-item" onclick="changeFontSize(2)"><i class="fas fa-search-plus"></i> Zoom In Text (A+)</div>
+            <div class="menu-item" onclick="changeFontSize(-2)"><i class="fas fa-search-minus"></i> Zoom Out Text (A-)</div>
+            <div class="menu-item" onclick="printNote()"><i class="fas fa-print"></i> Print Document</div>
             <div class="menu-item" onclick="shareNote()"><i class="fas fa-share-square"></i> Share Note</div>
-            <div class="menu-item danger" onclick="document.getElementById('zeTextarea').value=''; handleTyping(document.getElementById('zeTextarea')); closeAllModals();"><i class="fas fa-broom"></i> Clear All Text</div>
-            <div class="menu-item danger" onclick="deleteZenNote()"><i class="fas fa-trash-alt"></i> Delete Note entirely</div>
+            <div class="menu-item danger" onclick="deleteZenNote()"><i class="fas fa-trash-alt"></i> Delete Permanently</div>
         </div>
     </div>
 
     <div class="modal-sheet" id="catSelectorMenu" style="z-index: 2005;">
-        <div class="modal-close-btn" onclick="closeAllModals()"><i class="fas fa-times"></i></div>
-        <h2 class="section-title" style="margin-top:0;">Select Category</h2>
+        <div class="modal-header">
+            <h2>Select Folder</h2>
+            <button class="close-btn" onclick="document.getElementById('catSelectorMenu').classList.remove('active');"><i class="fas fa-times"></i></button>
+        </div>
         <div class="tags-container" id="zeTagsContainer"></div>
-        <input type="text" id="zeCustomTagInput" class="tag-custom-input" placeholder="Type new category & press Enter..." onkeypress="if(event.key === 'Enter') applyNewCategory()">
+        <input type="text" id="zeCustomTagInput" class="tag-custom-input" placeholder="Type new folder & press Enter..." onkeypress="if(event.key === 'Enter') applyNewCategory()">
     </div>
 
     <div class="modal-sheet" id="categoryModal" style="z-index: 1001;">
-        <div class="modal-close-btn" onclick="closeAllModals()"><i class="fas fa-times"></i></div>
-        <h2 class="section-title" style="margin-top:0;">Rename Category</h2>
-        <div class="form-group"><input type="text" class="form-control" id="catEditName" placeholder="Category Name"></div>
+        <div class="modal-header">
+            <h2>Rename Folder</h2>
+            <button class="close-btn" onclick="closeCategoryModal()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="form-group"><input type="text" class="form-control" id="catEditName" placeholder="Folder Name"></div>
         <input type="hidden" id="oldCatName" value="">
         <div class="modal-actions">
             <button class="btn btn-primary" onclick="saveCategorySettings()" style="width: 100%;">Apply & Save</button>
@@ -174,7 +187,7 @@
         tg.expand();
         if (tg.requestFullscreen) { tg.requestFullscreen(); }
 
-        // --- НАТИВНАЯ КНОПКА "НАЗАД" ТЕЛЕГРАМ ---
+        // Telegram Back Button (работает синхронно с кнопками Х)
         tg.BackButton.onClick(function() {
             if (document.getElementById('catSelectorMenu').classList.contains('active') || document.getElementById('contextOptionsMenu').classList.contains('active')) {
                 document.getElementById('catSelectorMenu').classList.remove('active');
@@ -183,7 +196,7 @@
             } else if (document.getElementById('zenEditor').classList.contains('active')) {
                 saveAndCloseZenEditor();
             } else if (document.getElementById('categoryModal').classList.contains('active')) {
-                closeAllModals();
+                closeCategoryModal();
             } else {
                 closeAllModals();
             }
@@ -242,13 +255,6 @@
             }
         });
 
-        // --- УДАЛЕНЫ СВАЙПЫ, РАБОТАЮТ КНОПКИ 'X' ---
-        window.closeAllModals = function() {
-            document.querySelectorAll('.modal-sheet').forEach(m => m.classList.remove('active'));
-            document.getElementById('modalOverlay').classList.remove('active');
-            if (!document.getElementById('zenEditor').classList.contains('active')) { tg.BackButton.hide(); }
-        }
-
         const defaultTags = ['Personal', 'Work', 'Finance', 'Ideas'];
         const sectionIcons = { 'Personal': 'fa-user', 'Work': 'fa-briefcase', 'Finance': 'fa-wallet', 'Ideas': 'fa-lightbulb' };
         const neonHues = [330, 180, 45, 120, 270, 15, 210, 90, 30, 300, 60, 150];
@@ -275,8 +281,11 @@
             return { category: "Personal", date: '', content: rawText, rawText };
         }
 
-        function formatCardText(text) {
-            return text.replace(/^#\s+(.*)$/gm, '<b>$1</b>'); 
+        // Очистка HTML для превью карточки на главном экране
+        function stripHtmlForPreview(html) {
+            let tmp = document.createElement("DIV");
+            tmp.innerHTML = html;
+            return tmp.textContent || tmp.innerText || "";
         }
 
         window.setTaskFilter = function(filter) {
@@ -288,14 +297,6 @@
         }
 
         window.filterNotes = function() { renderUI(); }
-
-        window.copyToClipboard = function(event, text) {
-            event.stopPropagation();
-            navigator.clipboard.writeText(text).then(() => {
-                tg.HapticFeedback.impactOccurred('success');
-                tg.showAlert("Copied to clipboard!");
-            });
-        }
 
         window.exportData = function() {
             if(!window.currentUserData) return;
@@ -327,9 +328,10 @@
             
             notes.forEach((n, i) => {
                 const parsed = parseItem(n);
-                if (parsed.content.toLowerCase().includes(searchTerm)) {
+                const cleanContent = stripHtmlForPreview(parsed.content); // Для поиска
+                if (cleanContent.toLowerCase().includes(searchTerm)) {
                     if (!groupedNotes[parsed.category]) groupedNotes[parsed.category] = [];
-                    groupedNotes[parsed.category].push({ ...parsed, origIndex: i });
+                    groupedNotes[parsed.category].push({ ...parsed, cleanContent: cleanContent, origIndex: i });
                 }
             });
 
@@ -361,10 +363,7 @@
                             <div class="grid-cards">
                                 ${groupedNotes[category].map(nObj => `
                                     <div class="card" onclick="openZenEditor(${nObj.origIndex})">
-                                        <div class="card-text">${formatCardText(nObj.content)}</div>
-                                        <div class="card-icon">
-                                            <div class="copy-btn" onclick="copyToClipboard(event, '${nObj.content.replace(/'/g, "\\'")}')"><i class="fas fa-copy"></i></div>
-                                        </div>
+                                        <div class="card-text">${nObj.cleanContent}</div>
                                     </div>
                                 `).join('')}
                             </div>
@@ -397,7 +396,7 @@
                     return `
                     <div class="list-item" onclick="openReminderModal(${i})">
                         <div class="list-info">
-                            <span class="list-title">${parsed.content}</span>
+                            <span class="list-title">${stripHtmlForPreview(parsed.content)}</span>
                             <div class="list-meta"><span style="color: ${color};"><i class="fas fa-circle" style="font-size:8px;"></i> ${parsed.category}</span> • <span>${dateStr}</span></div>
                         </div>
                         <div class="checkbox" onclick="event.stopPropagation(); completeReminder(${i})"><i class="fas fa-check"></i></div>
@@ -422,6 +421,12 @@
             document.getElementById('activityPct').innerText = `${Math.floor(pct)}%`;
         }
 
+        window.closeAllModals = function() {
+            document.querySelectorAll('.modal-sheet').forEach(m => m.classList.remove('active'));
+            document.getElementById('modalOverlay').classList.remove('active');
+            if (!document.getElementById('zenEditor').classList.contains('active')) { tg.BackButton.hide(); }
+        }
+
         window.openCreationRouter = function() {
             tg.HapticFeedback.impactOccurred('medium');
             document.getElementById('modalOverlay').classList.add('active');
@@ -429,14 +434,19 @@
             tg.BackButton.show();
         }
 
-        // --- INFINITE CANVAS & ZEN EDITOR ---
+        // --- ZEN EDITOR & RICH TEXT ---
+        window.formatText = function(command) {
+            document.execCommand(command, false, null);
+            document.getElementById('zeEditorCanvas').focus();
+            tg.HapticFeedback.impactOccurred('light');
+        }
+
         window.openZenEditor = function(index) {
             closeAllModals();
             tg.HapticFeedback.impactOccurred('light');
             
             const data = window.currentUserData;
             document.getElementById('zeEditIndex').value = index;
-            document.getElementById('zenEditor').classList.remove('focus-mode'); // Reset Focus Mode
             
             let category = "Personal";
             let content = "";
@@ -445,93 +455,61 @@
             if (index !== -1) {
                 const parsed = parseItem(data.notes[index]);
                 category = parsed.category;
-                content = parsed.content;
+                content = parsed.content; // Берем чистый HTML из базы
                 if (parsed.date) dateStr = parsed.date;
             }
 
             document.getElementById('zeCategory').innerText = category;
             document.getElementById('zeDate').innerText = dateStr;
             
-            const ta = document.getElementById('zeTextarea');
-            ta.value = content;
-            ta.style.fontSize = `${currentFontSize}px`;
+            // Вставляем HTML контент
+            const canvas = document.getElementById('zeEditorCanvas');
+            canvas.innerHTML = content;
+            canvas.style.fontSize = `${currentFontSize}px`;
             
+            updateWordCount();
             document.getElementById('zenEditor').classList.add('active');
             tg.BackButton.show();
-            
-            handleTyping(ta); // Trigger metrics update and resize
-            if (index === -1) { setTimeout(() => ta.focus(), 350); }
+
+            if (index === -1) { setTimeout(() => canvas.focus(), 350); }
         }
 
-        window.handleTyping = function(el) {
-            // Auto Resize Textarea
-            el.style.height = 'auto';
-            el.style.height = (el.scrollHeight) + 'px';
-
-            const text = el.value.trim();
-            const words = text ? text.split(/\s+/).length : 0;
-            const readTime = Math.max(1, Math.ceil(words / 200)); // Average reading speed 200wpm
-            
-            document.getElementById('zeWordCount').innerText = `${words} words`;
-            document.getElementById('zeReadTime').innerText = `${readTime} min read`;
-
+        window.handleTyping = function() {
+            updateWordCount();
             const status = document.getElementById('zeSaveStatus');
             status.style.opacity = '1';
             clearTimeout(typingTimer);
             typingTimer = setTimeout(() => { status.style.opacity = '0'; }, 800);
         }
 
-        window.focusTextarea = function(event) {
-            // Если кликнули мимо текста, но внутри редактора - ставим курсор в конец
-            if(event.target.id === 'zePaper' || event.target.className === 'ze-body') {
-                const ta = document.getElementById('zeTextarea');
-                ta.focus();
-                const val = ta.value;
-                ta.value = ''; ta.value = val; // Трюк с курсором в конец
-            }
+        window.updateWordCount = function() {
+            const text = document.getElementById('zeEditorCanvas').innerText.trim();
+            const words = text ? text.split(/\s+/).length : 0;
+            document.getElementById('zeWordCount').innerText = `${words} words`;
         }
 
-        window.toggleFocusMode = function() {
-            document.getElementById('zenEditor').classList.toggle('focus-mode');
-            tg.HapticFeedback.impactOccurred('light');
-        }
-
-        window.insertFormat = function(formatStr) {
-            const ta = document.getElementById('zeTextarea');
-            const start = ta.selectionStart;
-            const end = ta.selectionEnd;
-            const text = ta.value;
-            ta.value = text.substring(0, start) + formatStr + text.substring(end);
-            ta.selectionStart = ta.selectionEnd = start + formatStr.length;
-            ta.focus();
-            handleTyping(ta);
-            tg.HapticFeedback.impactOccurred('light');
-        }
-
-        window.insertTime = function() {
-            const now = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            insertFormat(`[${now}] `);
-        }
-
-        // Авто-сохранение при выходе из редактора
         window.saveAndCloseZenEditor = async function() {
             document.getElementById('zenEditor').classList.remove('active');
             tg.BackButton.hide();
             tg.HapticFeedback.impactOccurred('medium');
 
             const data = window.currentUserData; if(!data) return;
-            const text = document.getElementById('zeTextarea').value; 
+            const canvas = document.getElementById('zeEditorCanvas');
+            const htmlContent = canvas.innerHTML; 
+            const plainText = canvas.innerText.trim();
             const idx = parseInt(document.getElementById('zeEditIndex').value);
             let notes = [...(data.notes || [])];
 
-            if (!text.trim()) {
+            if (!plainText) {
                 if (idx !== -1) { notes.splice(idx, 1); await updateDoc(userDocRef, { notes }); }
                 return;
             }
 
             const category = document.getElementById('zeCategory').innerText;
             const dateStr = document.getElementById('zeDate').innerText;
-            const formattedText = `[${category}] {${dateStr}} ${text}`;
+            
+            // Сохраняем HTML прямо в базу
+            const formattedText = `[${category}] {${dateStr}} ${htmlContent}`;
 
             let newCategoryColors = { ...data.category_colors };
             if (!defaultTags.includes(category) && !newCategoryColors[category]) {
@@ -544,31 +522,28 @@
             await updateDoc(userDocRef, { notes, category_colors: newCategoryColors });
         }
 
-        window.openContextOptions = function(event) {
-            event.stopPropagation();
+        window.openContextOptions = function() {
             tg.HapticFeedback.impactOccurred('light');
             document.getElementById('modalOverlay').classList.add('active');
             document.getElementById('contextOptionsMenu').classList.add('active');
-            tg.BackButton.show();
         }
 
         window.changeFontSize = function(delta) {
             currentFontSize += delta;
             if(currentFontSize < 12) currentFontSize = 12;
             if(currentFontSize > 30) currentFontSize = 30;
-            document.getElementById('zeTextarea').style.fontSize = `${currentFontSize}px`;
+            document.getElementById('zeEditorCanvas').style.fontSize = `${currentFontSize}px`;
             tg.HapticFeedback.impactOccurred('light');
-            handleTyping(document.getElementById('zeTextarea')); // Recalculate height
         }
 
         window.printNote = function() {
-            const content = document.getElementById('zeTextarea').value;
+            const content = document.getElementById('zeEditorCanvas').innerHTML;
             const printWindow = window.open('', '', 'height=600,width=800');
             printWindow.document.write('<html><head><title>Print Note</title>');
-            printWindow.document.write('<style>body{font-family:sans-serif; padding:20px; white-space:pre-wrap;}</style></head><body>');
+            printWindow.document.write('<style>body{font-family:sans-serif; padding:20px;} ul{padding-left:20px;}</style></head><body>');
             printWindow.document.write(`<h1>${document.getElementById('zeCategory').innerText}</h1>`);
             printWindow.document.write(`<p style="color:gray;">${document.getElementById('zeDate').innerText}</p>`);
-            printWindow.document.write(`<p>${content}</p>`);
+            printWindow.document.write(`<div>${content}</div>`);
             printWindow.document.write('</body></html>');
             printWindow.document.close();
             printWindow.print();
@@ -576,7 +551,7 @@
         }
 
         window.shareNote = function() {
-            const text = document.getElementById('zeTextarea').value;
+            const text = document.getElementById('zeEditorCanvas').innerText;
             if (navigator.share) { navigator.share({ text: text }); } 
             else { navigator.clipboard.writeText(text).then(() => tg.showAlert("Copied to clipboard!")); }
             closeAllModals();
@@ -611,7 +586,6 @@
             
             document.getElementById('modalOverlay').classList.add('active');
             document.getElementById('catSelectorMenu').classList.add('active');
-            tg.BackButton.show();
         }
 
         window.applyCat = function(cat) {
@@ -623,7 +597,7 @@
             if(val) { applyCat(val); document.getElementById('zeCustomTagInput').value = ""; document.getElementById('zeCustomTagInput').style.display = "none"; }
         }
 
-        // --- REMINDERS MODAL (Задачи) ---
+        // --- REMINDERS ---
         window.openReminderModal = function(index) {
             closeAllModals();
             tg.HapticFeedback.impactOccurred('light');
@@ -639,7 +613,7 @@
                 document.getElementById('remModalTitle').innerText = "Edit Reminder";
                 const item = window.currentUserData.reminders[index];
                 const parsed = parseItem(item.text);
-                content = parsed.content;
+                content = stripHtmlForPreview(parsed.content);
                 if(item.datetime) {
                     const dt = new Date(item.datetime.replace(' ', 'T'));
                     timeStr = (new Date(dt - dt.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
@@ -676,7 +650,6 @@
             
             const idx = parseInt(document.getElementById('remEditIndex').value);
             let reminders = [...(data.reminders || [])];
-            
             const formattedText = `[Agenda] ${text}`; 
             
             if (idx !== -1) reminders.splice(idx, 1);
@@ -722,7 +695,7 @@
         window.closeCategoryModal = function() {
             document.getElementById('categoryModal').classList.remove('active');
             document.getElementById('modalOverlay').classList.remove('active');
-            tg.BackButton.hide();
+            if (!document.getElementById('zenEditor').classList.contains('active')) { tg.BackButton.hide(); }
         }
 
         window.saveCategorySettings = async function() {
@@ -748,7 +721,7 @@
             }
 
             await updateDoc(userDocRef, { notes: notes, category_colors: newColors });
-            closeAllModals();
+            closeCategoryModal();
         }
     </script>
 </body>
