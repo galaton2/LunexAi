@@ -82,7 +82,7 @@
 
     <div class="modal-overlay" id="modalOverlay" onclick="closeAllModals()"></div>
     <div class="modal-sheet" id="creationRouterModal">
-        <div class="modal-handle"></div>
+        <div class="modal-close-btn" onclick="closeAllModals()"><i class="fas fa-times"></i></div>
         <h2 class="section-title" style="margin-top:0;">Create New</h2>
         <div class="creation-grid">
             <div class="creation-btn" onclick="openZenEditor(-1)"><i class="fas fa-pen-nib"></i> New Note</div>
@@ -91,7 +91,7 @@
     </div>
 
     <div class="modal-sheet" id="reminderModal" style="z-index: 1001;">
-        <div class="modal-handle"></div>
+        <div class="modal-close-btn" onclick="closeAllModals()"><i class="fas fa-times"></i></div>
         <h2 class="section-title" id="remModalTitle" style="margin-top:0;">Set Reminder</h2>
         <div class="form-group"><input type="text" class="form-control" id="remText" placeholder="What to do?"></div>
         <div class="form-group">
@@ -106,7 +106,7 @@
         <input type="hidden" id="remEditIndex" value="-1">
         <div class="modal-actions">
             <button class="btn btn-danger" id="remBtnDelete" style="display:none;" onclick="deleteReminder()">Delete</button>
-            <button class="btn btn-primary" onclick="saveReminder()">Save</button>
+            <button class="btn btn-primary" onclick="saveReminder()">Save Timer</button>
         </div>
     </div>
 
@@ -114,39 +114,50 @@
         <div class="ze-header">
             <div class="ze-meta" onclick="openCategorySelector()"><span id="zeCategory">Personal</span> <i class="fas fa-caret-down"></i></div>
         </div>
-        <div class="ze-body">
-            <div class="ze-paper">
+        <div class="ze-body" onclick="focusTextarea(event)">
+            <div class="ze-paper" id="zePaper">
                 <div class="ze-paper-header">
                     <div class="ze-date"><span id="zeDate">17 Apr 2026</span> <span id="zeSaveStatus">Saving...</span></div>
-                    <button class="ze-menu-btn-small" onclick="openContextOptions()"><i class="fas fa-ellipsis-h"></i></button>
+                    <button class="ze-menu-btn-small" onclick="openContextOptions(event)"><i class="fas fa-ellipsis-h"></i></button>
                 </div>
-                <textarea id="zeTextarea" placeholder="Start writing..." oninput="handleTyping()"></textarea>
-                <div class="ze-words" id="zeWordCount" style="text-align:center; padding-top:10px; color:var(--text-muted); font-size:12px;">0 words</div>
+                <textarea id="zeTextarea" placeholder="Write anything..." oninput="handleTyping(this)"></textarea>
+                <div class="ze-metrics">
+                    <span id="zeWordCount">0 words</span>
+                    <span>•</span>
+                    <span id="zeReadTime">1 min read</span>
+                </div>
             </div>
+        </div>
+        <div class="ze-footer">
+            <button class="tool-btn" onclick="insertFormat('- [ ] ')"><i class="far fa-check-square"></i> Task</button>
+            <button class="tool-btn" onclick="insertFormat('• ')"><i class="fas fa-list-ul"></i> Bullet</button>
+            <button class="tool-btn" onclick="insertTime()"><i class="far fa-clock"></i> Date</button>
+            <button class="tool-btn" onclick="toggleFocusMode()"><i class="fas fa-eye"></i> Focus</button>
         </div>
         <input type="hidden" id="zeEditIndex" value="-1">
     </div>
 
     <div class="modal-sheet" id="contextOptionsMenu" style="z-index: 2005;">
-        <div class="modal-handle"></div>
+        <div class="modal-close-btn" onclick="closeAllModals()"><i class="fas fa-times"></i></div>
         <div class="menu-list">
             <div class="menu-item" onclick="changeFontSize(2)"><i class="fas fa-search-plus"></i> Zoom In (A+)</div>
             <div class="menu-item" onclick="changeFontSize(-2)"><i class="fas fa-search-minus"></i> Zoom Out (A-)</div>
             <div class="menu-item" onclick="printNote()"><i class="fas fa-print"></i> Print Note</div>
             <div class="menu-item" onclick="shareNote()"><i class="fas fa-share-square"></i> Share Note</div>
-            <div class="menu-item danger" onclick="deleteZenNote()"><i class="fas fa-trash-alt"></i> Delete Note</div>
+            <div class="menu-item danger" onclick="document.getElementById('zeTextarea').value=''; handleTyping(document.getElementById('zeTextarea')); closeAllModals();"><i class="fas fa-broom"></i> Clear All Text</div>
+            <div class="menu-item danger" onclick="deleteZenNote()"><i class="fas fa-trash-alt"></i> Delete Note entirely</div>
         </div>
     </div>
 
     <div class="modal-sheet" id="catSelectorMenu" style="z-index: 2005;">
-        <div class="modal-handle"></div>
+        <div class="modal-close-btn" onclick="closeAllModals()"><i class="fas fa-times"></i></div>
         <h2 class="section-title" style="margin-top:0;">Select Category</h2>
         <div class="tags-container" id="zeTagsContainer"></div>
         <input type="text" id="zeCustomTagInput" class="tag-custom-input" placeholder="Type new category & press Enter..." onkeypress="if(event.key === 'Enter') applyNewCategory()">
     </div>
 
     <div class="modal-sheet" id="categoryModal" style="z-index: 1001;">
-        <div class="modal-handle"></div>
+        <div class="modal-close-btn" onclick="closeAllModals()"><i class="fas fa-times"></i></div>
         <h2 class="section-title" style="margin-top:0;">Rename Category</h2>
         <div class="form-group"><input type="text" class="form-control" id="catEditName" placeholder="Category Name"></div>
         <input type="hidden" id="oldCatName" value="">
@@ -163,39 +174,7 @@
         tg.expand();
         if (tg.requestFullscreen) { tg.requestFullscreen(); }
 
-        // --- ВСТРОЕННЫЕ PUSH УВЕДОМЛЕНИЯ (Работает, пока открыто приложение) ---
-        let notifiedReminders = new Set();
-        if ("Notification" in window && Notification.permission !== "denied") {
-            Notification.requestPermission();
-        }
-        
-        setInterval(() => {
-            if(!window.currentUserData) return;
-            const now = new Date();
-            const reminders = window.currentUserData.reminders || [];
-            
-            reminders.forEach((r, idx) => {
-                if(r.datetime) {
-                    const rd = new Date(r.datetime.replace(' ', 'T'));
-                    // Если время совпало (с точностью до минуты) и еще не уведомляли
-                    if(rd.getFullYear() === now.getFullYear() && rd.getMonth() === now.getMonth() && rd.getDate() === now.getDate() && rd.getHours() === now.getHours() && rd.getMinutes() === now.getMinutes()) {
-                        const uniqueId = r.text + r.datetime;
-                        if(!notifiedReminders.has(uniqueId)) {
-                            notifiedReminders.add(uniqueId);
-                            tg.HapticFeedback.notificationOccurred('warning');
-                            
-                            if (Notification.permission === "granted") {
-                                new Notification("Lunex AI Reminder", { body: r.text.replace(/\[.*?\]\s*/, '') });
-                            } else {
-                                tg.showAlert("🔔 Reminder: \n" + r.text.replace(/\[.*?\]\s*/, ''));
-                            }
-                        }
-                    }
-                }
-            });
-        }, 30000); // Проверка каждые 30 секунд
-
-        // --- ИНТЕГРАЦИЯ НАТИВНОЙ КНОПКИ "НАЗАД" ---
+        // --- НАТИВНАЯ КНОПКА "НАЗАД" ТЕЛЕГРАМ ---
         tg.BackButton.onClick(function() {
             if (document.getElementById('catSelectorMenu').classList.contains('active') || document.getElementById('contextOptionsMenu').classList.contains('active')) {
                 document.getElementById('catSelectorMenu').classList.remove('active');
@@ -204,7 +183,7 @@
             } else if (document.getElementById('zenEditor').classList.contains('active')) {
                 saveAndCloseZenEditor();
             } else if (document.getElementById('categoryModal').classList.contains('active')) {
-                closeCategoryModal();
+                closeAllModals();
             } else {
                 closeAllModals();
             }
@@ -263,28 +242,12 @@
             }
         });
 
-        function enableSwipeToClose() {
-            document.querySelectorAll('.modal-sheet').forEach(sheet => {
-                const handle = sheet.querySelector('.modal-handle');
-                if (!handle) return;
-                let startY = 0; let currentY = 0;
-                handle.addEventListener('touchstart', (e) => { startY = e.touches[0].clientY; sheet.style.transition = 'none'; });
-                handle.addEventListener('touchmove', (e) => {
-                    currentY = e.touches[0].clientY;
-                    const delta = currentY - startY;
-                    if (delta > 0) sheet.style.transform = `translateY(${delta}px)`;
-                });
-                handle.addEventListener('touchend', (e) => {
-                    sheet.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), bottom 0.4s';
-                    sheet.style.transform = ''; 
-                    if (currentY - startY > 60) {
-                        if(sheet.id === 'categoryModal') closeCategoryModal();
-                        else closeAllModals();
-                    }
-                });
-            });
+        // --- УДАЛЕНЫ СВАЙПЫ, РАБОТАЮТ КНОПКИ 'X' ---
+        window.closeAllModals = function() {
+            document.querySelectorAll('.modal-sheet').forEach(m => m.classList.remove('active'));
+            document.getElementById('modalOverlay').classList.remove('active');
+            if (!document.getElementById('zenEditor').classList.contains('active')) { tg.BackButton.hide(); }
         }
-        document.addEventListener("DOMContentLoaded", enableSwipeToClose);
 
         const defaultTags = ['Personal', 'Work', 'Finance', 'Ideas'];
         const sectionIcons = { 'Personal': 'fa-user', 'Work': 'fa-briefcase', 'Finance': 'fa-wallet', 'Ideas': 'fa-lightbulb' };
@@ -325,6 +288,14 @@
         }
 
         window.filterNotes = function() { renderUI(); }
+
+        window.copyToClipboard = function(event, text) {
+            event.stopPropagation();
+            navigator.clipboard.writeText(text).then(() => {
+                tg.HapticFeedback.impactOccurred('success');
+                tg.showAlert("Copied to clipboard!");
+            });
+        }
 
         window.exportData = function() {
             if(!window.currentUserData) return;
@@ -391,6 +362,9 @@
                                 ${groupedNotes[category].map(nObj => `
                                     <div class="card" onclick="openZenEditor(${nObj.origIndex})">
                                         <div class="card-text">${formatCardText(nObj.content)}</div>
+                                        <div class="card-icon">
+                                            <div class="copy-btn" onclick="copyToClipboard(event, '${nObj.content.replace(/'/g, "\\'")}')"><i class="fas fa-copy"></i></div>
+                                        </div>
                                     </div>
                                 `).join('')}
                             </div>
@@ -448,12 +422,6 @@
             document.getElementById('activityPct').innerText = `${Math.floor(pct)}%`;
         }
 
-        window.closeAllModals = function() {
-            document.querySelectorAll('.modal-sheet').forEach(m => m.classList.remove('active'));
-            document.getElementById('modalOverlay').classList.remove('active');
-            if (!document.getElementById('zenEditor').classList.contains('active')) { tg.BackButton.hide(); }
-        }
-
         window.openCreationRouter = function() {
             tg.HapticFeedback.impactOccurred('medium');
             document.getElementById('modalOverlay').classList.add('active');
@@ -461,12 +429,14 @@
             tg.BackButton.show();
         }
 
+        // --- INFINITE CANVAS & ZEN EDITOR ---
         window.openZenEditor = function(index) {
             closeAllModals();
             tg.HapticFeedback.impactOccurred('light');
             
             const data = window.currentUserData;
             document.getElementById('zeEditIndex').value = index;
+            document.getElementById('zenEditor').classList.remove('focus-mode'); // Reset Focus Mode
             
             let category = "Personal";
             let content = "";
@@ -481,30 +451,69 @@
 
             document.getElementById('zeCategory').innerText = category;
             document.getElementById('zeDate').innerText = dateStr;
-            document.getElementById('zeTextarea').value = content;
-            document.getElementById('zeTextarea').style.fontSize = `${currentFontSize}px`;
             
-            updateWordCount();
+            const ta = document.getElementById('zeTextarea');
+            ta.value = content;
+            ta.style.fontSize = `${currentFontSize}px`;
+            
             document.getElementById('zenEditor').classList.add('active');
             tg.BackButton.show();
-
-            if (index === -1) { setTimeout(() => document.getElementById('zeTextarea').focus(), 350); }
+            
+            handleTyping(ta); // Trigger metrics update and resize
+            if (index === -1) { setTimeout(() => ta.focus(), 350); }
         }
 
-        window.handleTyping = function() {
-            updateWordCount();
+        window.handleTyping = function(el) {
+            // Auto Resize Textarea
+            el.style.height = 'auto';
+            el.style.height = (el.scrollHeight) + 'px';
+
+            const text = el.value.trim();
+            const words = text ? text.split(/\s+/).length : 0;
+            const readTime = Math.max(1, Math.ceil(words / 200)); // Average reading speed 200wpm
+            
+            document.getElementById('zeWordCount').innerText = `${words} words`;
+            document.getElementById('zeReadTime').innerText = `${readTime} min read`;
+
             const status = document.getElementById('zeSaveStatus');
             status.style.opacity = '1';
             clearTimeout(typingTimer);
             typingTimer = setTimeout(() => { status.style.opacity = '0'; }, 800);
         }
 
-        window.updateWordCount = function() {
-            const text = document.getElementById('zeTextarea').value.trim();
-            const words = text ? text.split(/\s+/).length : 0;
-            document.getElementById('zeWordCount').innerText = `${words} words`;
+        window.focusTextarea = function(event) {
+            // Если кликнули мимо текста, но внутри редактора - ставим курсор в конец
+            if(event.target.id === 'zePaper' || event.target.className === 'ze-body') {
+                const ta = document.getElementById('zeTextarea');
+                ta.focus();
+                const val = ta.value;
+                ta.value = ''; ta.value = val; // Трюк с курсором в конец
+            }
         }
 
+        window.toggleFocusMode = function() {
+            document.getElementById('zenEditor').classList.toggle('focus-mode');
+            tg.HapticFeedback.impactOccurred('light');
+        }
+
+        window.insertFormat = function(formatStr) {
+            const ta = document.getElementById('zeTextarea');
+            const start = ta.selectionStart;
+            const end = ta.selectionEnd;
+            const text = ta.value;
+            ta.value = text.substring(0, start) + formatStr + text.substring(end);
+            ta.selectionStart = ta.selectionEnd = start + formatStr.length;
+            ta.focus();
+            handleTyping(ta);
+            tg.HapticFeedback.impactOccurred('light');
+        }
+
+        window.insertTime = function() {
+            const now = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            insertFormat(`[${now}] `);
+        }
+
+        // Авто-сохранение при выходе из редактора
         window.saveAndCloseZenEditor = async function() {
             document.getElementById('zenEditor').classList.remove('active');
             tg.BackButton.hide();
@@ -535,7 +544,8 @@
             await updateDoc(userDocRef, { notes, category_colors: newCategoryColors });
         }
 
-        window.openContextOptions = function() {
+        window.openContextOptions = function(event) {
+            event.stopPropagation();
             tg.HapticFeedback.impactOccurred('light');
             document.getElementById('modalOverlay').classList.add('active');
             document.getElementById('contextOptionsMenu').classList.add('active');
@@ -548,6 +558,7 @@
             if(currentFontSize > 30) currentFontSize = 30;
             document.getElementById('zeTextarea').style.fontSize = `${currentFontSize}px`;
             tg.HapticFeedback.impactOccurred('light');
+            handleTyping(document.getElementById('zeTextarea')); // Recalculate height
         }
 
         window.printNote = function() {
@@ -612,6 +623,7 @@
             if(val) { applyCat(val); document.getElementById('zeCustomTagInput').value = ""; document.getElementById('zeCustomTagInput').style.display = "none"; }
         }
 
+        // --- REMINDERS MODAL (Задачи) ---
         window.openReminderModal = function(index) {
             closeAllModals();
             tg.HapticFeedback.impactOccurred('light');
@@ -736,7 +748,7 @@
             }
 
             await updateDoc(userDocRef, { notes: notes, category_colors: newColors });
-            closeCategoryModal();
+            closeAllModals();
         }
     </script>
 </body>
