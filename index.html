@@ -10,12 +10,12 @@
 </head>
 <body>
 
-    <div id="splashScreen">
-        <i class="fas fa-star splash-logo"></i>
-    </div>
+    <div id="splashScreen"><i class="fas fa-star splash-logo"></i></div>
+    
+    <div id="toastContainer"><i class="fas fa-check-circle"></i> <span id="toastMsg">Success</span></div>
 
     <div class="top-bar">
-        <div class="premium-btn">Try Premium <i class="fas fa-star"></i></div>
+        <div class="premium-btn">Lunex PRO <i class="fas fa-star"></i></div>
         <div class="avatar-container"><img id="userAvatar" src="" alt="Avatar"></div>
     </div>
 
@@ -25,8 +25,11 @@
             <p>Give me any command, from organizing tasks to scheduling your life.</p>
         </div>
 
-        <h2 class="section-title">Weekly Activity</h2>
-        <div class="chart" id="activityChart"></div>
+        <h2 class="section-title">Workload Heatmap <span style="font-size:10px; font-weight:normal;">(Next 7 Days)</span></h2>
+        <div class="heatmap-card">
+            <div class="heatmap-grid" id="heatmapGrid">
+                </div>
+        </div>
 
         <h2 class="section-title">Active Reminders</h2>
         <div id="dashReminders"></div>
@@ -80,32 +83,43 @@
             <div class="list-info"><span class="list-title"><i class="fas fa-file-download"></i> Export Data (Backup)</span></div>
             <i class="fas fa-chevron-right" style="color: var(--text-muted);"></i>
         </div>
-        <div class="list-item">
-            <div class="list-info"><span class="list-title"><i class="fas fa-sync fa-spin"></i> Live Sync</span></div>
-            <span style="color:#00f0ff; font-size:12px; font-weight:bold;">ONLINE</span>
-        </div>
     </main>
 
     <div class="bottom-panel">
         <div class="nav-bar">
             <div class="nav-item active" onclick="switchTab('dashboard', this)"><i class="fas fa-home"></i></div>
             <div class="nav-item" onclick="switchTab('notes', this)"><i class="fas fa-folder-open"></i></div>
-            <button class="fab-btn" onclick="openAddModal()"><i class="fas fa-plus"></i></button>
+            <button class="fab-btn" onclick="openAddChoice()"><i class="fas fa-plus"></i></button>
             <div class="nav-item" onclick="switchTab('tasks', this)"><i class="fas fa-check-circle"></i></div>
             <div class="nav-item" onclick="switchTab('settings', this)"><i class="fas fa-cog"></i></div>
         </div>
     </div>
 
     <div class="modal-overlay" id="modalOverlay" onclick="closeModal()"></div>
+    
+    <div class="modal-sheet" id="actionChoiceModal">
+        <div class="modal-handle"></div>
+        <h2 class="section-title" style="margin-top:0; text-align:center;">What to create?</h2>
+        <div style="display:flex; gap:15px; margin-top:20px;">
+            <div class="card" style="flex:1; align-items:center; min-height:100px;" onclick="openAddModal('note')">
+                <i class="fas fa-bolt" style="font-size:24px; color:var(--pink-main); margin-bottom:10px;"></i>
+                <div style="font-weight:600;">Fast Note</div>
+            </div>
+            <div class="card" style="flex:1; align-items:center; min-height:100px;" onclick="openAddModal('task')">
+                <i class="fas fa-clock" style="font-size:24px; color:#00f0ff; margin-bottom:10px;"></i>
+                <div style="font-weight:600;">Reminder</div>
+            </div>
+        </div>
+        <div class="card" style="margin-top:15px; align-items:center; min-height:80px; flex-direction:row; padding:15px 25px;" onclick="openProEditor()">
+            <div style="font-weight:600;"><i class="fas fa-book-open" style="color:#ffd700; margin-right:10px;"></i> Pro Editor (Big Note)</div>
+            <i class="fas fa-chevron-right" style="color:var(--text-muted);"></i>
+        </div>
+    </div>
+
     <div class="modal-sheet" id="actionModal">
         <div class="modal-handle"></div>
-        <h2 class="section-title" id="modalTitle" style="margin-top:0;">Add Item</h2>
+        <h2 class="section-title" id="modalTitle" style="margin-top:0;">Quick Add</h2>
         
-        <div class="type-selector" id="typeSelector">
-            <div class="type-btn active" onclick="selectType('note')" id="btnTypeNote">Note</div>
-            <div class="type-btn" onclick="selectType('task')" id="btnTypeTask">Reminder</div>
-        </div>
-
         <div class="form-group">
             <textarea class="form-control" id="modalText" placeholder="Write here..."></textarea>
         </div>
@@ -116,27 +130,52 @@
 
         <div class="form-group">
             <div class="tags-container" id="tagsContainer"></div>
-            <input type="text" id="customTagInput" class="tag-custom-input" placeholder="Type category name..." oninput="updateCustomTagSelection()">
-            
-            <div class="color-palette" id="colorPalette">
-                <div class="color-dot" style="background: #ff477e" onclick="selectColor('#ff477e')"></div>
-                <div class="color-dot" style="background: #00f0ff" onclick="selectColor('#00f0ff')"></div>
-                <div class="color-dot" style="background: #ffd700" onclick="selectColor('#ffd700')"></div>
-                <div class="color-dot" style="background: #00ff88" onclick="selectColor('#00ff88')"></div>
-                <div class="color-dot" style="background: #b554ff" onclick="selectColor('#b554ff')"></div>
-                <div class="color-dot random-color" onclick="selectColor('random')"><i class="fas fa-dice"></i></div>
-            </div>
         </div>
 
         <input type="hidden" id="editIndex" value="-1">
         <input type="hidden" id="editOriginalType" value="">
         <input type="hidden" id="selectedTag" value="Personal">
-        <input type="hidden" id="selectedColor" value="">
 
         <div class="modal-actions">
             <button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
             <button class="btn btn-danger" id="btnDelete" style="display:none;" onclick="deleteItem()">Delete</button>
             <button class="btn btn-primary" onclick="saveItem()">Save</button>
+        </div>
+    </div>
+
+    <div class="full-modal" id="proEditorModal">
+        <div class="full-header">
+            <div class="full-close" onclick="closeProEditor()"><i class="fas fa-times"></i></div>
+            <div class="full-title">Pro Editor</div>
+            <div style="color: var(--pink-main); font-weight:700; cursor:pointer;" onclick="saveProNote()">SAVE</div>
+        </div>
+        <div class="full-content">
+            <div class="form-group">
+                <div class="tags-container" id="proTagsContainer"></div>
+            </div>
+            <textarea class="pro-textarea" id="proText" placeholder="Start writing your masterpiece..."></textarea>
+        </div>
+    </div>
+
+    <div class="modal-sheet" id="categorySettingsModal">
+        <div class="modal-handle"></div>
+        <h2 class="section-title" style="margin-top:0;">Category Settings</h2>
+        <h3 id="catSettingsName" style="margin-bottom: 20px; font-size: 20px;">Category Name</h3>
+        
+        <p style="font-size:13px; color:var(--text-muted); margin-bottom:10px;">Choose a neon accent color:</p>
+        <div class="color-palette" id="colorPalette" style="display:flex;">
+            <div class="color-dot" style="background: #ff477e" onclick="selectColor('#ff477e')"></div>
+            <div class="color-dot" style="background: #00f0ff" onclick="selectColor('#00f0ff')"></div>
+            <div class="color-dot" style="background: #ffd700" onclick="selectColor('#ffd700')"></div>
+            <div class="color-dot" style="background: #00ff88" onclick="selectColor('#00ff88')"></div>
+            <div class="color-dot" style="background: #b554ff" onclick="selectColor('#b554ff')"></div>
+            <div class="color-dot random-color" onclick="selectColor('random')"><i class="fas fa-dice"></i></div>
+        </div>
+        <input type="hidden" id="catSettingsColor" value="">
+
+        <div class="modal-actions" style="margin-top:30px;">
+            <button class="btn btn-cancel" onclick="closeCategorySettings()">Close</button>
+            <button class="btn btn-primary" onclick="saveCategoryColor()">Apply Color</button>
         </div>
     </div>
 
@@ -161,6 +200,15 @@
             if (tg.initDataUnsafe.user.photo_url) avatarUrl = tg.initDataUnsafe.user.photo_url;
             document.getElementById('userAvatar').src = avatarUrl;
             document.getElementById('setAvatar').src = avatarUrl;
+        }
+
+        // --- TOAST NOTIFICATIONS ---
+        window.showToast = function(msg) {
+            const toast = document.getElementById('toastContainer');
+            document.getElementById('toastMsg').innerText = msg;
+            tg.HapticFeedback.impactOccurred('light');
+            toast.classList.add('show');
+            setTimeout(() => { toast.classList.remove('show'); }, 3000);
         }
 
         window.switchTab = function(tabId, btn) {
@@ -192,34 +240,34 @@
 
             if (docSnap.exists()) {
                 window.currentUserData = docSnap.data();
-                // Убеждаемся, что есть объект с цветами категорий
                 if (!window.currentUserData.category_colors) window.currentUserData.category_colors = {};
                 renderUI();
-                renderChart();
+                renderHeatmap();
             }
         });
 
-        // Базовые категории
         const defaultTags = ['Personal', 'Work', 'Finance', 'Ideas'];
         const sectionIcons = { 'Personal': 'fa-user', 'Work': 'fa-briefcase', 'Finance': 'fa-wallet', 'Ideas': 'fa-lightbulb' };
         
-        // Генератор неоновых цветов
+        // Память свернутых секций
+        window.collapsedSections = new Set();
+
         function getRandomNeonColor() {
-            const hues = [0, 60, 180, 280, 320]; // Яркие цвета (красный, желтый, циан, фиолетовый, розовый)
+            const hues = [0, 60, 180, 280, 320];
             const randomHue = hues[Math.floor(Math.random() * hues.length)] + Math.floor(Math.random() * 20);
             return `hsl(${randomHue}, 100%, 60%)`;
         }
 
         function getCategoryColor(category) {
-            const predefined = { 'Personal': '#ff477e', 'Work': '#00f0ff', 'Finance': '#ffd700', 'Ideas': '#b554ff' };
             if (window.currentUserData?.category_colors?.[category]) return window.currentUserData.category_colors[category];
+            const predefined = { 'Personal': '#ff477e', 'Work': '#00f0ff', 'Finance': '#ffd700', 'Ideas': '#b554ff' };
             if (predefined[category]) return predefined[category];
-            return '#a0a0b0'; // Fallback
+            return '#a0a0b0'; 
         }
 
         function parseItem(rawText) {
             let category = "Personal"; let content = rawText;
-            const match = rawText.match(/^\[(.*?)\]\s*(.*)/);
+            const match = rawText.match(/^\[(.*?)\]\s*([\s\S]*)/); // [\s\S] для поддержки переносов строк
             if (match) { category = match[1]; content = match[2]; }
             return { category, content, rawText };
         }
@@ -235,36 +283,75 @@
 
         window.filterNotes = function() { renderUI(); }
 
-        // ФИЧА: Быстрое копирование
         window.copyToClipboard = function(event, text) {
-            event.stopPropagation(); // Не открываем модалку
-            navigator.clipboard.writeText(text).then(() => {
-                tg.HapticFeedback.impactOccurred('success');
-                tg.showAlert("Copied to clipboard!");
-            });
+            event.stopPropagation();
+            navigator.clipboard.writeText(text).then(() => { showToast("Copied to clipboard!"); });
         }
 
-        // ФИЧА: Экспорт данных
         window.exportData = function() {
             if(!window.currentUserData) return;
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(window.currentUserData, null, 2));
             const dlAnchorElem = document.createElement('a');
-            dlAnchorElem.setAttribute("href", dataStr);
-            dlAnchorElem.setAttribute("download", "lunex_backup.json");
+            dlAnchorElem.setAttribute("href", dataStr); dlAnchorElem.setAttribute("download", "lunex_backup.json");
             dlAnchorElem.click();
-            tg.HapticFeedback.impactOccurred('success');
+            showToast("Backup downloaded!");
         }
+
+        // Сворачивание секций
+        window.toggleSection = function(category) {
+            if (window.collapsedSections.has(category)) window.collapsedSections.delete(category);
+            else window.collapsedSections.add(category);
+            renderUI();
+            tg.HapticFeedback.impactOccurred('light');
+        }
+
+        // Настройка категории
+        window.editCategory = function(category, event) {
+            event.stopPropagation();
+            tg.HapticFeedback.impactOccurred('medium');
+            document.getElementById('catSettingsName').innerText = category;
+            document.getElementById('catSettingsName').style.color = getCategoryColor(category);
+            document.getElementById('catSettingsColor').value = category; // Храним имя категории тут
+            document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('selected'));
+            
+            document.getElementById('modalOverlay').classList.add('active');
+            document.getElementById('categorySettingsModal').classList.add('active');
+        }
+        
+        window.closeCategorySettings = function() {
+            document.getElementById('modalOverlay').classList.remove('active');
+            document.getElementById('categorySettingsModal').classList.remove('active');
+        }
+
+        window.selectColor = function(color) {
+            document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+            if (color === 'random') { color = getRandomNeonColor(); event.currentTarget.style.background = color; }
+            document.getElementById('catSettingsColor').dataset.tempColor = color; // Временный цвет
+            tg.HapticFeedback.impactOccurred('light');
+        }
+
+        window.saveCategoryColor = async function() {
+            const category = document.getElementById('catSettingsColor').value;
+            const newColor = document.getElementById('catSettingsColor').dataset.tempColor;
+            if (newColor && window.currentUserData) {
+                let newCategoryColors = { ...window.currentUserData.category_colors };
+                newCategoryColors[category] = newColor;
+                await updateDoc(userDocRef, { category_colors: newCategoryColors });
+                showToast("Category updated!");
+            }
+            closeCategorySettings();
+        }
+
 
         function renderUI() {
             const data = window.currentUserData; if(!data) return;
             const notes = data.notes || []; let reminders = data.reminders || [];
             document.getElementById('dbItemCount').innerText = `${notes.length + reminders.length}`;
 
-            // --- СЕКЦИИ ДЛЯ ЗАМЕТОК (Categorized Vault) ---
+            // --- VAULT СЕКЦИИ ---
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const vault = document.getElementById('notesVault');
-            
-            // Группируем заметки
             const groupedNotes = {};
             notes.forEach((n, i) => {
                 const parsed = parseItem(n);
@@ -275,9 +362,8 @@
             });
 
             if (Object.keys(groupedNotes).length === 0) {
-                vault.innerHTML = '<p class="empty-state">No records found.</p>';
+                vault.innerHTML = '<p class="empty-state">Vault is empty.</p>';
             } else {
-                // Сортируем: Personal и Work всегда сверху
                 const sortedKeys = Object.keys(groupedNotes).sort((a, b) => {
                     if (a === 'Personal') return -1; if (b === 'Personal') return 1;
                     if (a === 'Work') return -1; if (b === 'Work') return 1;
@@ -288,19 +374,23 @@
                 sortedKeys.forEach(category => {
                     const color = getCategoryColor(category);
                     const icon = sectionIcons[category] || 'fa-folder';
+                    const isCollapsed = window.collapsedSections.has(category) ? 'collapsed' : '';
                     
                     vaultHTML += `
-                    <div class="category-section">
-                        <div class="category-header" style="color: ${color}">
-                            <i class="fas ${icon}"></i> ${category}
+                    <div class="category-section ${isCollapsed}">
+                        <div class="category-header" onclick="toggleSection('${category}')">
+                            <div class="cat-left" style="color: ${color}"><i class="fas ${icon}"></i> ${category}</div>
+                            <div class="cat-right">
+                                <i class="fas fa-cog cat-cog" onclick="editCategory('${category}', event)"></i>
+                                <i class="fas fa-chevron-down cat-chevron" style="color: var(--text-muted); font-size: 14px;"></i>
+                            </div>
                         </div>
                         <div class="grid-cards">
                             ${groupedNotes[category].map(nObj => `
                                 <div class="card" onclick="openEditModal('note', ${nObj.origIndex})">
-                                    <div class="card-text">${nObj.content.length > 60 ? nObj.content.substring(0, 60) + '...' : nObj.content}</div>
+                                    <div class="card-text">${nObj.content}</div>
                                     <div class="card-icon">
-                                        <span class="tag" style="background: ${color}20; color: ${color}; border: 1px solid ${color}50">${category}</span>
-                                        <div class="copy-btn" onclick="copyToClipboard(event, '${nObj.content.replace(/'/g, "\\'")}')"><i class="fas fa-copy"></i></div>
+                                        <div class="copy-btn" onclick="copyToClipboard(event, \`${nObj.content.replace(/'/g, "\\'").replace(/"/g, '&quot;')}\`)"><i class="fas fa-copy"></i></div>
                                     </div>
                                 </div>
                             `).join('')}
@@ -310,27 +400,19 @@
                 vault.innerHTML = vaultHTML;
             }
 
-            // --- ЗАДАЧИ И ПРОГРЕСС БАР ---
+            // --- ЗАДАЧИ И ПРОГРЕСС ---
             const tList = document.getElementById('tasksList');
             const dReminders = document.getElementById('dashReminders');
             const todayStr = new Date().toLocaleDateString();
             
-            // Считаем прогресс (выполненные за сегодня)
-            let todayTotal = 0; let todayDone = 0; // Для этого нужна история выполненных, пока сделаем заглушку или визуальную логику
-
             let displayReminders = reminders;
-            if(window.currentTaskFilter === 'today') {
-                displayReminders = reminders.filter(r => new Date(r.datetime.replace(' ', 'T')).toLocaleDateString() === todayStr);
-            }
+            if(window.currentTaskFilter === 'today') { displayReminders = reminders.filter(r => new Date(r.datetime.replace(' ', 'T')).toLocaleDateString() === todayStr); }
 
-            // Визуальный прогресс-бар (зависит от оставшихся задач на сегодня)
             const todayRemindersCount = reminders.filter(r => new Date(r.datetime.replace(' ', 'T')).toLocaleDateString() === todayStr).length;
             const progFill = document.getElementById('progFill');
             const progPct = document.getElementById('progPct');
-            // Простая логика: чем меньше задач осталось, тем больше прогресс. Допустим, мы берем базу в 5 задач.
             let pct = todayRemindersCount === 0 ? 100 : Math.max(0, 100 - (todayRemindersCount * 20));
-            progFill.style.width = `${pct}%`;
-            progPct.innerText = `${pct}%`;
+            progFill.style.width = `${pct}%`; progPct.innerText = `${pct}%`;
 
             if(displayReminders.length === 0) {
                 tList.innerHTML = '<p class="empty-state">No pending tasks.</p>';
@@ -358,47 +440,52 @@
             }
         }
 
-        // CHART
-        function renderChart() {
+        // --- HEATMAP (Тепловая карта загруженности) ---
+        function renderHeatmap() {
             const reminders = window.currentUserData?.reminders || [];
             const today = new Date(); today.setHours(0,0,0,0);
             let days = []; let counts = [0,0,0,0,0,0,0];
 
             for(let i=0; i<7; i++) {
                 let d = new Date(today); d.setDate(d.getDate() + i);
-                days.push(d.toLocaleDateString('en-US', {weekday: 'short'}).charAt(0));
+                days.push({ name: d.toLocaleDateString('en-US', {weekday: 'short'}).charAt(0), date: d });
             }
+            
             reminders.forEach(r => {
                 let rd = new Date(r.datetime.replace(' ', 'T')); rd.setHours(0,0,0,0);
                 let diffDays = Math.ceil((rd - today) / (1000 * 60 * 60 * 24));
                 if(diffDays >= 0 && diffDays < 7) counts[diffDays]++;
             });
 
-            const maxCount = Math.max(...counts, 1);
-            document.getElementById('activityChart').innerHTML = days.map((day, i) => {
-                let heightPct = (counts[i] / maxCount) * 100;
-                if(heightPct < 5 && counts[i] > 0) heightPct = 15; 
+            document.getElementById('heatmapGrid').innerHTML = days.map((day, i) => {
+                let level = 0;
+                if(counts[i] == 1) level = 1;
+                else if (counts[i] == 2) level = 2;
+                else if (counts[i] >= 3) level = 3;
+                
                 let isToday = i === 0 ? 'today' : '';
-                return `<div class="bar ${isToday}"><div class="fill" style="height: ${heightPct}%;"></div><span class="day">${day}</span></div>`;
+                return `
+                <div class="heatmap-col">
+                    <div class="heat-box level-${level} ${isToday}">
+                        <div class="heat-count">${counts[i]}</div>
+                    </div>
+                    <span class="heat-day">${day.name}</span>
+                </div>`;
             }).join('');
         }
 
-        // MODAL & TAGS LOGIC
+        // --- MODAL & TAGS LOGIC ---
         window.currentType = 'note';
-        window.selectType = function(type) {
-            window.currentType = type;
-            document.getElementById('btnTypeNote').classList.remove('active');
-            document.getElementById('btnTypeTask').classList.remove('active');
-            document.getElementById(type === 'note' ? 'btnTypeNote' : 'btnTypeTask').classList.add('active');
-            document.getElementById('dateGroup').style.display = type === 'task' ? 'block' : 'none';
-            tg.HapticFeedback.impactOccurred('light');
+        
+        window.openAddChoice = function() {
+            tg.HapticFeedback.impactOccurred('medium');
+            document.getElementById('modalOverlay').classList.add('active');
+            document.getElementById('actionChoiceModal').classList.add('active');
         }
 
-        window.buildTagsUI = function(selected) {
+        window.buildTagsUI = function(selected, containerId = 'tagsContainer') {
             document.getElementById('selectedTag').value = selected;
-            const container = document.getElementById('tagsContainer');
-            
-            // Собираем все теги, включая пользовательские из БД
+            const container = document.getElementById(containerId);
             const customTags = Object.keys(window.currentUserData?.category_colors || {});
             const allTags = [...new Set([...defaultTags, ...customTags])];
             
@@ -406,58 +493,50 @@
                 const isSel = tag === selected ? 'selected' : '';
                 const color = getCategoryColor(tag);
                 const borderStyle = isSel ? `border-color: ${color}; color: ${color}; box-shadow: 0 0 10px ${color}50;` : '';
-                return `<div class="tag-pill ${isSel}" style="${borderStyle}" onclick="buildTagsUI('${tag}')">${tag}</div>`;
+                return `<div class="tag-pill ${isSel}" style="${borderStyle}" onclick="buildTagsUI('${tag}', '${containerId}')">${tag}</div>`;
             }).join('');
             
-            html += `<div class="tag-pill" style="border-style: dashed;" onclick="toggleCustomTagInput()">+ NEW</div>`;
+            // Если это обычная шторка, даем возможность создать новый тег
+            if(containerId === 'tagsContainer') {
+                html += `<div class="tag-pill" style="border-style: dashed;" onclick="toggleCustomTagInput()">+ NEW</div>`;
+            }
             container.innerHTML = html;
         }
 
-        window.toggleCustomTagInput = function() { 
-            document.getElementById('customTagInput').style.display = 'block'; 
-            document.getElementById('colorPalette').style.display = 'flex';
-            document.getElementById('customTagInput').focus(); 
-            document.getElementById('selectedColor').value = ""; // Сброс цвета
-            document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('selected'));
-        }
-        
-        window.updateCustomTagSelection = function() { 
-            const val = document.getElementById('customTagInput').value.trim(); 
-            if(val) document.getElementById('selectedTag').value = val; 
-        }
-
-        window.selectColor = function(color) {
-            document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('selected'));
-            event.currentTarget.classList.add('selected');
-            
-            if (color === 'random') {
-                color = getRandomNeonColor();
-                event.currentTarget.style.background = color; // Показываем сгенерированный цвет на кнопке кубиков
-            }
-            document.getElementById('selectedColor').value = color;
-            tg.HapticFeedback.impactOccurred('light');
-        }
-
-        window.openAddModal = function() {
-            tg.HapticFeedback.impactOccurred('medium');
+        window.openAddModal = function(type) {
+            document.getElementById('actionChoiceModal').classList.remove('active');
             document.getElementById('modalText').value = "";
             document.getElementById('editIndex').value = "-1";
             document.getElementById('btnDelete').style.display = "none";
             document.getElementById('customTagInput').style.display = 'none';
-            document.getElementById('colorPalette').style.display = 'none';
             document.getElementById('customTagInput').value = "";
-            document.getElementById('selectedColor').value = "";
             
-            buildTagsUI('Personal');
+            buildTagsUI('Personal', 'tagsContainer');
             
-            const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1); tomorrow.setHours(10, 0, 0, 0);
-            const offset = tomorrow.getTimezoneOffset() * 60000;
-            document.getElementById('modalDate').value = (new Date(tomorrow - offset)).toISOString().slice(0, 16);
+            if(type === 'task') {
+                const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1); tomorrow.setHours(10, 0, 0, 0);
+                const offset = tomorrow.getTimezoneOffset() * 60000;
+                document.getElementById('modalDate').value = (new Date(tomorrow - offset)).toISOString().slice(0, 16);
+                document.getElementById('dateGroup').style.display = 'block';
+            } else {
+                document.getElementById('dateGroup').style.display = 'none';
+            }
+            window.currentType = type;
 
-            selectType('note');
-            document.getElementById('modalOverlay').classList.add('active');
-            document.getElementById('actionModal').classList.add('active');
+            setTimeout(() => { document.getElementById('actionModal').classList.add('active'); }, 100);
         }
+        
+        // Открытие PRO Редактора
+        window.openProEditor = function() {
+            document.getElementById('actionChoiceModal').classList.remove('active');
+            document.getElementById('modalOverlay').classList.remove('active');
+            document.getElementById('proText').value = "";
+            document.getElementById('editIndex').value = "-1";
+            buildTagsUI('Personal', 'proTagsContainer');
+            
+            setTimeout(() => { document.getElementById('proEditorModal').classList.add('active'); }, 100);
+        }
+        window.closeProEditor = function() { document.getElementById('proEditorModal').classList.remove('active'); }
 
         window.openEditModal = function(type, index) {
             tg.HapticFeedback.impactOccurred('light');
@@ -466,14 +545,15 @@
             document.getElementById('editOriginalType').value = type;
             document.getElementById('btnDelete').style.display = "block";
             document.getElementById('customTagInput').style.display = 'none';
-            document.getElementById('colorPalette').style.display = 'none';
 
             let parsed;
             if(type === 'note') {
-                selectType('note');
+                window.currentType = 'note';
+                document.getElementById('dateGroup').style.display = 'none';
                 parsed = parseItem(data.notes[index]);
             } else {
-                selectType('task');
+                window.currentType = 'task';
+                document.getElementById('dateGroup').style.display = 'block';
                 const item = data.reminders[index];
                 parsed = parseItem(item.text);
                 if(item.datetime) {
@@ -484,16 +564,7 @@
             }
 
             document.getElementById('modalText').value = parsed.content;
-            
-            // Если тег кастомный, показываем инпут
-            const allKnownTags = [...defaultTags, ...Object.keys(data.category_colors || {})];
-            if(!allKnownTags.includes(parsed.category)) {
-                buildTagsUI(''); toggleCustomTagInput();
-                document.getElementById('customTagInput').value = parsed.category;
-                document.getElementById('selectedTag').value = parsed.category;
-            } else {
-                buildTagsUI(parsed.category);
-            }
+            buildTagsUI(parsed.category, 'tagsContainer');
 
             document.getElementById('modalOverlay').classList.add('active');
             document.getElementById('actionModal').classList.add('active');
@@ -501,7 +572,19 @@
 
         window.closeModal = function() {
             document.getElementById('modalOverlay').classList.remove('active');
+            document.getElementById('actionChoiceModal').classList.remove('active');
             document.getElementById('actionModal').classList.remove('active');
+            document.getElementById('categorySettingsModal').classList.remove('active');
+        }
+
+        window.toggleCustomTagInput = function() { 
+            document.getElementById('customTagInput').style.display = 'block'; 
+            document.getElementById('customTagInput').focus(); 
+            document.querySelectorAll('.tag-pill').forEach(t => t.classList.remove('selected'));
+        }
+        window.updateCustomTagSelection = function() { 
+            const val = document.getElementById('customTagInput').value.trim(); 
+            if(val) document.getElementById('selectedTag').value = val; 
         }
 
         // CRUD FIREBASE
@@ -513,17 +596,11 @@
             const category = document.getElementById('selectedTag').value || 'Personal';
             const formattedText = `[${category}] ${text}`;
             
-            // Сохранение нового цвета (если выбран)
+            // Проверка на новый тег и авто-выделение случайного цвета
             let newCategoryColors = { ...data.category_colors };
-            const pickedColor = document.getElementById('selectedColor').value;
-            
-            // Если юзер ввел новый тег, но не выбрал цвет - генерируем рандомный
-            if (!defaultTags.includes(category) && !newCategoryColors[category]) {
-                newCategoryColors[category] = pickedColor || getRandomNeonColor();
-            } else if (pickedColor) {
-                // Если юзер явно выбрал цвет для старого тега - обновляем
-                newCategoryColors[category] = pickedColor;
-            }
+            const customTags = Object.keys(newCategoryColors);
+            const allKnownTags = [...defaultTags, ...customTags];
+            if (!allKnownTags.includes(category)) { newCategoryColors[category] = getRandomNeonColor(); }
             
             const isEdit = document.getElementById('editIndex').value !== "-1";
             const idx = parseInt(document.getElementById('editIndex').value);
@@ -543,6 +620,25 @@
 
             await updateDoc(userDocRef, { notes, reminders, category_colors: newCategoryColors });
             closeModal();
+            showToast("Saved to Vault!");
+        }
+
+        // Сохранение из Pro Editor
+        window.saveProNote = async function() {
+            const data = window.currentUserData; if(!data) return;
+            const text = document.getElementById('proText').value.trim();
+            if(!text) return;
+            
+            const category = document.getElementById('selectedTag').value || 'Personal';
+            const formattedText = `[${category}] ${text}`;
+            
+            let notes = [...(data.notes || [])];
+            notes.unshift(formattedText);
+            tg.HapticFeedback.impactOccurred('heavy');
+
+            await updateDoc(userDocRef, { notes });
+            closeProEditor();
+            showToast("Masterpiece saved!");
         }
 
         window.deleteItem = async function() {
@@ -550,13 +646,14 @@
             const idx = parseInt(document.getElementById('editIndex').value);
             const origType = document.getElementById('editOriginalType').value;
             
-            tg.showConfirm("Delete this item?", async function(confirm) {
+            tg.showConfirm("Delete this item permanently?", async function(confirm) {
                 if(!confirm) return;
                 let notes = [...(data.notes || [])]; let reminders = [...(data.reminders || [])];
                 if(origType === 'note') notes.splice(idx, 1); else reminders.splice(idx, 1);
                 await updateDoc(userDocRef, { notes, reminders });
                 closeModal();
                 tg.HapticFeedback.impactOccurred('medium');
+                showToast("Item deleted.");
             });
         }
 
@@ -566,7 +663,10 @@
             document.querySelectorAll('#tasksList .list-item')[index].classList.add('done');
             let reminders = [...(data.reminders || [])];
             reminders.splice(index, 1);
-            setTimeout(async () => { await updateDoc(userDocRef, { reminders }); }, 300);
+            setTimeout(async () => { 
+                await updateDoc(userDocRef, { reminders }); 
+                showToast("Task completed! +XP");
+            }, 300);
         }
     </script>
 </body>
