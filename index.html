@@ -31,14 +31,8 @@
                 <text x="18" y="20.35" class="percentage" id="activityPct">0%</text>
             </svg>
             <div class="ring-stats">
-                <div class="ring-stat-item">
-                    <span class="ring-stat-value" id="statCompleted">0</span>
-                    <span class="ring-stat-label">Tasks Done</span>
-                </div>
-                <div class="ring-stat-item">
-                    <span class="ring-stat-value" id="statPending">0</span>
-                    <span class="ring-stat-label">Pending Today</span>
-                </div>
+                <div class="ring-stat-item"><span class="ring-stat-value" id="statCompleted">0</span><span class="ring-stat-label">Tasks Done</span></div>
+                <div class="ring-stat-item"><span class="ring-stat-value" id="statPending">0</span><span class="ring-stat-label">Pending Today</span></div>
             </div>
         </div>
 
@@ -92,6 +86,8 @@
         <div class="modal-handle"></div>
         <h2 class="section-title" id="modalTitle" style="margin-top:0;">Add Item</h2>
         
+        <div class="note-timestamp" id="noteTimestamp" style="display:none;"></div>
+        
         <div class="type-selector" id="typeSelector">
             <div class="type-btn active" onclick="selectType('note')" id="btnTypeNote">Fast Note</div>
             <div class="type-btn" onclick="selectType('large_note')" id="btnTypeLarge">Large Note</div>
@@ -99,30 +95,27 @@
         </div>
 
         <div class="form-group" style="flex-grow: 1;">
-            <textarea class="form-control" id="modalText" placeholder="Write here..."></textarea>
+            <textarea class="form-control" id="modalText" placeholder="Start typing..."></textarea>
         </div>
 
         <div class="form-group" id="dateGroup" style="display: none;">
             <input type="datetime-local" class="form-control" id="modalDate">
+            <div class="quick-time-row">
+                <div class="tag-pill" onclick="setQuickTime('1h')">+1 Hour</div>
+                <div class="tag-pill" onclick="setQuickTime('3h')">+3 Hours</div>
+                <div class="tag-pill" onclick="setQuickTime('tmw_morn')">Tmw 9:00 AM</div>
+                <div class="tag-pill" onclick="setQuickTime('tmw_eve')">Tmw 7:00 PM</div>
+            </div>
         </div>
 
         <div class="form-group" id="tagsGroup">
             <div class="tags-container" id="tagsContainer"></div>
-            <input type="text" id="customTagInput" class="tag-custom-input" placeholder="Type category name..." oninput="updateCustomTagSelection()">
-            <div class="color-palette" id="colorPalette">
-                <div class="color-dot" style="background: #ff477e" onclick="selectColor('#ff477e')"></div>
-                <div class="color-dot" style="background: #00f0ff" onclick="selectColor('#00f0ff')"></div>
-                <div class="color-dot" style="background: #ffd700" onclick="selectColor('#ffd700')"></div>
-                <div class="color-dot" style="background: #00ff88" onclick="selectColor('#00ff88')"></div>
-                <div class="color-dot" style="background: #b554ff" onclick="selectColor('#b554ff')"></div>
-                <div class="color-dot" style="background: #ffffff" onclick="selectColor('#ffffff')"></div>
-            </div>
+            <input type="text" id="customTagInput" class="tag-custom-input" placeholder="Type new category..." oninput="updateCustomTagSelection()">
         </div>
 
         <input type="hidden" id="editIndex" value="-1">
         <input type="hidden" id="editOriginalType" value="">
         <input type="hidden" id="selectedTag" value="Personal">
-        <input type="hidden" id="selectedColor" value="">
 
         <div class="modal-actions">
             <button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
@@ -133,22 +126,11 @@
 
     <div class="modal-sheet" id="categoryModal" style="z-index: 1001;">
         <div class="modal-handle"></div>
-        <h2 class="section-title" style="margin-top:0;">Edit Category</h2>
+        <h2 class="section-title" style="margin-top:0;">Rename Category</h2>
         <div class="form-group">
             <input type="text" class="form-control" id="catEditName" placeholder="Category Name">
         </div>
-        <div class="form-group">
-            <div class="color-palette" style="display: flex;">
-                <div class="color-dot cat-color-dot" style="background: #ff477e" onclick="selectCatColor('#ff477e')"></div>
-                <div class="color-dot cat-color-dot" style="background: #00f0ff" onclick="selectCatColor('#00f0ff')"></div>
-                <div class="color-dot cat-color-dot" style="background: #ffd700" onclick="selectCatColor('#ffd700')"></div>
-                <div class="color-dot cat-color-dot" style="background: #00ff88" onclick="selectCatColor('#00ff88')"></div>
-                <div class="color-dot cat-color-dot" style="background: #b554ff" onclick="selectCatColor('#b554ff')"></div>
-                <div class="color-dot cat-color-dot" style="background: #ffffff" onclick="selectCatColor('#ffffff')"></div>
-            </div>
-        </div>
         <input type="hidden" id="oldCatName" value="">
-        <input type="hidden" id="newCatColor" value="">
         <div class="modal-actions">
             <button class="btn btn-cancel" onclick="closeCategoryModal()">Cancel</button>
             <button class="btn btn-primary" onclick="saveCategorySettings()">Apply</button>
@@ -200,7 +182,6 @@
         window.currentUserData = null;
         const userDocRef = doc(db, "users", userId);
 
-        // Память открытых секций
         let openSections = JSON.parse(localStorage.getItem('lunexOpenSections')) || {};
 
         onSnapshot(userDocRef, (docSnap) => {
@@ -217,18 +198,39 @@
         });
 
         const defaultTags = ['Personal', 'Work', 'Finance', 'Ideas'];
+        const sectionIcons = { 'Personal': 'fa-user', 'Work': 'fa-briefcase', 'Finance': 'fa-wallet', 'Ideas': 'fa-lightbulb' };
+        
+        // АВТО-ЦВЕТ: Умный алгоритм выбора уникального цвета
+        const neonHues = [330, 180, 45, 120, 270, 15, 210, 90, 30, 300, 60, 150];
+        function getUniqueColor(existingColorsObj) {
+            const usedColors = Object.values(existingColorsObj);
+            for (let hue of neonHues) {
+                const color = `hsl(${hue}, 100%, 65%)`;
+                if (!usedColors.includes(color)) return color;
+            }
+            return `hsl(${Math.floor(Math.random()*360)}, 100%, 65%)`; // Если палитра кончилась
+        }
+
         function getCategoryColor(category) {
             const predefined = { 'Personal': '#ff477e', 'Work': '#00f0ff', 'Finance': '#ffd700', 'Ideas': '#b554ff' };
             if (window.currentUserData?.category_colors?.[category]) return window.currentUserData.category_colors[category];
             if (predefined[category]) return predefined[category];
-            return '#ffffff';
+            return '#a0a0b0'; 
         }
 
+        // ФИКС РЕДАКТИРОВАНИЯ И УРЕЗАНИЯ (Regex [\s\S] сохраняет все абзацы и дату)
         function parseItem(rawText) {
-            let category = "Personal"; let content = rawText;
-            const match = rawText.match(/^\[(.*?)\]\s*(.*)/);
-            if (match) { category = match[1]; content = match[2]; }
-            return { category, content, rawText };
+            const match = rawText.match(/^\[(.*?)\](?:\s*\{([^\}]+)\})?\s*([\s\S]*)/);
+            if (match) { 
+                return { category: match[1], date: match[2] || '', content: match[3], rawText }; 
+            }
+            return { category: "Personal", date: '', content: rawText, rawText };
+        }
+
+        // MARDOWN PREVIEW: Жирный текст для карточек
+        function formatCardText(text) {
+            let preview = text.length > 150 ? text.substring(0, 150) + '...' : text;
+            return preview.replace(/^#\s+(.*)$/gm, '<b>$1</b>');
         }
 
         window.currentTaskFilter = 'all';
@@ -276,8 +278,8 @@
             // --- THE VAULT (ACCORDIONS) ---
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const vault = document.getElementById('notesVault');
-            
             const groupedNotes = {};
+            
             notes.forEach((n, i) => {
                 const parsed = parseItem(n);
                 if (parsed.content.toLowerCase().includes(searchTerm)) {
@@ -298,13 +300,13 @@
                 let vaultHTML = '';
                 sortedKeys.forEach(category => {
                     const color = getCategoryColor(category);
-                    // Если поиск активен - принудительно открываем все
                     const isOpen = (searchTerm !== "" || openSections[category]) ? "open" : "";
+                    const icon = sectionIcons[category] || 'fa-folder';
                     
                     vaultHTML += `
                     <div class="category-section ${isOpen}" id="section-${category}">
                         <div class="category-header" onclick="toggleSection('${category}')">
-                            <div class="category-title" style="color: ${color}"><i class="fas fa-folder"></i> ${category}</div>
+                            <div class="category-title" style="color: ${color}"><i class="fas ${icon}"></i> ${category}</div>
                             <div class="category-controls">
                                 <div class="category-settings-btn" onclick="openCategorySettings(event, '${category}')"><i class="fas fa-cog"></i></div>
                                 <i class="fas fa-chevron-down chevron"></i>
@@ -314,7 +316,7 @@
                             <div class="grid-cards">
                                 ${groupedNotes[category].map(nObj => `
                                     <div class="card" onclick="openEditModal('note', ${nObj.origIndex})">
-                                        <div class="card-text">${nObj.content.length > 150 ? nObj.content.substring(0, 150) + '...' : nObj.content}</div>
+                                        <div class="card-text">${formatCardText(nObj.content)}</div>
                                         <div class="card-icon">
                                             <div class="copy-btn" onclick="copyToClipboard(event, '${nObj.content.replace(/'/g, "\\'")}')"><i class="fas fa-copy"></i></div>
                                         </div>
@@ -365,27 +367,31 @@
         function renderActivityRing() {
             const data = window.currentUserData; if(!data) return;
             const reminders = data.reminders || [];
-            const completedToday = data.completed_tasks_today || 0; // Для демки: если бы мы сохраняли выполненные за сегодня
-            
             const todayStr = new Date().toLocaleDateString();
             const pendingToday = reminders.filter(r => new Date(r.datetime.replace(' ', 'T')).toLocaleDateString() === todayStr).length;
             
             document.getElementById('statPending').innerText = pendingToday;
-            document.getElementById('statCompleted').innerText = data.completed_tasks || 0; // Общее кол-во
+            document.getElementById('statCompleted').innerText = data.completed_tasks || 0; 
             
-            // Если дел на сегодня нет, кольцо полное
-            let pct = 100;
-            if (pendingToday > 0) {
-                // Имитация: если есть дела, кольцо показывает, сколько осталось сделать. 
-                // В реале нужно хранить кол-во выполненных именно сегодня.
-                pct = Math.max(5, 100 - (pendingToday * 15)); 
-            }
-            
+            let pct = pendingToday === 0 ? 100 : Math.max(5, 100 - (pendingToday * 15)); 
             document.getElementById('activityRing').style.strokeDasharray = `${pct}, 100`;
             document.getElementById('activityPct').innerText = `${Math.floor(pct)}%`;
         }
 
-        // --- MODAL LOGIC (Zen Editor & Setup) ---
+        // --- БЫСТРЫЕ ТАЙМЕРЫ ---
+        window.setQuickTime = function(type) {
+            let d = new Date();
+            if (type === '1h') d.setHours(d.getHours() + 1);
+            else if (type === '3h') d.setHours(d.getHours() + 3);
+            else if (type === 'tmw_morn') { d.setDate(d.getDate() + 1); d.setHours(9, 0, 0); }
+            else if (type === 'tmw_eve') { d.setDate(d.getDate() + 1); d.setHours(19, 0, 0); }
+            
+            const offset = d.getTimezoneOffset() * 60000;
+            document.getElementById('modalDate').value = (new Date(d - offset)).toISOString().slice(0, 16);
+            tg.HapticFeedback.impactOccurred('light');
+        }
+
+        // --- MODAL LOGIC ---
         window.currentType = 'note';
         window.selectType = function(type) {
             window.currentType = type;
@@ -394,19 +400,16 @@
             const isLarge = (type === 'large_note');
             const isTask = (type === 'task');
             
-            if (type === 'large_note') { document.getElementById('btnTypeLarge').classList.add('active'); window.currentType = 'note'; }
-            else if (type === 'task') { document.getElementById('btnTypeTask').classList.add('active'); }
+            if (isLarge) { document.getElementById('btnTypeLarge').classList.add('active'); window.currentType = 'note'; }
+            else if (isTask) { document.getElementById('btnTypeTask').classList.add('active'); }
             else { document.getElementById('btnTypeNote').classList.add('active'); }
             
             document.getElementById('dateGroup').style.display = isTask ? 'block' : 'none';
-            document.getElementById('tagsGroup').style.display = isLarge ? 'none' : 'block';
+            document.getElementById('tagsGroup').style.display = isTask ? 'none' : 'block';
             
             // Zen Mode
-            if (isLarge) {
-                document.getElementById('actionModal').classList.add('fullscreen-mode');
-            } else {
-                document.getElementById('actionModal').classList.remove('fullscreen-mode');
-            }
+            if (isLarge) document.getElementById('actionModal').classList.add('fullscreen-mode');
+            else document.getElementById('actionModal').classList.remove('fullscreen-mode');
             
             tg.HapticFeedback.impactOccurred('light');
         }
@@ -430,43 +433,36 @@
 
         window.toggleCustomTagInput = function() { 
             document.getElementById('customTagInput').style.display = 'block'; 
-            document.getElementById('colorPalette').style.display = 'flex';
             document.getElementById('customTagInput').focus(); 
-            document.getElementById('selectedColor').value = "";
-            document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('selected'));
         }
         window.updateCustomTagSelection = function() { 
             const val = document.getElementById('customTagInput').value.trim(); 
             if(val) document.getElementById('selectedTag').value = val; 
         }
-        window.selectColor = function(color) {
-            document.querySelectorAll('#colorPalette .color-dot').forEach(d => d.classList.remove('selected'));
-            event.currentTarget.classList.add('selected');
-            document.getElementById('selectedColor').value = color;
-            tg.HapticFeedback.impactOccurred('light');
-        }
 
         window.openAddModal = function() {
             tg.HapticFeedback.impactOccurred('medium');
+            document.getElementById('modalTitle').innerText = "Add Item";
             document.getElementById('modalText').value = "";
             document.getElementById('editIndex').value = "-1";
             document.getElementById('btnDelete').style.display = "none";
+            document.getElementById('typeSelector').style.display = "flex"; // Показываем выбор типа
             document.getElementById('customTagInput').style.display = 'none';
-            document.getElementById('colorPalette').style.display = 'none';
             document.getElementById('customTagInput').value = "";
-            document.getElementById('selectedColor').value = "";
+            document.getElementById('noteTimestamp').style.display = "none";
             
             buildTagsUI('Personal');
+            selectType('note');
             
             const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1); tomorrow.setHours(10, 0, 0, 0);
             const offset = tomorrow.getTimezoneOffset() * 60000;
             document.getElementById('modalDate').value = (new Date(tomorrow - offset)).toISOString().slice(0, 16);
 
-            selectType('note');
             document.getElementById('modalOverlay').classList.add('active');
             document.getElementById('actionModal').classList.add('active');
         }
 
+        // ЧТЕНИЕ И РЕДАКТИРОВАНИЕ СУЩЕСТВУЮЩЕГО ЭЛЕМЕНТА
         window.openEditModal = function(type, index) {
             tg.HapticFeedback.impactOccurred('light');
             const data = window.currentUserData;
@@ -474,15 +470,29 @@
             document.getElementById('editOriginalType').value = type;
             document.getElementById('btnDelete').style.display = "block";
             document.getElementById('customTagInput').style.display = 'none';
-            document.getElementById('colorPalette').style.display = 'none';
-
+            document.getElementById('typeSelector').style.display = 'none'; // Скрываем табы (Large/Fast) чтобы не путать
+            
             let parsed;
             if(type === 'note') {
                 parsed = parseItem(data.notes[index]);
-                // Авто-выбор Large Note если текст длинный
-                selectType(parsed.content.length > 200 ? 'large_note' : 'note');
+                document.getElementById('modalTitle').innerText = parsed.category;
+                
+                // Дата создания
+                const timeStr = parsed.date ? `Saved on ${parsed.date}` : 'Saved recently';
+                document.getElementById('noteTimestamp').innerText = timeStr;
+                document.getElementById('noteTimestamp').style.display = "block";
+
+                document.getElementById('tagsGroup').style.display = 'none'; // Скрываем теги при просмотре
+                document.getElementById('dateGroup').style.display = 'none';
+                document.getElementById('actionModal').classList.add('fullscreen-mode'); // Всегда Fullscreen для заметок
+                window.currentType = 'note';
+
             } else {
                 selectType('task');
+                document.getElementById('modalTitle').innerText = "Edit Reminder";
+                document.getElementById('noteTimestamp').style.display = "none";
+                document.getElementById('typeSelector').style.display = 'none';
+                
                 const item = data.reminders[index];
                 parsed = parseItem(item.text);
                 if(item.datetime) {
@@ -494,12 +504,8 @@
 
             document.getElementById('modalText').value = parsed.content;
             
-            const allKnownTags = [...defaultTags, ...Object.keys(data.category_colors || {})];
-            if(!allKnownTags.includes(parsed.category)) {
-                buildTagsUI(''); toggleCustomTagInput();
-                document.getElementById('customTagInput').value = parsed.category;
-                document.getElementById('selectedTag').value = parsed.category;
-            } else { buildTagsUI(parsed.category); }
+            // Теги (для внутреннего сохранения)
+            document.getElementById('selectedTag').value = parsed.category;
 
             document.getElementById('modalOverlay').classList.add('active');
             document.getElementById('actionModal').classList.add('active');
@@ -517,11 +523,6 @@
             tg.HapticFeedback.impactOccurred('medium');
             document.getElementById('oldCatName').value = category;
             document.getElementById('catEditName').value = category;
-            
-            const currentColor = getCategoryColor(category);
-            document.getElementById('newCatColor').value = currentColor;
-            document.querySelectorAll('.cat-color-dot').forEach(d => d.classList.remove('selected'));
-            
             document.getElementById('modalOverlay').classList.add('active');
             document.getElementById('categoryModal').classList.add('active');
         }
@@ -530,23 +531,17 @@
             document.getElementById('categoryModal').classList.remove('active');
             document.getElementById('modalOverlay').classList.remove('active');
         }
-        
-        window.selectCatColor = function(color) {
-            document.querySelectorAll('.cat-color-dot').forEach(d => d.classList.remove('selected'));
-            event.currentTarget.classList.add('selected');
-            document.getElementById('newCatColor').value = color;
-            tg.HapticFeedback.impactOccurred('light');
-        }
 
         window.saveCategorySettings = async function() {
             const data = window.currentUserData; if(!data) return;
             const oldName = document.getElementById('oldCatName').value;
             const newName = document.getElementById('catEditName').value.trim() || oldName;
-            const newColor = document.getElementById('newCatColor').value;
             
             let newColors = { ...data.category_colors };
-            if (oldName !== newName) { delete newColors[oldName]; }
-            newColors[newName] = newColor;
+            if (oldName !== newName) { 
+                newColors[newName] = newColors[oldName]; // Переносим цвет
+                delete newColors[oldName]; 
+            }
 
             let notes = [...(data.notes || [])];
             if (oldName !== newName) {
@@ -554,7 +549,6 @@
                 notes = notes.map(n => n.startsWith(`[${oldName}]`) ? n.replace(`[${oldName}]`, `[${newName}]`) : n);
             }
             
-            // Если переименовали секцию, переносим состояние аккордеона
             if (oldName !== newName && openSections[oldName]) {
                 openSections[newName] = true;
                 delete openSections[oldName];
@@ -568,22 +562,35 @@
         // --- CRUD LOGIC ---
         window.saveItem = async function() {
             const data = window.currentUserData; if(!data) return;
-            const text = document.getElementById('modalText').value; // Без trim, чтобы сохранить пробелы
+            const text = document.getElementById('modalText').value; // Без trim, сохраняем отступы
             if(!text.trim()) return;
             
             const category = document.getElementById('selectedTag').value || 'Personal';
-            const formattedText = `[${category}] ${text}`;
-            
-            let newCategoryColors = { ...data.category_colors };
-            const pickedColor = document.getElementById('selectedColor').value;
-            if (!defaultTags.includes(category) && !newCategoryColors[category] && pickedColor) {
-                newCategoryColors[category] = pickedColor;
-            }
             
             const isEdit = document.getElementById('editIndex').value !== "-1";
             const idx = parseInt(document.getElementById('editIndex').value);
             const origType = document.getElementById('editOriginalType').value;
 
+            // Если новая заметка, добавляем дату: {17 Apr 2026}
+            let dateStr = "";
+            if (window.currentType === 'note') {
+                if (isEdit) {
+                    const parsed = parseItem(data.notes[idx]);
+                    dateStr = parsed.date ? `{${parsed.date}} ` : '';
+                } else {
+                    const today = new Date().toLocaleDateString('en-US', {day:'numeric', month:'short', year:'numeric'});
+                    dateStr = `{${today}} `;
+                }
+            }
+
+            const formattedText = `[${category}] ${dateStr}${text}`;
+            
+            // Умная выдача цвета
+            let newCategoryColors = { ...data.category_colors };
+            if (!defaultTags.includes(category) && !newCategoryColors[category]) {
+                newCategoryColors[category] = getUniqueColor(newCategoryColors);
+            }
+            
             let notes = [...(data.notes || [])]; let reminders = [...(data.reminders || [])];
             tg.HapticFeedback.impactOccurred('heavy');
 
@@ -591,9 +598,9 @@
 
             if(window.currentType === 'note') notes.unshift(formattedText);
             else {
-                const dateVal = document.getElementById('modalDate').value;
-                if(!dateVal) return;
-                reminders.push({ text: formattedText, datetime: dateVal.replace('T', ' ') + ":00" });
+                const dtVal = document.getElementById('modalDate').value;
+                if(!dtVal) return;
+                reminders.push({ text: formattedText, datetime: dtVal.replace('T', ' ') + ":00" });
             }
 
             await updateDoc(userDocRef, { notes, reminders, category_colors: newCategoryColors });
@@ -621,10 +628,7 @@
             document.querySelectorAll('#tasksList .list-item')[index].classList.add('done');
             let reminders = [...(data.reminders || [])];
             reminders.splice(index, 1);
-            
-            // Накручиваем счетчик выполненных для кольца
             const completed = (data.completed_tasks || 0) + 1;
-            
             setTimeout(async () => { await updateDoc(userDocRef, { reminders, completed_tasks: completed }); }, 300);
         }
     </script>
