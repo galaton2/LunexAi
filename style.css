@@ -31,10 +31,19 @@ body {
 .splash-logo { font-size: 70px; color: var(--pink-main); text-shadow: 0 0 30px var(--pink-glow); animation: pulse 1.5s infinite alternate; }
 @keyframes pulse { from { transform: scale(0.9); text-shadow: 0 0 10px var(--pink-glow); } to { transform: scale(1.1); text-shadow: 0 0 40px var(--pink-glow); } }
 
-/* --- TOP BAR (Fix Telegram Overlap) --- */
-.top-bar { display: flex; justify-content: space-between; align-items: center; padding: max(60px, env(safe-area-inset-top)) 24px 10px; position: sticky; top: 0; background: transparent; backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); z-index: 50; }
-.premium-btn { background: var(--pink-glow); color: #fff; font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: 20px; border: 1px solid var(--pink-main); display: flex; align-items: center; gap: 6px; box-shadow: 0 0 12px var(--pink-glow); }
-.avatar-container { width: 42px; height: 42px; border-radius: 50%; overflow: hidden; border: 2px solid var(--card-border); }
+/* --- TOP BAR (Centered & No Avatar) --- */
+.top-bar { 
+    display: flex; justify-content: center; align-items: center; 
+    padding: max(60px, env(safe-area-inset-top)) 24px 10px; 
+    position: sticky; top: 0; 
+    background: transparent; 
+    backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); 
+    z-index: 50; 
+}
+.premium-btn { background: var(--pink-glow); color: #fff; font-size: 13px; font-weight: 600; padding: 8px 18px; border-radius: 20px; border: 1px solid var(--pink-main); display: flex; align-items: center; gap: 8px; box-shadow: 0 0 12px var(--pink-glow); letter-spacing: 0.5px; }
+
+/* Settings Avatar */
+.avatar-container { width: 60px; height: 60px; border-radius: 50%; overflow: hidden; border: 2px solid var(--card-border); }
 .avatar-container img { width: 100%; height: 100%; object-fit: cover; }
 
 /* --- GREETING --- */
@@ -65,21 +74,18 @@ body {
 .grid-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .card { 
     background: var(--bg-card); border: 1px solid var(--card-border); border-radius: 16px; 
-    padding: 16px; height: 135px; /* Жестко фиксируем высоту! */
+    padding: 16px; height: 135px;
     display: flex; flex-direction: column; justify-content: space-between; 
     backdrop-filter: blur(10px); transition: 0.2s; cursor: pointer; overflow: hidden;
 }
 .card:active { transform: scale(0.96); border-color: var(--pink-main); }
 .card-text { 
     font-size: 13px; font-weight: 500; line-height: 1.5; 
-    /* Идеальная обрезка текста на 4 строках */
     display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; 
     overflow: hidden; text-overflow: ellipsis; white-space: pre-wrap; flex-grow: 1;
 }
 .card-text b { color: #fff; font-size: 14px; }
 .card-icon { font-size: 14px; color: var(--text-muted); margin-top: 10px; display: flex; justify-content: flex-end; width: 100%; flex-shrink: 0; }
-.copy-btn { padding: 6px; border-radius: 50%; background: rgba(255,255,255,0.05); transition: 0.2s; display: flex; align-items: center; justify-content: center; }
-.copy-btn:active { background: var(--pink-main); color: white; }
 
 /* Lists & Tasks */
 .list-item { background: var(--bg-card); border: 1px solid var(--card-border); border-radius: 16px; padding: 16px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; backdrop-filter: blur(10px); cursor: pointer; transition: 0.2s; }
@@ -137,17 +143,20 @@ body {
 .zen-editor { position: fixed; inset: 0; background: var(--editor-bg); z-index: 2000; display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1); }
 .zen-editor.active { transform: translateX(0); }
 
-/* Header Fix */
-.ze-header { display: flex; justify-content: space-between; align-items: center; padding: max(50px, env(safe-area-inset-top)) 20px 15px; background: var(--editor-bg); border-bottom: 1px solid var(--card-border); }
-.ze-back { background: transparent; border: none; color: var(--pink-main); font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 5px; cursor: pointer; }
+/* Zen Header */
+.ze-header { display: flex; justify-content: center; align-items: center; padding: max(50px, env(safe-area-inset-top)) 20px 15px; background: var(--editor-bg); border-bottom: 1px solid var(--card-border); }
 .ze-meta { font-size: 13px; font-weight: 600; color: var(--text-main); background: rgba(255,255,255,0.05); padding: 6px 14px; border-radius: 20px; cursor: pointer; display: flex; align-items: center; gap: 5px; border: 1px solid var(--card-border); }
-.ze-menu-btn-small { background: transparent; border: none; color: var(--text-main); font-size: 18px; cursor: pointer; padding: 5px; }
 
+/* Zen Paper & Body */
 .ze-body { flex-grow: 1; padding: 20px 15px 0; overflow-y: auto; display: flex; flex-direction: column; align-items: center; }
 .ze-paper { background: var(--paper-bg); width: 100%; max-width: 700px; border-radius: 20px 20px 0 0; padding: 25px 25px 50px; flex-grow: 1; display: flex; flex-direction: column; border: 1px solid var(--card-border); border-bottom: none; }
 
-.ze-date { font-size: 12px; color: var(--text-muted); font-weight: 500; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; }
-#zeSaveStatus { color: var(--pink-main); font-size: 11px; opacity: 0; transition: opacity 0.3s; }
+/* ТРИ ТОЧКИ ТЕПЕРЬ НА ЛИСТЕ */
+.ze-paper-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px; }
+.ze-date { font-size: 12px; color: var(--text-muted); font-weight: 500; display: flex; align-items: center; }
+.ze-menu-btn-small { background: transparent; border: none; color: var(--text-muted); font-size: 18px; cursor: pointer; transition: 0.2s; padding: 0 5px; }
+.ze-menu-btn-small:active { color: #fff; }
+#zeSaveStatus { color: var(--pink-main); font-size: 11px; opacity: 0; transition: opacity 0.3s; margin-left: 10px; }
 #zeTextarea { flex-grow: 1; background: transparent; border: none; color: #ffffff; outline: none; font-size: 16px; line-height: 1.6; resize: none; white-space: pre-wrap; font-weight: 400; transition: font-size 0.2s; padding-bottom: 50px; }
 
 /* Forms & Quick Time Chips */
