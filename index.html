@@ -82,18 +82,17 @@
     </div>
 
     <div class="modal-overlay" id="modalOverlay" onclick="closeAllModals()"></div>
-
     <div class="modal-sheet" id="creationRouterModal">
-        <div class="modal-handle-area"><div class="modal-handle"></div></div>
+        <div class="modal-handle"></div>
         <h2 class="section-title" style="margin-top:0;">Create New</h2>
-        <div class="form-group" style="gap: 10px;">
-            <button class="btn btn-cancel" onclick="openZenEditor(-1)" style="display:flex; align-items:center; gap:10px; border-color:var(--card-border); color:white;"><i class="fas fa-pen-nib" style="color:var(--pink-main);"></i> New Note</button>
-            <button class="btn btn-cancel" onclick="openReminderModal(-1)" style="display:flex; align-items:center; gap:10px; border-color:var(--card-border); color:white;"><i class="fas fa-clock" style="color:var(--pink-main);"></i> New Reminder</button>
+        <div class="creation-grid">
+            <div class="creation-btn" onclick="openZenEditor(-1)"><i class="fas fa-pen-nib"></i> New Note</div>
+            <div class="creation-btn" onclick="openReminderModal(-1)"><i class="fas fa-clock"></i> New Reminder</div>
         </div>
     </div>
 
     <div class="modal-sheet" id="reminderModal" style="z-index: 1001;">
-        <div class="modal-handle-area"><div class="modal-handle"></div></div>
+        <div class="modal-handle"></div>
         <h2 class="section-title" id="remModalTitle" style="margin-top:0;">Set Reminder</h2>
         <div class="form-group"><input type="text" class="form-control" id="remText" placeholder="What to do?"></div>
         <div class="form-group">
@@ -116,46 +115,44 @@
     <div id="zenEditor" class="zen-editor">
         <div class="ze-header">
             <button class="ze-back" onclick="saveAndCloseZenEditor()"><i class="fas fa-chevron-left"></i> Vault</button>
-            <div class="ze-meta" onclick="openCategorySelector()"><span id="zeCategory">Personal</span> <i class="fas fa-caret-down" style="font-size:10px;"></i></div>
-            <button class="ze-menu-btn" onclick="openContextOptions()"><i class="fas fa-ellipsis-h"></i></button>
+            <div class="ze-meta" onclick="openCategorySelector()"><span id="zeCategory">Personal</span> <i class="fas fa-caret-down"></i></div>
+            <button class="ze-menu-btn-small" onclick="openContextOptions()"><i class="fas fa-ellipsis-v"></i></button>
         </div>
-        
         <div class="ze-body">
             <div class="ze-paper">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <div class="ze-date" id="zeDate">17 Apr 2026</div>
-                    <div class="ze-date" id="zeWordCount" style="color:var(--pink-main);">0 words</div>
-                </div>
-                <textarea id="zeTextarea" placeholder="Start writing..." oninput="updateWordCount()"></textarea>
+                <div class="ze-date"><span id="zeDate">17 Apr 2026</span> <span id="zeSaveStatus">Saving...</span></div>
+                <textarea id="zeTextarea" placeholder="Start writing..." oninput="handleTyping()"></textarea>
+                <div class="ze-words" id="zeWordCount" style="text-align:center; padding-top:10px; color:var(--text-muted); font-size:12px;">0 words</div>
             </div>
         </div>
         <input type="hidden" id="zeEditIndex" value="-1">
     </div>
 
     <div class="modal-sheet" id="contextOptionsMenu" style="z-index: 2005;">
-        <div class="modal-handle-area"><div class="modal-handle"></div></div>
+        <div class="modal-handle"></div>
         <div class="menu-list">
             <div class="menu-item" onclick="changeFontSize(2)"><i class="fas fa-search-plus"></i> Zoom In (A+)</div>
             <div class="menu-item" onclick="changeFontSize(-2)"><i class="fas fa-search-minus"></i> Zoom Out (A-)</div>
             <div class="menu-item" onclick="printNote()"><i class="fas fa-print"></i> Print Note</div>
+            <div class="menu-item" onclick="shareNote()"><i class="fas fa-share-square"></i> Share Note</div>
             <div class="menu-item danger" onclick="deleteZenNote()"><i class="fas fa-trash-alt"></i> Delete Note</div>
         </div>
     </div>
 
     <div class="modal-sheet" id="catSelectorMenu" style="z-index: 2005;">
-        <div class="modal-handle-area"><div class="modal-handle"></div></div>
+        <div class="modal-handle"></div>
         <h2 class="section-title" style="margin-top:0;">Select Category</h2>
         <div class="tags-container" id="zeTagsContainer"></div>
         <input type="text" id="zeCustomTagInput" class="tag-custom-input" placeholder="Type new category & press Enter..." onkeypress="if(event.key === 'Enter') applyNewCategory()">
     </div>
 
     <div class="modal-sheet" id="categoryModal" style="z-index: 1001;">
-        <div class="modal-handle-area"><div class="modal-handle"></div></div>
+        <div class="modal-handle"></div>
         <h2 class="section-title" style="margin-top:0;">Rename Category</h2>
         <div class="form-group"><input type="text" class="form-control" id="catEditName" placeholder="Category Name"></div>
         <input type="hidden" id="oldCatName" value="">
         <div class="modal-actions">
-            <button class="btn btn-cancel" onclick="closeAllModals()">Cancel</button>
+            <button class="btn btn-cancel" onclick="closeCategoryModal()">Cancel</button>
             <button class="btn btn-primary" onclick="saveCategorySettings()">Apply</button>
         </div>
     </div>
@@ -183,26 +180,6 @@
             document.getElementById('setAvatar').src = avatarUrl;
         }
 
-        // SWIPE-TO-CLOSE ЛОГИКА ДЛЯ ВСЕХ ШТОРОК
-        let startY = 0; let currentY = 0;
-        document.querySelectorAll('.modal-sheet').forEach(sheet => {
-            const handle = sheet.querySelector('.modal-handle-area');
-            if(!handle) return;
-            handle.addEventListener('touchstart', e => {
-                startY = e.touches[0].clientY;
-                sheet.style.transition = 'none';
-            }, {passive: true});
-            handle.addEventListener('touchmove', e => {
-                currentY = e.touches[0].clientY;
-                if(currentY > startY) { sheet.style.transform = `translateY(${currentY - startY}px)`; }
-            }, {passive: true});
-            handle.addEventListener('touchend', e => {
-                sheet.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), bottom 0.4s';
-                if(currentY - startY > 80) { closeAllModals(); } // Закрываем если свайпнули вниз на 80px
-                sheet.style.transform = '';
-            });
-        });
-
         window.switchTab = function(tabId, btn) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
@@ -227,6 +204,7 @@
 
         let openSections = JSON.parse(localStorage.getItem('lunexOpenSections')) || {};
         let currentFontSize = 16; 
+        let typingTimer;
 
         onSnapshot(userDocRef, (docSnap) => {
             const splash = document.getElementById('splashScreen');
@@ -240,6 +218,30 @@
                 renderActivityRing();
             }
         });
+
+        // --- SWIPE TO DISMISS LOGIC ---
+        function enableSwipeToClose() {
+            document.querySelectorAll('.modal-sheet').forEach(sheet => {
+                const handle = sheet.querySelector('.modal-handle');
+                if (!handle) return;
+                let startY = 0; let currentY = 0;
+                handle.addEventListener('touchstart', (e) => {
+                    startY = e.touches[0].clientY;
+                    sheet.style.transition = 'none'; 
+                });
+                handle.addEventListener('touchmove', (e) => {
+                    currentY = e.touches[0].clientY;
+                    const delta = currentY - startY;
+                    if (delta > 0) sheet.style.transform = `translateY(${delta}px)`;
+                });
+                handle.addEventListener('touchend', (e) => {
+                    sheet.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), bottom 0.4s';
+                    sheet.style.transform = ''; 
+                    if (currentY - startY > 60) closeAllModals();
+                });
+            });
+        }
+        document.addEventListener("DOMContentLoaded", enableSwipeToClose);
 
         const defaultTags = ['Personal', 'Work', 'Finance', 'Ideas'];
         const sectionIcons = { 'Personal': 'fa-user', 'Work': 'fa-briefcase', 'Finance': 'fa-wallet', 'Ideas': 'fa-lightbulb' };
@@ -268,10 +270,10 @@
         }
 
         function formatCardText(text) {
-            return text.replace(/^#\s+(.*)$/gm, '<b>$1</b>');
+            let preview = text.replace(/^#\s+(.*)$/gm, '<b>$1</b>'); 
+            return preview;
         }
 
-        window.currentTaskFilter = 'all';
         window.setTaskFilter = function(filter) {
             window.currentTaskFilter = filter;
             document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
@@ -281,6 +283,14 @@
         }
 
         window.filterNotes = function() { renderUI(); }
+
+        window.copyToClipboard = function(event, text) {
+            event.stopPropagation();
+            navigator.clipboard.writeText(text).then(() => {
+                tg.HapticFeedback.impactOccurred('success');
+                tg.showAlert("Copied to clipboard!");
+            });
+        }
 
         window.exportData = function() {
             if(!window.currentUserData) return;
@@ -347,6 +357,9 @@
                                 ${groupedNotes[category].map(nObj => `
                                     <div class="card" onclick="openZenEditor(${nObj.origIndex})">
                                         <div class="card-text">${formatCardText(nObj.content)}</div>
+                                        <div class="card-icon">
+                                            <div class="copy-btn" onclick="copyToClipboard(event, '${nObj.content.replace(/'/g, "\\'")}')"><i class="fas fa-copy"></i></div>
+                                        </div>
                                     </div>
                                 `).join('')}
                             </div>
@@ -390,7 +403,6 @@
             }
         }
 
-        // --- ACTIVITY RING ---
         function renderActivityRing() {
             const data = window.currentUserData; if(!data) return;
             const reminders = data.reminders || [];
@@ -407,8 +419,8 @@
 
         // --- MODAL ROUTING & UTILS ---
         window.closeAllModals = function() {
+            document.querySelectorAll('.modal-sheet').forEach(m => m.classList.remove('active'));
             document.getElementById('modalOverlay').classList.remove('active');
-            document.querySelectorAll('.modal-sheet').forEach(el => { el.classList.remove('active'); el.style.transform = ''; });
         }
 
         window.openCreationRouter = function() {
@@ -440,10 +452,18 @@
             document.getElementById('zeDate').innerText = dateStr;
             document.getElementById('zeTextarea').value = content;
             document.getElementById('zeTextarea').style.fontSize = `${currentFontSize}px`;
+            
             updateWordCount();
-
             document.getElementById('zenEditor').classList.add('active');
             if (index === -1) { setTimeout(() => document.getElementById('zeTextarea').focus(), 350); }
+        }
+
+        window.handleTyping = function() {
+            updateWordCount();
+            const status = document.getElementById('zeSaveStatus');
+            status.style.opacity = '1';
+            clearTimeout(typingTimer);
+            typingTimer = setTimeout(() => { status.style.opacity = '0'; }, 800);
         }
 
         window.updateWordCount = function() {
@@ -452,7 +472,7 @@
             document.getElementById('zeWordCount').innerText = `${words} words`;
         }
 
-        // АВТО-СОХРАНЕНИЕ
+        // Авто-сохранение при закрытии
         window.saveAndCloseZenEditor = async function() {
             document.getElementById('zenEditor').classList.remove('active');
             tg.HapticFeedback.impactOccurred('medium');
@@ -476,13 +496,13 @@
                 newCategoryColors[category] = getUniqueColor(newCategoryColors);
             }
 
-            if (idx !== -1) { notes.splice(idx, 1); }
+            if (idx !== -1) notes.splice(idx, 1); 
             notes.unshift(formattedText); 
             
             await updateDoc(userDocRef, { notes, category_colors: newCategoryColors });
         }
 
-        // ТРИ ТОЧКИ В РЕДАКТОРЕ
+        // Контекстное меню
         window.openContextOptions = function() {
             tg.HapticFeedback.impactOccurred('light');
             document.getElementById('modalOverlay').classList.add('active');
@@ -497,7 +517,26 @@
             tg.HapticFeedback.impactOccurred('light');
         }
 
-        window.printNote = function() { closeAllModals(); window.print(); }
+        window.printNote = function() {
+            const content = document.getElementById('zeTextarea').value;
+            const printWindow = window.open('', '', 'height=600,width=800');
+            printWindow.document.write('<html><head><title>Print Note</title>');
+            printWindow.document.write('<style>body{font-family:sans-serif; padding:20px; white-space:pre-wrap;}</style></head><body>');
+            printWindow.document.write(`<h1>${document.getElementById('zeCategory').innerText}</h1>`);
+            printWindow.document.write(`<p style="color:gray;">${document.getElementById('zeDate').innerText}</p>`);
+            printWindow.document.write(`<p>${content}</p>`);
+            printWindow.document.write('</body></html>');
+            printWindow.document.close();
+            printWindow.print();
+            closeAllModals();
+        }
+
+        window.shareNote = function() {
+            const text = document.getElementById('zeTextarea').value;
+            if (navigator.share) { navigator.share({ text: text }); } 
+            else { window.copyToClipboard(event, text); }
+            closeAllModals();
+        }
 
         window.deleteZenNote = async function() {
             const idx = parseInt(document.getElementById('zeEditIndex').value);
@@ -512,7 +551,6 @@
             tg.HapticFeedback.impactOccurred('heavy');
         }
 
-        // ВЫБОР КАТЕГОРИИ (В РЕДАКТОРЕ)
         window.openCategorySelector = function() {
             const data = window.currentUserData;
             const customTags = Object.keys(data?.category_colors || {});
@@ -530,13 +568,16 @@
             document.getElementById('catSelectorMenu').classList.add('active');
         }
 
-        window.applyCat = function(cat) { document.getElementById('zeCategory').innerText = cat; closeAllModals(); }
+        window.applyCat = function(cat) {
+            document.getElementById('zeCategory').innerText = cat;
+            closeAllModals();
+        }
         window.applyNewCategory = function() {
             const val = document.getElementById('zeCustomTagInput').value.trim();
             if(val) { applyCat(val); document.getElementById('zeCustomTagInput').value = ""; document.getElementById('zeCustomTagInput').style.display = "none"; }
         }
 
-        // --- REMINDERS MODAL (ЗАДАЧИ) ---
+        // --- REMINDERS MODAL (Задачи) ---
         window.openReminderModal = function(index) {
             closeAllModals();
             tg.HapticFeedback.impactOccurred('light');
@@ -557,7 +598,9 @@
                     const dt = new Date(item.datetime.replace(' ', 'T'));
                     timeStr = (new Date(dt - dt.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
                 }
-            } else { document.getElementById('remModalTitle').innerText = "Set Reminder"; }
+            } else {
+                document.getElementById('remModalTitle').innerText = "Set Reminder";
+            }
 
             document.getElementById('remText').value = content;
             document.getElementById('remDate').value = timeStr;
@@ -586,6 +629,7 @@
             
             const idx = parseInt(document.getElementById('remEditIndex').value);
             let reminders = [...(data.reminders || [])];
+            
             const formattedText = `[Agenda] ${text}`; 
             
             if (idx !== -1) reminders.splice(idx, 1);
@@ -606,7 +650,17 @@
             tg.HapticFeedback.impactOccurred('medium');
         }
 
-        // --- УПРАВЛЕНИЕ КАТЕГОРИЯМИ ---
+        window.completeReminder = async function(index) {
+            const data = window.currentUserData;
+            tg.HapticFeedback.impactOccurred('medium');
+            document.querySelectorAll('#tasksList .list-item')[index].classList.add('done');
+            let reminders = [...(data.reminders || [])];
+            reminders.splice(index, 1);
+            const completed = (data.completed_tasks || 0) + 1;
+            setTimeout(async () => { await updateDoc(userDocRef, { reminders, completed_tasks: completed }); }, 300);
+        }
+        
+        // --- CATEGORY SETTINGS ---
         window.openCategorySettings = function(event, category) {
             event.stopPropagation();
             tg.HapticFeedback.impactOccurred('medium');
@@ -616,6 +670,11 @@
             document.getElementById('categoryModal').classList.add('active');
         }
         
+        window.closeCategoryModal = function() {
+            document.getElementById('categoryModal').classList.remove('active');
+            document.getElementById('modalOverlay').classList.remove('active');
+        }
+
         window.saveCategorySettings = async function() {
             const data = window.currentUserData; if(!data) return;
             const oldName = document.getElementById('oldCatName').value;
@@ -623,7 +682,7 @@
             
             let newColors = { ...data.category_colors };
             if (oldName !== newName) { 
-                newColors[newName] = newColors[oldName]; 
+                newColors[newName] = newColors[oldName] || getUniqueColor(newColors); 
                 delete newColors[oldName]; 
             }
 
@@ -639,17 +698,7 @@
             }
 
             await updateDoc(userDocRef, { notes: notes, category_colors: newColors });
-            closeAllModals();
-        }
-
-        window.completeReminder = async function(index) {
-            const data = window.currentUserData;
-            tg.HapticFeedback.impactOccurred('medium');
-            document.querySelectorAll('#tasksList .list-item')[index].classList.add('done');
-            let reminders = [...(data.reminders || [])];
-            reminders.splice(index, 1);
-            const completed = (data.completed_tasks || 0) + 1;
-            setTimeout(async () => { await updateDoc(userDocRef, { reminders, completed_tasks: completed }); }, 300);
+            closeCategoryModal();
         }
     </script>
 </body>
