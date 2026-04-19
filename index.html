@@ -6,140 +6,7 @@
     <title>Lunex Premium</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        /* --- DESIGN SYSTEM: STAR.AI STYLE --- */
-        :root {
-            --bg-dark: #050508;
-            --bg-card: rgba(25, 25, 30, 0.6);
-            --bg-modal: rgba(15, 15, 18, 0.95);
-            --card-border: rgba(255, 255, 255, 0.08);
-            --pink-main: #ff477e;
-            --pink-glow: rgba(255, 71, 126, 0.5);
-            --text-main: #ffffff;
-            --text-muted: #a0a0b0;
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
-
-        body {
-            /* Тот самый градиент с фото */
-            background: radial-gradient(circle at 50% 0%, #4a0d26 0%, var(--bg-dark) 45%);
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            min-height: 100vh;
-            overflow-y: auto;
-            overflow-x: hidden;
-            padding-bottom: 120px;
-            -webkit-overflow-scrolling: touch;
-            background-attachment: fixed;
-        }
-
-        /* --- SPLASH SCREEN --- */
-        #splashScreen { position: fixed; inset: 0; background: var(--bg-dark); z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; transition: opacity 0.5s ease, visibility 0.5s; }
-        .splash-logo { font-size: 70px; color: var(--pink-main); text-shadow: 0 0 30px var(--pink-glow); animation: pulse 1.5s infinite alternate; }
-        @keyframes pulse { from { transform: scale(0.9); text-shadow: 0 0 10px var(--pink-glow); } to { transform: scale(1.1); text-shadow: 0 0 40px var(--pink-glow); } }
-
-        /* --- TOP BAR (Отступ 75px под челку) --- */
-        .top-bar { 
-            display: flex; justify-content: space-between; align-items: center; 
-            padding: 75px 24px 10px; 
-            position: sticky; top: 0; 
-            background: transparent; 
-            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); 
-            z-index: 50; 
-        }
-        .premium-btn { background: var(--pink-glow); color: #fff; font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: 20px; border: 1px solid var(--pink-main); display: flex; align-items: center; gap: 6px; box-shadow: 0 0 12px var(--pink-glow); }
-        .avatar-container { width: 42px; height: 42px; border-radius: 50%; overflow: hidden; border: 2px solid var(--card-border); }
-        .avatar-container img { width: 100%; height: 100%; object-fit: cover; }
-
-        /* --- GREETING (Из фото) --- */
-        .greeting { padding: 10px 24px 20px; }
-        .greeting h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
-        .greeting p { font-size: 13px; color: var(--text-muted); line-height: 1.4; max-width: 80%; }
-
-        /* --- TABS --- */
-        .tab-content { display: none; animation: fadeIn 0.3s ease; padding: 0 20px 20px; }
-        .tab-content.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* --- UI COMPONENTS (Карточки и Списки) --- */
-        .section-title { font-size: 14px; font-weight: 600; color: var(--text-muted); margin: 25px 0 15px; text-transform: uppercase; letter-spacing: 1px; }
-        
-        .grid-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px; }
-        .card { background: var(--bg-card); border: 1px solid var(--card-border); border-radius: 20px; padding: 16px; min-height: 120px; display: flex; flex-direction: column; justify-content: space-between; backdrop-filter: blur(10px); transition: 0.2s; cursor: pointer; }
-        .card:active { transform: scale(0.96); border-color: var(--pink-main); }
-        .card-text { font-size: 14px; font-weight: 500; line-height: 1.4; word-wrap: break-word; }
-        .card-icon { font-size: 16px; color: var(--text-muted); margin-top: 15px; display: flex; justify-content: space-between; align-items: center; width: 100%; }
-        
-        .tag { font-size: 9px; padding: 4px 10px; border-radius: 12px; font-weight: 700; text-transform: uppercase; color: #fff; background: rgba(255,255,255,0.1); }
-        
-        .list-item { background: var(--bg-card); border: 1px solid var(--card-border); border-radius: 16px; padding: 16px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; backdrop-filter: blur(10px); cursor: pointer; transition: 0.2s; }
-        .list-item:active { transform: scale(0.98); }
-        .list-info { flex-grow: 1; display: flex; flex-direction: column; gap: 5px; }
-        .list-title { font-size: 15px; font-weight: 500; }
-        .list-meta { font-size: 12px; color: var(--pink-main); font-weight: 600; display: flex; gap: 10px; align-items: center; }
-        
-        .checkbox { width: 24px; height: 24px; border-radius: 8px; border: 2px solid var(--text-muted); display: flex; justify-content: center; align-items: center; transition: 0.3s; }
-        .list-item.done .checkbox { background: var(--pink-main); border-color: var(--pink-main); box-shadow: 0 0 10px var(--pink-glow); }
-        .list-item.done .checkbox i { color: #fff; font-size: 12px; opacity: 1; }
-        .checkbox i { opacity: 0; transition: 0.3s; }
-        .list-item.done .list-title { text-decoration: line-through; opacity: 0.5; }
-
-        /* --- CHART --- */
-        .chart { background: var(--bg-card); border: 1px solid var(--card-border); border-radius: 20px; padding: 20px 15px 30px; display: flex; align-items: flex-end; justify-content: space-between; height: 160px; margin-top: 10px; }
-        .bar { width: 10%; background: rgba(255,255,255,0.05); border-radius: 6px; position: relative; display: flex; justify-content: center; height: 100%; transition: 0.3s; }
-        .fill { position: absolute; bottom: 0; width: 100%; background: var(--pink-main); border-radius: 6px; box-shadow: 0 0 10px var(--pink-glow); transition: height 1s; height: 0%; }
-        .bar.today .fill { background: #fff; box-shadow: 0 0 15px rgba(255,255,255,0.8); }
-        .day { position: absolute; bottom: -25px; font-size: 11px; color: var(--text-muted); font-weight: 600;}
-        .bar.today .day { color: #fff; }
-
-        /* --- SEARCH & FILTERS --- */
-        .search-bar { background: var(--bg-card); border: 1px solid var(--card-border); border-radius: 16px; padding: 12px 16px; display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
-        .search-bar input { background: transparent; border: none; outline: none; color: white; font-size: 14px; width: 100%; }
-        
-        .filter-tabs { display: flex; gap: 10px; margin-bottom: 20px; }
-        .filter-btn { background: transparent; border: 1px solid var(--card-border); color: var(--text-muted); padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; transition: 0.3s; }
-        .filter-btn.active { background: var(--pink-glow); color: #fff; border-color: var(--pink-main); }
-
-        /* --- НОВАЯ ПЛАВАЮЩАЯ ПАНЕЛЬ С КНОПКОЙ (Floating Nav) --- */
-        .bottom-panel { position: fixed; bottom: 0; left: 0; width: 100%; padding: 0 0 25px; background: linear-gradient(0deg, var(--bg-dark) 70%, transparent 100%); z-index: 100; display: flex; justify-content: center; }
-        .nav-bar { display: flex; justify-content: space-between; align-items: center; width: 90%; background: var(--bg-modal); border: 1px solid var(--card-border); border-radius: 30px; padding: 8px 25px; backdrop-filter: blur(20px); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .nav-item { color: var(--text-muted); font-size: 18px; padding: 10px; transition: 0.3s; cursor: pointer; }
-        .nav-item.active { color: var(--pink-main); text-shadow: 0 0 10px var(--pink-glow); transform: translateY(-3px); }
-        .fab-btn { width: 48px; height: 48px; border-radius: 50%; background: var(--pink-main); color: white; display: flex; justify-content: center; align-items: center; border: none; box-shadow: 0 4px 15px var(--pink-glow); cursor: pointer; font-size: 18px; transition: 0.2s; }
-        .fab-btn:active { transform: scale(0.9); }
-
-        /* --- MODAL (BOTTOM SHEET) --- */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); z-index: 999; display: none; opacity: 0; transition: 0.3s; }
-        .modal-overlay.active { display: block; opacity: 1; }
-        .modal-sheet { position: fixed; bottom: -100%; left: 0; width: 100%; background: var(--bg-modal); border-top: 1px solid var(--card-border); border-radius: 24px 24px 0 0; padding: 20px 24px 40px; z-index: 1000; transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
-        .modal-sheet.active { bottom: 0; }
-        
-        .modal-handle { width: 40px; height: 5px; background: rgba(255,255,255,0.2); border-radius: 10px; margin: 0 auto 20px; }
-        .form-group { margin-bottom: 20px; }
-        .form-control { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--card-border); border-radius: 16px; padding: 14px; color: white; font-size: 15px; outline: none; transition: 0.3s; }
-        .form-control:focus { border-color: var(--pink-main); }
-        textarea.form-control { resize: none; height: 100px; }
-        
-        /* Tags in Modal */
-        .tags-container { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-        .tag-pill { padding: 8px 14px; border-radius: 20px; background: rgba(255,255,255,0.05); border: 1px solid var(--card-border); font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; }
-        .tag-pill.selected { border-color: var(--pink-main); color: var(--pink-main); box-shadow: 0 0 10px var(--pink-glow); }
-        .tag-custom-input { display: none; width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--pink-main); color: white; padding: 8px 0; margin-top: 10px; font-size: 14px; outline: none; }
-
-        .type-selector { display: flex; background: rgba(255,255,255,0.05); border-radius: 16px; padding: 4px; margin-bottom: 25px; }
-        .type-btn { flex: 1; text-align: center; padding: 12px; border-radius: 12px; font-size: 14px; font-weight: 600; color: var(--text-muted); cursor: pointer; transition: 0.3s; }
-        .type-btn.active { background: var(--pink-main); color: white; box-shadow: 0 0 10px var(--pink-glow); }
-
-        .modal-actions { display: flex; gap: 10px; margin-top: 25px; }
-        .btn { flex: 1; padding: 14px; border-radius: 16px; font-size: 15px; font-weight: 700; cursor: pointer; border: none; transition: 0.2s; }
-        .btn-primary { background: var(--pink-main); color: white; box-shadow: 0 0 15px var(--pink-glow); }
-        .btn-danger { background: rgba(255, 50, 50, 0.2); color: #ff4d4d; border: 1px solid rgba(255, 50, 50, 0.5); }
-        .btn-cancel { background: transparent; color: var(--text-main); border: 1px solid var(--card-border); }
-
-        ::-webkit-scrollbar { width: 0px; }
-        .empty-state { text-align: center; color: var(--text-muted); font-size: 14px; padding: 20px; }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
@@ -148,7 +15,7 @@
     </div>
 
     <div class="top-bar">
-        <div class="premium-btn">Try Premium <i class="fas fa-star"></i></div>
+        <div class="premium-btn">Lunex PRO <i class="fas fa-star"></i></div>
         <div class="avatar-container"><img id="userAvatar" src="" alt="Avatar"></div>
     </div>
 
@@ -166,18 +33,28 @@
     </main>
 
     <main id="tab-notes" class="tab-content">
-        <div class="greeting" style="padding-bottom: 5px;"><h1>Your Notes</h1><p>Save ideas and records.</p></div>
+        <div class="greeting" style="padding-bottom: 5px;"><h1>Your Vault</h1><p>Structured Knowledge Base.</p></div>
         
         <div class="search-bar">
             <i class="fas fa-search" style="color: var(--text-muted);"></i>
             <input type="text" id="searchInput" placeholder="Search notes..." oninput="filterNotes()">
         </div>
 
-        <div class="grid-cards" id="notesGrid"></div>
+        <div id="notesContainer"></div>
     </main>
 
     <main id="tab-tasks" class="tab-content">
         <div class="greeting" style="padding-bottom: 5px;"><h1>To-Do List</h1><p>Manage your schedule.</p></div>
+
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-header">
+                <span>Daily Progress</span>
+                <span id="progressText" style="color: var(--pink-main);">0/0</span>
+            </div>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="progressBar"></div>
+            </div>
+        </div>
 
         <div class="filter-tabs">
             <div class="filter-btn active" id="fltAll" onclick="setTaskFilter('all')">All Tasks</div>
@@ -189,7 +66,7 @@
 
     <main id="tab-settings" class="tab-content">
         <div class="greeting"><h1>Settings</h1></div>
-        <div class="list-item" style="background: transparent; border: none;">
+        <div class="list-item" style="background: transparent; border: none; padding-left: 0;">
             <div style="display:flex; align-items:center; gap:15px;">
                 <div class="avatar-container" style="width: 60px; height: 60px;"><img id="setAvatar" src=""></div>
                 <div>
@@ -212,10 +89,8 @@
     <div class="bottom-panel">
         <div class="nav-bar">
             <div class="nav-item active" onclick="switchTab('dashboard', this)"><i class="fas fa-home"></i></div>
-            <div class="nav-item" onclick="switchTab('notes', this)"><i class="fas fa-border-all"></i></div>
-            
+            <div class="nav-item" onclick="switchTab('notes', this)"><i class="fas fa-folder-open"></i></div>
             <button class="fab-btn" onclick="openAddModal()"><i class="fas fa-plus"></i></button>
-            
             <div class="nav-item" onclick="switchTab('tasks', this)"><i class="fas fa-check-circle"></i></div>
             <div class="nav-item" onclick="switchTab('settings', this)"><i class="fas fa-cog"></i></div>
         </div>
@@ -259,7 +134,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
         import { getFirestore, doc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
 
-        // INIT TELEGRAM
         const tg = window.Telegram.WebApp;
         tg.expand();
         if (tg.requestFullscreen) { tg.requestFullscreen(); }
@@ -279,10 +153,6 @@
             
             document.getElementById('userAvatar').src = avatarUrl;
             document.getElementById('setAvatar').src = avatarUrl;
-        } else {
-            const fA = "https://ui-avatars.com/api/?name=AI&background=ff477e&color=fff";
-            document.getElementById('userAvatar').src = fA;
-            document.getElementById('setAvatar').src = fA;
         }
 
         window.switchTab = function(tabId, btn) {
@@ -294,7 +164,6 @@
             window.scrollTo(0,0);
         };
 
-        // FIREBASE SETUP
         const firebaseConfig = {
             apiKey: "AIzaSyDY8g42qsSkoN36i-DIeptehoDWXSEUlU0",
             authDomain: "lunex-f5362.firebaseapp.com",
@@ -321,7 +190,7 @@
         });
 
         const defaultTags = ['Personal', 'Work', 'Ideas', 'Buy'];
-        const iconsArr = ['fa-user', 'fa-envelope', 'fa-comment', 'fa-code', 'fa-bolt', 'fa-star'];
+        const iconsArr = ['fa-cube', 'fa-bolt', 'fa-star', 'fa-layer-group'];
         
         function getTagColor(tag) {
             const predefined = { 'Personal': '#ff477e', 'Work': '#00f0ff', 'Ideas': '#ffd700', 'Buy': '#ff9900' };
@@ -334,14 +203,18 @@
             let category = "Personal"; let content = rawText;
             const match = rawText.match(/^\[(.*?)\]\s*(.*)/);
             if (match) { category = match[1]; content = match[2]; }
-            return { category, content, rawText };
+            
+            // Фича: Если есть значок 🔴, это срочно
+            const isUrgent = content.includes('🔴');
+            if(isUrgent) content = content.replace('🔴', '').trim();
+            
+            return { category, content, rawText, isUrgent };
         }
 
         window.currentTaskFilter = 'all';
         window.setTaskFilter = function(filter) {
             window.currentTaskFilter = filter;
-            document.getElementById('fltAll').classList.remove('active');
-            document.getElementById('fltToday').classList.remove('active');
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById(filter === 'all' ? 'fltAll' : 'fltToday').classList.add('active');
             tg.HapticFeedback.impactOccurred('light');
             renderUI();
@@ -351,59 +224,91 @@
 
         function renderUI() {
             const data = window.currentUserData; if(!data) return;
-            const notes = data.notes || []; let reminders = data.reminders || [];
+            const notes = data.notes || []; 
+            let reminders = data.reminders || [];
             document.getElementById('dbItemCount').innerText = `${notes.length + reminders.length}`;
 
-            // Search Filter
+            // --- СЕКЦИИ ЗАМЕТОК (SMART SECTIONS) ---
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const filteredNotes = notes.map((n, i) => ({ text: n, origIndex: i }))
                                      .filter(n => n.text.toLowerCase().includes(searchTerm));
 
-            // Render Notes Grid (STAR.ai Style)
-            const nGrid = document.getElementById('notesGrid');
-            if(filteredNotes.length === 0) nGrid.innerHTML = '<p class="empty-state" style="grid-column: span 2;">No notes found.</p>';
-            else {
-                nGrid.innerHTML = filteredNotes.map(nObj => {
+            const nContainer = document.getElementById('notesContainer');
+            if(filteredNotes.length === 0) {
+                nContainer.innerHTML = '<p class="empty-state">No notes found.</p>';
+            } else {
+                // Группируем по категориям
+                const groupedNotes = {};
+                filteredNotes.forEach(nObj => {
                     const parsed = parseItem(nObj.text);
-                    const icon = iconsArr[nObj.origIndex % iconsArr.length];
-                    return `
-                    <div class="card" onclick="openEditModal('note', ${nObj.origIndex})">
-                        <div class="card-text">${parsed.content.length > 60 ? parsed.content.substring(0, 60) + '...' : parsed.content}</div>
-                        <div class="card-icon">
-                            <span class="tag">${parsed.category}</span>
-                            <i class="fas ${icon}"></i>
-                        </div>
-                    </div>`;
-                }).join('');
+                    if(!groupedNotes[parsed.category]) groupedNotes[parsed.category] = [];
+                    groupedNotes[parsed.category].push(nObj);
+                });
+
+                let html = '';
+                for(const [cat, items] of Object.entries(groupedNotes)) {
+                    const tCol = getTagColor(cat);
+                    html += `<div class="category-header" style="color: ${tCol}; border-bottom: 1px solid ${tCol}40;">
+                                <i class="fas fa-folder" style="font-size: 11px;"></i> ${cat} <span style="color:var(--text-muted); font-size:10px; margin-left:auto;">${items.length}</span>
+                             </div>`;
+                    html += `<div class="grid-cards">`;
+                    html += items.map((nObj, index) => {
+                        const parsed = parseItem(nObj.text);
+                        const icon = iconsArr[index % iconsArr.length];
+                        return `
+                        <div class="card" onclick="openEditModal('note', ${nObj.origIndex})">
+                            <div class="card-text">${parsed.content.length > 60 ? parsed.content.substring(0, 60) + '...' : parsed.content}</div>
+                            <div class="card-icon"><i class="fas ${icon}"></i></div>
+                        </div>`;
+                    }).join('');
+                    html += `</div>`;
+                }
+                nContainer.innerHTML = html;
             }
 
-            // Render Tasks (STAR.ai Style)
+            // --- АВТО-СОРТИРОВКА И ПРОГРЕСС ТРЕКЕР (TASKS) ---
+            // Сортировка: самые близкие по времени наверху
+            reminders.sort((a, b) => new Date(a.datetime.replace(' ', 'T')) - new Date(b.datetime.replace(' ', 'T')));
+            
             const tList = document.getElementById('tasksList');
             const dReminders = document.getElementById('dashReminders');
             const todayStr = new Date().toLocaleDateString();
+            const nowTime = new Date();
             
-            if(window.currentTaskFilter === 'today') {
-                reminders = reminders.filter(r => new Date(r.datetime.replace(' ', 'T')).toLocaleDateString() === todayStr);
-            }
+            const todayReminders = reminders.filter(r => new Date(r.datetime.replace(' ', 'T')).toLocaleDateString() === todayStr);
+
+            // Прогресс бар
+            const totalToday = todayReminders.length;
+            // Условная логика: т.к. мы удаляем выполненные задачи, прогресс бар показывает оставшиеся
+            document.getElementById('progressText').innerText = `${totalToday} Left Today`;
+            const fillPct = totalToday === 0 ? 100 : 10; // Если 0 - заполнено на 100%, иначе минимум
+            document.getElementById('progressBar').style.width = totalToday === 0 ? '100%' : '10%';
+            document.getElementById('progressBar').style.background = totalToday === 0 ? '#00f0ff' : 'var(--pink-main)';
+
+            if(window.currentTaskFilter === 'today') reminders = todayReminders;
 
             if(reminders.length === 0) {
                 tList.innerHTML = '<p class="empty-state">No pending tasks.</p>';
                 dReminders.innerHTML = '<p class="empty-state">No active timers.</p>';
             } else {
-                const renderHTML = reminders.map((r, i) => {
+                const renderHTML = reminders.map((r) => {
+                    const origIndex = data.reminders.indexOf(r);
                     const parsed = parseItem(r.text);
                     const d = new Date(r.datetime.replace(' ', 'T'));
+                    const isOverdue = d < nowTime;
                     const dateStr = d.toLocaleDateString([], {month:'short', day:'numeric'}) + ', ' + d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    const urgentClass = parsed.isUrgent ? 'urgent' : '';
+                    const timeClass = isOverdue ? 'overdue' : '';
                     
                     return `
-                    <div class="list-item" onclick="openEditModal('task', ${i})">
+                    <div class="list-item ${urgentClass}" id="task_${origIndex}" onclick="openEditModal('task', ${origIndex})">
                         <div class="list-info">
                             <span class="list-title">${parsed.content}</span>
-                            <div class="list-meta">
+                            <div class="list-meta ${timeClass}">
                                 <span>${parsed.category}</span> • <span>${dateStr}</span>
                             </div>
                         </div>
-                        <div class="checkbox" onclick="event.stopPropagation(); completeReminder(${i})"><i class="fas fa-check"></i></div>
+                        <div class="checkbox" onclick="event.stopPropagation(); completeReminder(${origIndex})"><i class="fas fa-check"></i></div>
                     </div>`;
                 }).join('');
                 tList.innerHTML = renderHTML;
@@ -440,8 +345,7 @@
         window.currentType = 'note';
         window.selectType = function(type) {
             window.currentType = type;
-            document.getElementById('btnTypeNote').classList.remove('active');
-            document.getElementById('btnTypeTask').classList.remove('active');
+            document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(type === 'note' ? 'btnTypeNote' : 'btnTypeTask').classList.add('active');
             document.getElementById('dateGroup').style.display = type === 'task' ? 'block' : 'none';
             tg.HapticFeedback.impactOccurred('light');
@@ -554,7 +458,7 @@
             const idx = parseInt(document.getElementById('editIndex').value);
             const origType = document.getElementById('editOriginalType').value;
             
-            tg.showConfirm("Delete this item?", async function(confirm) {
+            tg.showConfirm("Delete this item permanently?", async function(confirm) {
                 if(!confirm) return;
                 let notes = [...(data.notes || [])]; let reminders = [...(data.reminders || [])];
                 if(origType === 'note') notes.splice(idx, 1); else reminders.splice(idx, 1);
@@ -564,13 +468,19 @@
             });
         }
 
+        // КРАСИВОЕ ВЫПОЛНЕНИЕ ЗАДАЧИ
         window.completeReminder = async function(index) {
             const data = window.currentUserData;
             tg.HapticFeedback.impactOccurred('medium');
-            document.querySelectorAll('#tasksList .list-item')[index].classList.add('done');
+            
+            const taskEl = document.getElementById(`task_${index}`);
+            if(taskEl) taskEl.classList.add('done');
+            
             let reminders = [...(data.reminders || [])];
-            reminders.splice(index, 1);
-            setTimeout(async () => { await updateDoc(userDocRef, { reminders }); }, 300);
+            reminders.splice(index, 1); // Удаляем из массива
+            
+            // Ждем 0.5 секунд, чтобы юзер увидел красивую анимацию зачеркивания перед исчезновением
+            setTimeout(async () => { await updateDoc(userDocRef, { reminders }); }, 500);
         }
     </script>
 </body>
