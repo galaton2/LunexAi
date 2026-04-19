@@ -13,8 +13,7 @@
     <div id="splashScreen"><i class="fas fa-star splash-logo"></i></div>
 
     <div class="top-bar">
-        <div class="premium-btn">Try Premium <i class="fas fa-star"></i></div>
-        <div class="avatar-container"><img id="userAvatar" src="" alt="Avatar"></div>
+        <div class="premium-btn">Lunex AI v2.4 <i class="fas fa-star" style="font-size: 10px;"></i></div>
     </div>
 
     <main id="tab-dashboard" class="tab-content active">
@@ -113,12 +112,14 @@
 
     <div id="zenEditor" class="zen-editor">
         <div class="ze-header">
-            <div style="width: 24px;"></div> <div class="ze-meta" onclick="openCategorySelector()"><span id="zeCategory">Personal</span> <i class="fas fa-caret-down"></i></div>
-            <button class="ze-menu-btn-small" onclick="openContextOptions()"><i class="fas fa-ellipsis-v"></i></button>
+            <div class="ze-meta" onclick="openCategorySelector()"><span id="zeCategory">Personal</span> <i class="fas fa-caret-down"></i></div>
         </div>
         <div class="ze-body">
             <div class="ze-paper">
-                <div class="ze-date"><span id="zeDate">17 Apr 2026</span> <span id="zeSaveStatus">Saving...</span></div>
+                <div class="ze-paper-header">
+                    <div class="ze-date"><span id="zeDate">17 Apr 2026</span> <span id="zeSaveStatus">Saving...</span></div>
+                    <button class="ze-menu-btn-small" onclick="openContextOptions()"><i class="fas fa-ellipsis-h"></i></button>
+                </div>
                 <textarea id="zeTextarea" placeholder="Start writing..." oninput="handleTyping()"></textarea>
                 <div class="ze-words" id="zeWordCount" style="text-align:center; padding-top:10px; color:var(--text-muted); font-size:12px;">0 words</div>
             </div>
@@ -162,22 +163,49 @@
         tg.expand();
         if (tg.requestFullscreen) { tg.requestFullscreen(); }
 
-        // --- ИНТЕГРАЦИЯ НАТИВНОЙ КНОПКИ "НАЗАД" ТЕЛЕГРАМА ---
+        // --- ВСТРОЕННЫЕ PUSH УВЕДОМЛЕНИЯ (Работает, пока открыто приложение) ---
+        let notifiedReminders = new Set();
+        if ("Notification" in window && Notification.permission !== "denied") {
+            Notification.requestPermission();
+        }
+        
+        setInterval(() => {
+            if(!window.currentUserData) return;
+            const now = new Date();
+            const reminders = window.currentUserData.reminders || [];
+            
+            reminders.forEach((r, idx) => {
+                if(r.datetime) {
+                    const rd = new Date(r.datetime.replace(' ', 'T'));
+                    // Если время совпало (с точностью до минуты) и еще не уведомляли
+                    if(rd.getFullYear() === now.getFullYear() && rd.getMonth() === now.getMonth() && rd.getDate() === now.getDate() && rd.getHours() === now.getHours() && rd.getMinutes() === now.getMinutes()) {
+                        const uniqueId = r.text + r.datetime;
+                        if(!notifiedReminders.has(uniqueId)) {
+                            notifiedReminders.add(uniqueId);
+                            tg.HapticFeedback.notificationOccurred('warning');
+                            
+                            if (Notification.permission === "granted") {
+                                new Notification("Lunex AI Reminder", { body: r.text.replace(/\[.*?\]\s*/, '') });
+                            } else {
+                                tg.showAlert("🔔 Reminder: \n" + r.text.replace(/\[.*?\]\s*/, ''));
+                            }
+                        }
+                    }
+                }
+            });
+        }, 30000); // Проверка каждые 30 секунд
+
+        // --- ИНТЕГРАЦИЯ НАТИВНОЙ КНОПКИ "НАЗАД" ---
         tg.BackButton.onClick(function() {
-            // Проверяем, что именно сейчас открыто, и закрываем это
-            if (document.getElementById('catSelectorMenu').classList.contains('active') || 
-                document.getElementById('contextOptionsMenu').classList.contains('active')) {
-                // Если открыто меню внутри редактора - закрываем только меню
+            if (document.getElementById('catSelectorMenu').classList.contains('active') || document.getElementById('contextOptionsMenu').classList.contains('active')) {
                 document.getElementById('catSelectorMenu').classList.remove('active');
                 document.getElementById('contextOptionsMenu').classList.remove('active');
                 document.getElementById('modalOverlay').classList.remove('active');
             } else if (document.getElementById('zenEditor').classList.contains('active')) {
-                // Если открыт сам редактор - сохраняем и выходим
                 saveAndCloseZenEditor();
             } else if (document.getElementById('categoryModal').classList.contains('active')) {
                 closeCategoryModal();
             } else {
-                // Иначе закрываем любые другие шторки (создание, напоминания)
                 closeAllModals();
             }
         });
@@ -193,7 +221,6 @@
             document.getElementById('setID').innerText = userId;
             let avatarUrl = `https://ui-avatars.com/api/?name=${userName}&background=ff477e&color=fff&bold=true`;
             if (tg.initDataUnsafe.user.photo_url) avatarUrl = tg.initDataUnsafe.user.photo_url;
-            document.getElementById('userAvatar').src = avatarUrl;
             document.getElementById('setAvatar').src = avatarUrl;
         }
 
@@ -236,16 +263,12 @@
             }
         });
 
-        // --- СВАЙП ДЛЯ ЗАКРЫТИЯ (Адаптировано под Telegram Back Button) ---
         function enableSwipeToClose() {
             document.querySelectorAll('.modal-sheet').forEach(sheet => {
                 const handle = sheet.querySelector('.modal-handle');
                 if (!handle) return;
                 let startY = 0; let currentY = 0;
-                handle.addEventListener('touchstart', (e) => {
-                    startY = e.touches[0].clientY;
-                    sheet.style.transition = 'none'; 
-                });
+                handle.addEventListener('touchstart', (e) => { startY = e.touches[0].clientY; sheet.style.transition = 'none'; });
                 handle.addEventListener('touchmove', (e) => {
                     currentY = e.touches[0].clientY;
                     const delta = currentY - startY;
@@ -255,7 +278,6 @@
                     sheet.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), bottom 0.4s';
                     sheet.style.transform = ''; 
                     if (currentY - startY > 60) {
-                        // Эмуляция нажатия на кнопку "Назад"
                         if(sheet.id === 'categoryModal') closeCategoryModal();
                         else closeAllModals();
                     }
@@ -266,8 +288,8 @@
 
         const defaultTags = ['Personal', 'Work', 'Finance', 'Ideas'];
         const sectionIcons = { 'Personal': 'fa-user', 'Work': 'fa-briefcase', 'Finance': 'fa-wallet', 'Ideas': 'fa-lightbulb' };
-        
         const neonHues = [330, 180, 45, 120, 270, 15, 210, 90, 30, 300, 60, 150];
+        
         function getUniqueColor(existingColorsObj) {
             const usedColors = Object.values(existingColorsObj);
             for (let hue of neonHues) {
@@ -291,8 +313,7 @@
         }
 
         function formatCardText(text) {
-            let preview = text.replace(/^#\s+(.*)$/gm, '<b>$1</b>'); 
-            return preview;
+            return text.replace(/^#\s+(.*)$/gm, '<b>$1</b>'); 
         }
 
         window.setTaskFilter = function(filter) {
@@ -304,14 +325,6 @@
         }
 
         window.filterNotes = function() { renderUI(); }
-
-        window.copyToClipboard = function(event, text) {
-            event.stopPropagation();
-            navigator.clipboard.writeText(text).then(() => {
-                tg.HapticFeedback.impactOccurred('success');
-                tg.showAlert("Copied to clipboard!");
-            });
-        }
 
         window.exportData = function() {
             if(!window.currentUserData) return;
@@ -378,9 +391,6 @@
                                 ${groupedNotes[category].map(nObj => `
                                     <div class="card" onclick="openZenEditor(${nObj.origIndex})">
                                         <div class="card-text">${formatCardText(nObj.content)}</div>
-                                        <div class="card-icon">
-                                            <div class="copy-btn" onclick="copyToClipboard(event, '${nObj.content.replace(/'/g, "\\'")}')"><i class="fas fa-copy"></i></div>
-                                        </div>
                                     </div>
                                 `).join('')}
                             </div>
@@ -438,25 +448,19 @@
             document.getElementById('activityPct').innerText = `${Math.floor(pct)}%`;
         }
 
-        // --- MODAL ROUTING & UTILS ---
         window.closeAllModals = function() {
             document.querySelectorAll('.modal-sheet').forEach(m => m.classList.remove('active'));
             document.getElementById('modalOverlay').classList.remove('active');
-            
-            // Скрываем кнопку "Назад", если редактор тоже закрыт
-            if (!document.getElementById('zenEditor').classList.contains('active')) {
-                tg.BackButton.hide();
-            }
+            if (!document.getElementById('zenEditor').classList.contains('active')) { tg.BackButton.hide(); }
         }
 
         window.openCreationRouter = function() {
             tg.HapticFeedback.impactOccurred('medium');
             document.getElementById('modalOverlay').classList.add('active');
             document.getElementById('creationRouterModal').classList.add('active');
-            tg.BackButton.show(); // Показываем нативную кнопку
+            tg.BackButton.show();
         }
 
-        // --- ZEN EDITOR (ПОЛНОЭКРАННЫЕ ЗАМЕТКИ) ---
         window.openZenEditor = function(index) {
             closeAllModals();
             tg.HapticFeedback.impactOccurred('light');
@@ -482,7 +486,7 @@
             
             updateWordCount();
             document.getElementById('zenEditor').classList.add('active');
-            tg.BackButton.show(); // Показываем кнопку "Назад"
+            tg.BackButton.show();
 
             if (index === -1) { setTimeout(() => document.getElementById('zeTextarea').focus(), 350); }
         }
@@ -501,10 +505,9 @@
             document.getElementById('zeWordCount').innerText = `${words} words`;
         }
 
-        // Авто-сохранение при выходе из редактора
         window.saveAndCloseZenEditor = async function() {
             document.getElementById('zenEditor').classList.remove('active');
-            tg.BackButton.hide(); // Скрываем нативную кнопку
+            tg.BackButton.hide();
             tg.HapticFeedback.impactOccurred('medium');
 
             const data = window.currentUserData; if(!data) return;
@@ -564,7 +567,7 @@
         window.shareNote = function() {
             const text = document.getElementById('zeTextarea').value;
             if (navigator.share) { navigator.share({ text: text }); } 
-            else { window.copyToClipboard(event, text); }
+            else { navigator.clipboard.writeText(text).then(() => tg.showAlert("Copied to clipboard!")); }
             closeAllModals();
         }
 
@@ -602,14 +605,13 @@
 
         window.applyCat = function(cat) {
             document.getElementById('zeCategory').innerText = cat;
-            closeAllModals(); // Это закроет шторку, но оставит Back Button, т.к. Zen Editor еще открыт
+            closeAllModals();
         }
         window.applyNewCategory = function() {
             const val = document.getElementById('zeCustomTagInput').value.trim();
             if(val) { applyCat(val); document.getElementById('zeCustomTagInput').value = ""; document.getElementById('zeCustomTagInput').style.display = "none"; }
         }
 
-        // --- REMINDERS MODAL (Задачи) ---
         window.openReminderModal = function(index) {
             closeAllModals();
             tg.HapticFeedback.impactOccurred('light');
@@ -695,7 +697,6 @@
             setTimeout(async () => { await updateDoc(userDocRef, { reminders, completed_tasks: completed }); }, 300);
         }
         
-        // --- CATEGORY SETTINGS ---
         window.openCategorySettings = function(event, category) {
             event.stopPropagation();
             tg.HapticFeedback.impactOccurred('medium');
