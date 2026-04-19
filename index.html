@@ -82,17 +82,18 @@
     </div>
 
     <div class="modal-overlay" id="modalOverlay" onclick="closeAllModals()"></div>
+
     <div class="modal-sheet" id="creationRouterModal">
-        <div class="modal-handle"></div>
+        <div class="modal-handle-area"><div class="modal-handle"></div></div>
         <h2 class="section-title" style="margin-top:0;">Create New</h2>
-        <div class="creation-grid">
-            <div class="creation-btn" onclick="openZenEditor(-1)"><i class="fas fa-pen-nib"></i> New Note</div>
-            <div class="creation-btn" onclick="openReminderModal(-1)"><i class="fas fa-clock"></i> New Reminder</div>
+        <div class="form-group" style="gap: 10px;">
+            <button class="btn btn-cancel" onclick="openZenEditor(-1)" style="display:flex; align-items:center; gap:10px; border-color:var(--card-border); color:white;"><i class="fas fa-pen-nib" style="color:var(--pink-main);"></i> New Note</button>
+            <button class="btn btn-cancel" onclick="openReminderModal(-1)" style="display:flex; align-items:center; gap:10px; border-color:var(--card-border); color:white;"><i class="fas fa-clock" style="color:var(--pink-main);"></i> New Reminder</button>
         </div>
     </div>
 
     <div class="modal-sheet" id="reminderModal" style="z-index: 1001;">
-        <div class="modal-handle"></div>
+        <div class="modal-handle-area"><div class="modal-handle"></div></div>
         <h2 class="section-title" id="remModalTitle" style="margin-top:0;">Set Reminder</h2>
         <div class="form-group"><input type="text" class="form-control" id="remText" placeholder="What to do?"></div>
         <div class="form-group">
@@ -115,37 +116,48 @@
     <div id="zenEditor" class="zen-editor">
         <div class="ze-header">
             <button class="ze-back" onclick="saveAndCloseZenEditor()"><i class="fas fa-chevron-left"></i> Vault</button>
-            <div class="ze-meta" onclick="openCategorySelector()"><span id="zeCategory">Personal</span> <i class="fas fa-caret-down"></i></div>
-            <div class="ze-words" id="zeWordCount">0 words</div>
+            <div class="ze-meta" onclick="openCategorySelector()"><span id="zeCategory">Personal</span> <i class="fas fa-caret-down" style="font-size:10px;"></i></div>
+            <button class="ze-menu-btn" onclick="openContextOptions()"><i class="fas fa-ellipsis-h"></i></button>
         </div>
+        
         <div class="ze-body">
             <div class="ze-paper">
-                <div class="ze-date" id="zeDate">17 Apr 2026</div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div class="ze-date" id="zeDate">17 Apr 2026</div>
+                    <div class="ze-date" id="zeWordCount" style="color:var(--pink-main);">0 words</div>
+                </div>
                 <textarea id="zeTextarea" placeholder="Start writing..." oninput="updateWordCount()"></textarea>
             </div>
-        </div>
-        <div class="ze-footer">
-            <button class="ze-menu-btn" onclick="openContextOptions()"><i class="fas fa-ellipsis-h"></i></button>
         </div>
         <input type="hidden" id="zeEditIndex" value="-1">
     </div>
 
     <div class="modal-sheet" id="contextOptionsMenu" style="z-index: 2005;">
-        <div class="modal-handle"></div>
+        <div class="modal-handle-area"><div class="modal-handle"></div></div>
         <div class="menu-list">
             <div class="menu-item" onclick="changeFontSize(2)"><i class="fas fa-search-plus"></i> Zoom In (A+)</div>
             <div class="menu-item" onclick="changeFontSize(-2)"><i class="fas fa-search-minus"></i> Zoom Out (A-)</div>
             <div class="menu-item" onclick="printNote()"><i class="fas fa-print"></i> Print Note</div>
-            <div class="menu-item" onclick="shareNote()"><i class="fas fa-share-square"></i> Share</div>
             <div class="menu-item danger" onclick="deleteZenNote()"><i class="fas fa-trash-alt"></i> Delete Note</div>
         </div>
     </div>
 
     <div class="modal-sheet" id="catSelectorMenu" style="z-index: 2005;">
-        <div class="modal-handle"></div>
+        <div class="modal-handle-area"><div class="modal-handle"></div></div>
         <h2 class="section-title" style="margin-top:0;">Select Category</h2>
         <div class="tags-container" id="zeTagsContainer"></div>
         <input type="text" id="zeCustomTagInput" class="tag-custom-input" placeholder="Type new category & press Enter..." onkeypress="if(event.key === 'Enter') applyNewCategory()">
+    </div>
+
+    <div class="modal-sheet" id="categoryModal" style="z-index: 1001;">
+        <div class="modal-handle-area"><div class="modal-handle"></div></div>
+        <h2 class="section-title" style="margin-top:0;">Rename Category</h2>
+        <div class="form-group"><input type="text" class="form-control" id="catEditName" placeholder="Category Name"></div>
+        <input type="hidden" id="oldCatName" value="">
+        <div class="modal-actions">
+            <button class="btn btn-cancel" onclick="closeAllModals()">Cancel</button>
+            <button class="btn btn-primary" onclick="saveCategorySettings()">Apply</button>
+        </div>
     </div>
 
     <script type="module">
@@ -171,6 +183,26 @@
             document.getElementById('setAvatar').src = avatarUrl;
         }
 
+        // SWIPE-TO-CLOSE ЛОГИКА ДЛЯ ВСЕХ ШТОРОК
+        let startY = 0; let currentY = 0;
+        document.querySelectorAll('.modal-sheet').forEach(sheet => {
+            const handle = sheet.querySelector('.modal-handle-area');
+            if(!handle) return;
+            handle.addEventListener('touchstart', e => {
+                startY = e.touches[0].clientY;
+                sheet.style.transition = 'none';
+            }, {passive: true});
+            handle.addEventListener('touchmove', e => {
+                currentY = e.touches[0].clientY;
+                if(currentY > startY) { sheet.style.transform = `translateY(${currentY - startY}px)`; }
+            }, {passive: true});
+            handle.addEventListener('touchend', e => {
+                sheet.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), bottom 0.4s';
+                if(currentY - startY > 80) { closeAllModals(); } // Закрываем если свайпнули вниз на 80px
+                sheet.style.transform = '';
+            });
+        });
+
         window.switchTab = function(tabId, btn) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
@@ -194,7 +226,7 @@
         const userDocRef = doc(db, "users", userId);
 
         let openSections = JSON.parse(localStorage.getItem('lunexOpenSections')) || {};
-        let currentFontSize = 16; // Для зума
+        let currentFontSize = 16; 
 
         onSnapshot(userDocRef, (docSnap) => {
             const splash = document.getElementById('splashScreen');
@@ -212,7 +244,6 @@
         const defaultTags = ['Personal', 'Work', 'Finance', 'Ideas'];
         const sectionIcons = { 'Personal': 'fa-user', 'Work': 'fa-briefcase', 'Finance': 'fa-wallet', 'Ideas': 'fa-lightbulb' };
         
-        // Умный алгоритм уникальных цветов
         const neonHues = [330, 180, 45, 120, 270, 15, 210, 90, 30, 300, 60, 150];
         function getUniqueColor(existingColorsObj) {
             const usedColors = Object.values(existingColorsObj);
@@ -230,7 +261,6 @@
             return '#ffffff'; 
         }
 
-        // МОЩНЫЙ РЕГУЛЯРНЫЙ ПАРСЕР (Поддерживает абзацы [\s\S])
         function parseItem(rawText) {
             const match = rawText.match(/^\[(.*?)\](?:\s*\{([^\}]+)\})?\s*([\s\S]*)/);
             if (match) { return { category: match[1], date: match[2] || '', content: match[3], rawText }; }
@@ -238,8 +268,7 @@
         }
 
         function formatCardText(text) {
-            let preview = text.replace(/^#\s+(.*)$/gm, '<b>$1</b>'); // Заголовки Markdown
-            return preview;
+            return text.replace(/^#\s+(.*)$/gm, '<b>$1</b>');
         }
 
         window.currentTaskFilter = 'all';
@@ -309,6 +338,7 @@
                         <div class="category-header" onclick="toggleSection('${category}')">
                             <div class="category-title" style="color: ${color}"><i class="fas ${icon}"></i> ${category}</div>
                             <div class="category-controls">
+                                <div class="category-settings-btn" onclick="openCategorySettings(event, '${category}')"><i class="fas fa-cog"></i></div>
                                 <i class="fas fa-chevron-down chevron"></i>
                             </div>
                         </div>
@@ -378,10 +408,7 @@
         // --- MODAL ROUTING & UTILS ---
         window.closeAllModals = function() {
             document.getElementById('modalOverlay').classList.remove('active');
-            document.getElementById('creationRouterModal').classList.remove('active');
-            document.getElementById('reminderModal').classList.remove('active');
-            document.getElementById('contextOptionsMenu').classList.remove('active');
-            document.getElementById('catSelectorMenu').classList.remove('active');
+            document.querySelectorAll('.modal-sheet').forEach(el => { el.classList.remove('active'); el.style.transform = ''; });
         }
 
         window.openCreationRouter = function() {
@@ -416,7 +443,6 @@
             updateWordCount();
 
             document.getElementById('zenEditor').classList.add('active');
-            // Если новая заметка - сразу ставим фокус
             if (index === -1) { setTimeout(() => document.getElementById('zeTextarea').focus(), 350); }
         }
 
@@ -426,7 +452,7 @@
             document.getElementById('zeWordCount').innerText = `${words} words`;
         }
 
-        // Авто-сохранение при закрытии
+        // АВТО-СОХРАНЕНИЕ
         window.saveAndCloseZenEditor = async function() {
             document.getElementById('zenEditor').classList.remove('active');
             tg.HapticFeedback.impactOccurred('medium');
@@ -436,12 +462,8 @@
             const idx = parseInt(document.getElementById('zeEditIndex').value);
             let notes = [...(data.notes || [])];
 
-            // Если удалили весь текст - удаляем заметку
             if (!text.trim()) {
-                if (idx !== -1) {
-                    notes.splice(idx, 1);
-                    await updateDoc(userDocRef, { notes });
-                }
+                if (idx !== -1) { notes.splice(idx, 1); await updateDoc(userDocRef, { notes }); }
                 return;
             }
 
@@ -449,21 +471,18 @@
             const dateStr = document.getElementById('zeDate').innerText;
             const formattedText = `[${category}] {${dateStr}} ${text}`;
 
-            // Умная генерация цвета для новой категории
             let newCategoryColors = { ...data.category_colors };
             if (!defaultTags.includes(category) && !newCategoryColors[category]) {
                 newCategoryColors[category] = getUniqueColor(newCategoryColors);
             }
 
-            if (idx !== -1) {
-                notes.splice(idx, 1); // Удаляем старую версию
-            }
-            notes.unshift(formattedText); // Добавляем наверх
+            if (idx !== -1) { notes.splice(idx, 1); }
+            notes.unshift(formattedText); 
             
             await updateDoc(userDocRef, { notes, category_colors: newCategoryColors });
         }
 
-        // Три точки в редакторе
+        // ТРИ ТОЧКИ В РЕДАКТОРЕ
         window.openContextOptions = function() {
             tg.HapticFeedback.impactOccurred('light');
             document.getElementById('modalOverlay').classList.add('active');
@@ -472,23 +491,13 @@
 
         window.changeFontSize = function(delta) {
             currentFontSize += delta;
-            if(currentFontSize < 10) currentFontSize = 10;
+            if(currentFontSize < 12) currentFontSize = 12;
             if(currentFontSize > 30) currentFontSize = 30;
             document.getElementById('zeTextarea').style.fontSize = `${currentFontSize}px`;
             tg.HapticFeedback.impactOccurred('light');
         }
 
-        window.printNote = function() {
-            closeAllModals();
-            window.print();
-        }
-
-        window.shareNote = function() {
-            const text = document.getElementById('zeTextarea').value;
-            if (navigator.share) { navigator.share({ text: text }); } 
-            else { window.copyToClipboard(event, text); }
-            closeAllModals();
-        }
+        window.printNote = function() { closeAllModals(); window.print(); }
 
         window.deleteZenNote = async function() {
             const idx = parseInt(document.getElementById('zeEditIndex').value);
@@ -503,7 +512,7 @@
             tg.HapticFeedback.impactOccurred('heavy');
         }
 
-        // Смена категории в редакторе
+        // ВЫБОР КАТЕГОРИИ (В РЕДАКТОРЕ)
         window.openCategorySelector = function() {
             const data = window.currentUserData;
             const customTags = Object.keys(data?.category_colors || {});
@@ -521,16 +530,13 @@
             document.getElementById('catSelectorMenu').classList.add('active');
         }
 
-        window.applyCat = function(cat) {
-            document.getElementById('zeCategory').innerText = cat;
-            closeAllModals();
-        }
+        window.applyCat = function(cat) { document.getElementById('zeCategory').innerText = cat; closeAllModals(); }
         window.applyNewCategory = function() {
             const val = document.getElementById('zeCustomTagInput').value.trim();
             if(val) { applyCat(val); document.getElementById('zeCustomTagInput').value = ""; document.getElementById('zeCustomTagInput').style.display = "none"; }
         }
 
-        // --- REMINDERS MODAL (Задачи) ---
+        // --- REMINDERS MODAL (ЗАДАЧИ) ---
         window.openReminderModal = function(index) {
             closeAllModals();
             tg.HapticFeedback.impactOccurred('light');
@@ -551,9 +557,7 @@
                     const dt = new Date(item.datetime.replace(' ', 'T'));
                     timeStr = (new Date(dt - dt.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
                 }
-            } else {
-                document.getElementById('remModalTitle').innerText = "Set Reminder";
-            }
+            } else { document.getElementById('remModalTitle').innerText = "Set Reminder"; }
 
             document.getElementById('remText').value = content;
             document.getElementById('remDate').value = timeStr;
@@ -582,8 +586,7 @@
             
             const idx = parseInt(document.getElementById('remEditIndex').value);
             let reminders = [...(data.reminders || [])];
-            
-            const formattedText = `[Agenda] ${text}`; // Всегда в Agenda
+            const formattedText = `[Agenda] ${text}`; 
             
             if (idx !== -1) reminders.splice(idx, 1);
             reminders.push({ text: formattedText, datetime: dateVal.replace('T', ' ') + ":00" });
@@ -601,6 +604,42 @@
             await updateDoc(userDocRef, { reminders });
             closeAllModals();
             tg.HapticFeedback.impactOccurred('medium');
+        }
+
+        // --- УПРАВЛЕНИЕ КАТЕГОРИЯМИ ---
+        window.openCategorySettings = function(event, category) {
+            event.stopPropagation();
+            tg.HapticFeedback.impactOccurred('medium');
+            document.getElementById('oldCatName').value = category;
+            document.getElementById('catEditName').value = category;
+            document.getElementById('modalOverlay').classList.add('active');
+            document.getElementById('categoryModal').classList.add('active');
+        }
+        
+        window.saveCategorySettings = async function() {
+            const data = window.currentUserData; if(!data) return;
+            const oldName = document.getElementById('oldCatName').value;
+            const newName = document.getElementById('catEditName').value.trim() || oldName;
+            
+            let newColors = { ...data.category_colors };
+            if (oldName !== newName) { 
+                newColors[newName] = newColors[oldName]; 
+                delete newColors[oldName]; 
+            }
+
+            let notes = [...(data.notes || [])];
+            if (oldName !== newName) {
+                notes = notes.map(n => n.startsWith(`[${oldName}]`) ? n.replace(`[${oldName}]`, `[${newName}]`) : n);
+            }
+            
+            if (oldName !== newName && openSections[oldName]) {
+                openSections[newName] = true;
+                delete openSections[oldName];
+                localStorage.setItem('lunexOpenSections', JSON.stringify(openSections));
+            }
+
+            await updateDoc(userDocRef, { notes: notes, category_colors: newColors });
+            closeAllModals();
         }
 
         window.completeReminder = async function(index) {
