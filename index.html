@@ -7,6 +7,14 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    
+    <script>
+        window.onerror = function(msg, url, line) {
+            var splash = document.getElementById('splashScreen');
+            if(splash) splash.style.display = 'none';
+            console.error("Global Error: " + msg + " at line " + line);
+        };
+    </script>
 </head>
 <body>
 
@@ -182,27 +190,28 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
         import { getFirestore, doc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
 
-        // --- ИНИЦИАЛИЗАЦИЯ TELEGRAM WEB APP ---
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-        if (tg.requestFullscreen) { tg.requestFullscreen(); }
-
-        // Безопасное подключение кнопки "Назад"
-        if (tg.BackButton) {
-            tg.BackButton.onClick(function() {
-                if (document.getElementById('catSelectorMenu').classList.contains('active') || 
-                    document.getElementById('contextOptionsMenu').classList.contains('active')) {
-                    document.getElementById('catSelectorMenu').classList.remove('active');
-                    document.getElementById('contextOptionsMenu').classList.remove('active');
-                    document.getElementById('modalOverlay').classList.remove('active');
-                } else if (document.getElementById('zenEditor').classList.contains('active')) {
-                    saveAndCloseZenEditor();
-                } else if (document.getElementById('categoryModal').classList.contains('active')) {
-                    closeCategoryModal();
-                } else {
-                    closeAllModals();
-                }
-            });
+        // Защищенная инициализация TG
+        const tg = window.Telegram ? window.Telegram.WebApp : null;
+        if (tg) {
+            if (tg.expand) tg.expand();
+            if (tg.requestFullscreen) tg.requestFullscreen();
+            
+            if (tg.BackButton && tg.BackButton.onClick) {
+                tg.BackButton.onClick(function() {
+                    if (document.getElementById('catSelectorMenu').classList.contains('active') || 
+                        document.getElementById('contextOptionsMenu').classList.contains('active')) {
+                        document.getElementById('catSelectorMenu').classList.remove('active');
+                        document.getElementById('contextOptionsMenu').classList.remove('active');
+                        document.getElementById('modalOverlay').classList.remove('active');
+                    } else if (document.getElementById('zenEditor').classList.contains('active')) {
+                        saveAndCloseZenEditor();
+                    } else if (document.getElementById('categoryModal').classList.contains('active')) {
+                        closeCategoryModal();
+                    } else {
+                        closeAllModals();
+                    }
+                });
+            }
         }
 
         // --- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ---
@@ -211,18 +220,24 @@
         window.userDocRef = null;
         window.currentUserData = null;
         
-        let openSections = JSON.parse(localStorage.getItem('lunexOpenSections')) || {};
+        // Безопасное чтение localStorage
+        let openSections = {};
+        try { openSections = JSON.parse(localStorage.getItem('lunexOpenSections')) || {}; } catch(e) {}
+        
         let currentFontSize = 16; 
         let typingTimer;
 
-        // Предохранитель от вечной загрузки
+        // Жесткий сброс экрана загрузки
         function hideSplash() {
-            const splash = document.getElementById('splashScreen');
-            if(splash) { splash.style.opacity = '0'; setTimeout(() => splash.style.display = 'none', 500); }
+            var splash = document.getElementById('splashScreen');
+            if(splash) {
+                splash.style.opacity = '0';
+                setTimeout(function() { splash.style.display = 'none'; }, 500);
+            }
         }
-        setTimeout(hideSplash, 4000); 
+        // Предохранитель (если все зависло, пустит через 3 секунды)
+        setTimeout(hideSplash, 3000); 
 
-        // Инициализация Firebase ТОЛЬКО ПОСЛЕ ПОЛУЧЕНИЯ ID
         function initFirebase(uid) {
             const firebaseConfig = {
                 apiKey: "AIzaSyDY8g42qsSkoN36i-DIeptehoDWXSEUlU0",
@@ -253,7 +268,10 @@
                     renderUI();
                 }
             }, (error) => {
-                console.error(error); hideSplash(); tg.showAlert("Database connection error");
+                console.error(error); 
+                hideSplash(); 
+                if(tg && tg.showAlert) tg.showAlert("Database connection error");
+                else alert("Database connection error");
             });
         }
 
@@ -265,31 +283,37 @@
             document.getElementById('setName').innerText = userName;
             document.getElementById('setID').innerText = userId;
             
-            let avatarUrl = `https://ui-avatars.com/api/?name=${userName}&background=ff477e&color=fff&bold=true`;
+            let avatarUrl = "https://ui-avatars.com/api/?name=" + userName + "&background=ff477e&color=fff&bold=true";
             if (userObj.photo_url) avatarUrl = userObj.photo_url;
             document.getElementById('setAvatar').src = avatarUrl;
         }
 
-        // --- УМНАЯ АВТОРИЗАЦИЯ ---
-        if (tg.initDataUnsafe?.user) {
-            // Зашли из Телеграма
-            applyUserDataToUI(tg.initDataUnsafe.user);
+        // --- БЕЗОПАСНАЯ АВТОРИЗАЦИЯ (Без операторов ?.) ---
+        let initData = (tg && tg.initDataUnsafe) ? tg.initDataUnsafe : {};
+        let savedWebUser = null;
+        try {
+            let lsUser = localStorage.getItem('lunexWebUser');
+            if (lsUser) savedWebUser = JSON.parse(lsUser);
+        } catch(e) { console.warn("LocalStorage disabled"); }
+
+        if (initData && initData.user) {
+            // Телеграм
+            applyUserDataToUI(initData.user);
             initFirebase(userId);
-        } else if (localStorage.getItem('lunexWebUser')) {
-            // Зашли из браузера (Уже логинились)
-            const savedUser = JSON.parse(localStorage.getItem('lunexWebUser'));
-            applyUserDataToUI(savedUser);
+        } else if (savedWebUser) {
+            // Браузер (уже авторизован)
+            applyUserDataToUI(savedWebUser);
             document.getElementById('logoutBtn').style.display = 'flex'; 
             initFirebase(userId);
         } else {
-            // Зашли из браузера впервые
-            document.getElementById('splashScreen').style.display = 'none';
+            // Браузер (нужна авторизация)
+            hideSplash();
             document.getElementById('loginScreen').style.display = 'flex';
         }
 
-        // Вызывается виджетом Telegram после входа в браузере
+        // Вызывается виджетом Телеграма
         window.onTelegramAuth = function(user) {
-            localStorage.setItem('lunexWebUser', JSON.stringify(user));
+            try { localStorage.setItem('lunexWebUser', JSON.stringify(user)); } catch(e) {}
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('splashScreen').style.opacity = '1';
             document.getElementById('splashScreen').style.display = 'flex';
@@ -300,7 +324,7 @@
         };
 
         window.logoutBrowser = function() {
-            localStorage.removeItem('lunexWebUser');
+            try { localStorage.removeItem('lunexWebUser'); } catch(e) {}
             location.reload(); 
         };
 
@@ -320,11 +344,12 @@
                         const uniqueId = r.text + r.datetime;
                         if(!notifiedReminders.has(uniqueId)) {
                             notifiedReminders.add(uniqueId);
-                            tg.HapticFeedback.notificationOccurred('warning');
+                            if(tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('warning');
                             if (Notification.permission === "granted") {
                                 new Notification("Lunex Alert", { body: r.text.replace(/\[.*?\]\s*/, '') });
                             } else {
-                                tg.showAlert("🔔 Reminder: \n" + r.text.replace(/\[.*?\]\s*/, ''));
+                                if(tg && tg.showAlert) tg.showAlert("🔔 Reminder: \n" + r.text.replace(/\[.*?\]\s*/, ''));
+                                else alert("🔔 Reminder: \n" + r.text.replace(/\[.*?\]\s*/, ''));
                             }
                         }
                     }
@@ -332,13 +357,13 @@
             });
         }, 30000);
 
-        // --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ---
+        // --- ОСНОВНЫЕ ФУНКЦИИ ---
         window.switchTab = function(tabId, btn) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-            document.getElementById(`tab-${tabId}`).classList.add('active');
+            document.getElementById("tab-" + tabId).classList.add('active');
             btn.classList.add('active');
-            tg.HapticFeedback.impactOccurred('light');
+            if(tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
             window.scrollTo(0,0);
         };
 
@@ -348,24 +373,26 @@
         
         function getUniqueColor(existingColorsObj) {
             const usedColors = Object.values(existingColorsObj);
-            for (let hue of neonHues) {
-                const color = `hsl(${hue}, 100%, 65%)`;
-                if (!usedColors.includes(color)) return color;
+            for (let i = 0; i < neonHues.length; i++) {
+                const color = "hsl(" + neonHues[i] + ", 100%, 65%)";
+                if (usedColors.indexOf(color) === -1) return color;
             }
-            return `hsl(${Math.floor(Math.random()*360)}, 100%, 65%)`;
+            return "hsl(" + Math.floor(Math.random()*360) + ", 100%, 65%)";
         }
 
         function getCategoryColor(category) {
             const predefined = { 'Personal': '#ff477e', 'Work': '#00f0ff', 'Finance': '#ffd700', 'Ideas': '#b554ff' };
-            if (window.currentUserData?.category_colors?.[category]) return window.currentUserData.category_colors[category];
+            if (window.currentUserData && window.currentUserData.category_colors && window.currentUserData.category_colors[category]) {
+                return window.currentUserData.category_colors[category];
+            }
             if (predefined[category]) return predefined[category];
             return '#ffffff'; 
         }
 
         function parseItem(rawText) {
             const match = rawText.match(/^\[(.*?)\](?:\s*\{([^\}]+)\})?\s*([\s\S]*)/);
-            if (match) { return { category: match[1], date: match[2] || '', content: match[3], rawText }; }
-            return { category: "Personal", date: '', content: rawText, rawText };
+            if (match) { return { category: match[1], date: match[2] || '', content: match[3], rawText: rawText }; }
+            return { category: "Personal", date: '', content: rawText, rawText: rawText };
         }
 
         function formatCardText(text) { return text.replace(/^#\s+(.*)$/gm, '<b>$1</b>'); }
@@ -374,7 +401,7 @@
             window.currentTaskFilter = filter;
             document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById(filter === 'all' ? 'fltAll' : 'fltToday').classList.add('active');
-            tg.HapticFeedback.impactOccurred('light');
+            if(tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
             renderUI();
         }
 
@@ -387,22 +414,21 @@
             dlAnchorElem.setAttribute("href", dataStr);
             dlAnchorElem.setAttribute("download", "lunex_backup.json");
             dlAnchorElem.click();
-            tg.HapticFeedback.impactOccurred('success');
+            if(tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('success');
         }
 
         window.toggleSection = function(category) {
-            const sec = document.getElementById(`section-${category}`);
+            const sec = document.getElementById("section-" + category);
             sec.classList.toggle('open');
             openSections[category] = sec.classList.contains('open');
-            localStorage.setItem('lunexOpenSections', JSON.stringify(openSections));
-            tg.HapticFeedback.impactOccurred('light');
+            try { localStorage.setItem('lunexOpenSections', JSON.stringify(openSections)); } catch(e) {}
+            if(tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
         }
 
-        // --- РЕНДЕРИНГ ИНТЕРФЕЙСА ---
         function renderUI() {
             const data = window.currentUserData; if(!data) return;
             const notes = data.notes || []; let reminders = data.reminders || [];
-            document.getElementById('dbItemCount').innerText = `${notes.length + reminders.length}`;
+            document.getElementById('dbItemCount').innerText = (notes.length + reminders.length).toString();
 
             // THE VAULT
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
@@ -411,9 +437,9 @@
             
             notes.forEach((n, i) => {
                 const parsed = parseItem(n);
-                if (parsed.content.toLowerCase().includes(searchTerm)) {
+                if (parsed.content.toLowerCase().indexOf(searchTerm) !== -1) {
                     if (!groupedNotes[parsed.category]) groupedNotes[parsed.category] = [];
-                    groupedNotes[parsed.category].push({ ...parsed, origIndex: i });
+                    groupedNotes[parsed.category].push({ category: parsed.category, date: parsed.date, content: parsed.content, rawText: parsed.rawText, origIndex: i });
                 }
             });
 
@@ -432,25 +458,19 @@
                     const isOpen = (searchTerm !== "" || openSections[category]) ? "open" : "";
                     const icon = sectionIcons[category] || 'fa-folder';
                     
-                    vaultHTML += `
-                    <div class="category-section ${isOpen}" id="section-${category}">
-                        <div class="category-header" onclick="toggleSection('${category}')">
-                            <div class="category-title" style="color: ${color}"><i class="fas ${icon}"></i> ${category}</div>
-                            <div class="category-controls">
-                                <div class="category-settings-btn" onclick="openCategorySettings(event, '${category}')"><i class="fas fa-cog"></i></div>
-                                <i class="fas fa-chevron-down chevron"></i>
-                            </div>
-                        </div>
-                        <div class="category-content">
-                            <div class="grid-cards">
-                                ${groupedNotes[category].map(nObj => `
-                                    <div class="card" onclick="openZenEditor(${nObj.origIndex})">
-                                        <div class="card-text">${formatCardText(nObj.content)}</div>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
-                    </div>`;
+                    let cardsHTML = '';
+                    groupedNotes[category].forEach(nObj => {
+                        cardsHTML += '<div class="card" onclick="openZenEditor(' + nObj.origIndex + ')">';
+                        cardsHTML += '<div class="card-text">' + formatCardText(nObj.content) + '</div></div>';
+                    });
+
+                    vaultHTML += '<div class="category-section ' + isOpen + '" id="section-' + category + '">';
+                    vaultHTML += '<div class="category-header" onclick="toggleSection(\'' + category + '\')">';
+                    vaultHTML += '<div class="category-title" style="color: ' + color + '"><i class="fas ' + icon + '"></i> ' + category + '</div>';
+                    vaultHTML += '<div class="category-controls">';
+                    vaultHTML += '<div class="category-settings-btn" onclick="openCategorySettings(event, \'' + category + '\')"><i class="fas fa-cog"></i></div>';
+                    vaultHTML += '<i class="fas fa-chevron-down chevron"></i></div></div>';
+                    vaultHTML += '<div class="category-content"><div class="grid-cards">' + cardsHTML + '</div></div></div>';
                 });
                 vault.innerHTML = vaultHTML;
             }
@@ -469,21 +489,18 @@
                 tList.innerHTML = '<p class="empty-state">No pending tasks.</p>';
                 dReminders.innerHTML = '<p class="empty-state">No active timers.</p>';
             } else {
-                const renderHTML = displayReminders.map((r, i) => {
+                let renderHTML = '';
+                displayReminders.forEach((r, i) => {
                     const parsed = parseItem(r.text);
                     const d = new Date(r.datetime.replace(' ', 'T'));
                     const dateStr = d.toLocaleDateString([], {month:'short', day:'numeric'}) + ', ' + d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                     const color = getCategoryColor(parsed.category);
                     
-                    return `
-                    <div class="list-item" onclick="openReminderModal(${i})">
-                        <div class="list-info">
-                            <span class="list-title">${parsed.content}</span>
-                            <div class="list-meta"><span style="color: ${color};"><i class="fas fa-circle" style="font-size:8px;"></i> ${parsed.category}</span> • <span>${dateStr}</span></div>
-                        </div>
-                        <div class="checkbox" onclick="event.stopPropagation(); completeReminder(${i})"><i class="fas fa-check"></i></div>
-                    </div>`;
-                }).join('');
+                    renderHTML += '<div class="list-item" onclick="openReminderModal(' + i + ')">';
+                    renderHTML += '<div class="list-info"><span class="list-title">' + parsed.content + '</span>';
+                    renderHTML += '<div class="list-meta"><span style="color: ' + color + ';"><i class="fas fa-circle" style="font-size:8px;"></i> ' + parsed.category + '</span> • <span>' + dateStr + '</span></div></div>';
+                    renderHTML += '<div class="checkbox" onclick="event.stopPropagation(); completeReminder(' + i + ')"><i class="fas fa-check"></i></div></div>';
+                });
                 tList.innerHTML = renderHTML;
                 if(window.currentTaskFilter === 'all') dReminders.innerHTML = renderHTML; 
             }
@@ -495,34 +512,33 @@
             const todayStr = new Date().toLocaleDateString();
             const pendingToday = reminders.filter(r => new Date(r.datetime.replace(' ', 'T')).toLocaleDateString() === todayStr).length;
             
-            document.getElementById('statPending').innerText = pendingToday;
-            document.getElementById('statCompleted').innerText = data.completed_tasks || 0; 
+            document.getElementById('statPending').innerText = pendingToday.toString();
+            document.getElementById('statCompleted').innerText = (data.completed_tasks || 0).toString(); 
             
             let pct = pendingToday === 0 ? 100 : Math.max(5, 100 - (pendingToday * 15)); 
-            document.getElementById('activityRing').style.strokeDasharray = `${pct}, 100`;
-            document.getElementById('activityPct').innerText = `${Math.floor(pct)}%`;
+            document.getElementById('activityRing').style.strokeDasharray = Math.floor(pct) + ", 100";
+            document.getElementById('activityPct').innerText = Math.floor(pct) + "%";
         }
 
-        // --- МОДАЛЬНЫЕ ОКНА И ДЕЙСТВИЯ ---
         window.closeAllModals = function() {
             document.querySelectorAll('.modal-sheet').forEach(m => m.classList.remove('active'));
             document.getElementById('modalOverlay').classList.remove('active');
-            if (tg.BackButton && !document.getElementById('zenEditor').classList.contains('active')) { 
+            if (tg && tg.BackButton && !document.getElementById('zenEditor').classList.contains('active')) { 
                 tg.BackButton.hide(); 
             }
         }
 
         window.openCreationRouter = function() {
-            tg.HapticFeedback.impactOccurred('medium');
+            if(tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
             document.getElementById('modalOverlay').classList.add('active');
             document.getElementById('creationRouterModal').classList.add('active');
-            if(tg.BackButton) tg.BackButton.show();
+            if(initData && initData.user && tg && tg.BackButton) tg.BackButton.show();
         }
 
         // ZEN EDITOR
         window.openZenEditor = function(index) {
             closeAllModals();
-            tg.HapticFeedback.impactOccurred('light');
+            if(tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
             
             const data = window.currentUserData;
             document.getElementById('zeEditIndex').value = index;
@@ -541,11 +557,13 @@
             document.getElementById('zeCategory').innerText = category;
             document.getElementById('zeDate').innerText = dateStr;
             document.getElementById('zeTextarea').value = content;
-            document.getElementById('zeTextarea').style.fontSize = `${currentFontSize}px`;
+            document.getElementById('zeTextarea').style.fontSize = currentFontSize + "px";
             
             updateWordCount();
             document.getElementById('zenEditor').classList.add('active');
-            if(tg.BackButton) tg.BackButton.show();
+            if(initData && initData.user && tg && tg.BackButton) tg.BackButton.show();
+            
+            if (index === -1) { setTimeout(() => document.getElementById('zeTextarea').focus(), 350); }
         }
 
         window.handleTyping = function() {
@@ -560,47 +578,49 @@
             const text = document.getElementById('zeTextarea').value.trim();
             const words = text ? text.split(/\s+/).length : 0;
             const readTime = Math.ceil(words / 200) || 1;
-            document.getElementById('zeWordCount').innerText = `${words} words • ${readTime} min read`;
+            document.getElementById('zeWordCount').innerText = words + " words • " + readTime + " min read";
         }
 
         window.saveAndCloseZenEditor = async function() {
             document.getElementById('zenEditor').classList.remove('active');
-            if(tg.BackButton) tg.BackButton.hide();
-            tg.HapticFeedback.impactOccurred('medium');
+            if(tg && tg.BackButton) tg.BackButton.hide();
+            if(tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
 
             if(!window.userDocRef) return;
             const data = window.currentUserData; 
             const text = document.getElementById('zeTextarea').value; 
             const idx = parseInt(document.getElementById('zeEditIndex').value);
-            let notes = [...(data.notes || [])];
+            let notes = [];
+            if(data && data.notes) notes = [...data.notes];
 
             if (!text.trim()) {
-                if (idx !== -1) { notes.splice(idx, 1); await updateDoc(window.userDocRef, { notes }); }
+                if (idx !== -1) { notes.splice(idx, 1); await updateDoc(window.userDocRef, { notes: notes }); }
                 return;
             }
 
             const category = document.getElementById('zeCategory').innerText;
             const dateStr = document.getElementById('zeDate').innerText;
-            const formattedText = `[${category}] {${dateStr}} ${text}`;
+            const formattedText = "[" + category + "] {" + dateStr + "} " + text;
 
-            let newCategoryColors = { ...data.category_colors };
-            if (!defaultTags.includes(category) && !newCategoryColors[category]) {
+            let newCategoryColors = {};
+            if(data && data.category_colors) newCategoryColors = { ...data.category_colors };
+            
+            if (defaultTags.indexOf(category) === -1 && !newCategoryColors[category]) {
                 newCategoryColors[category] = getUniqueColor(newCategoryColors);
             }
 
             if (idx !== -1) notes.splice(idx, 1); 
             notes.unshift(formattedText); 
             
-            await updateDoc(window.userDocRef, { notes, category_colors: newCategoryColors });
+            await updateDoc(window.userDocRef, { notes: notes, category_colors: newCategoryColors });
         }
 
         window.openContextOptions = function() {
-            tg.HapticFeedback.impactOccurred('light');
+            if(tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
             document.getElementById('modalOverlay').classList.add('active');
             document.getElementById('contextOptionsMenu').classList.add('active');
-            if(tg.BackButton) tg.BackButton.show();
+            if(initData && initData.user && tg && tg.BackButton) tg.BackButton.show();
         }
-        
         window.closeContextMenu = function() {
             document.getElementById('contextOptionsMenu').classList.remove('active');
             document.getElementById('modalOverlay').classList.remove('active');
@@ -610,8 +630,8 @@
             currentFontSize += delta;
             if(currentFontSize < 12) currentFontSize = 12;
             if(currentFontSize > 30) currentFontSize = 30;
-            document.getElementById('zeTextarea').style.fontSize = `${currentFontSize}px`;
-            tg.HapticFeedback.impactOccurred('light');
+            document.getElementById('zeTextarea').style.fontSize = currentFontSize + "px";
+            if(tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
         }
 
         window.toggleInvertColors = function() {
@@ -630,9 +650,9 @@
             const dataStr = "data:text/plain;charset=utf-8," + encodeURIComponent(text);
             const dlAnchorElem = document.createElement('a');
             dlAnchorElem.setAttribute("href", dataStr);
-            dlAnchorElem.setAttribute("download", `${title}.txt`);
+            dlAnchorElem.setAttribute("download", title + ".txt");
             dlAnchorElem.click();
-            tg.HapticFeedback.impactOccurred('success');
+            if(tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('success');
             closeContextMenu();
         }
 
@@ -640,9 +660,9 @@
             const content = document.getElementById('zeTextarea').value;
             const printWindow = window.open('', '', 'height=600,width=800');
             printWindow.document.write('<html><head><title>Print Note</title><style>body{font-family:sans-serif; padding:20px; white-space:pre-wrap;}</style></head><body>');
-            printWindow.document.write(`<h1>${document.getElementById('zeCategory').innerText}</h1>`);
-            printWindow.document.write(`<p style="color:gray;">${document.getElementById('zeDate').innerText}</p>`);
-            printWindow.document.write(`<p>${content}</p>`);
+            printWindow.document.write('<h1>' + document.getElementById('zeCategory').innerText + '</h1>');
+            printWindow.document.write('<p style="color:gray;">' + document.getElementById('zeDate').innerText + '</p>');
+            printWindow.document.write('<p>' + content + '</p>');
             printWindow.document.write('</body></html>');
             printWindow.document.close();
             printWindow.print();
@@ -652,7 +672,12 @@
         window.shareNote = function() {
             const text = document.getElementById('zeTextarea').value;
             if (navigator.share) { navigator.share({ text: text }); } 
-            else { navigator.clipboard.writeText(text).then(() => tg.showAlert("Copied to clipboard!")); }
+            else { 
+                navigator.clipboard.writeText(text).then(() => {
+                    if(tg && tg.showAlert) tg.showAlert("Copied to clipboard!");
+                    else alert("Copied to clipboard!");
+                }); 
+            }
             closeContextMenu();
         }
 
@@ -660,32 +685,37 @@
             const idx = parseInt(document.getElementById('zeEditIndex').value);
             if (idx !== -1 && window.userDocRef) {
                 const data = window.currentUserData;
-                let notes = [...(data.notes || [])];
+                let notes = [];
+                if(data && data.notes) notes = [...data.notes];
                 notes.splice(idx, 1);
-                await updateDoc(window.userDocRef, { notes });
+                await updateDoc(window.userDocRef, { notes: notes });
             }
             closeContextMenu();
             document.getElementById('zenEditor').classList.remove('active');
-            if(tg.BackButton) tg.BackButton.hide();
-            tg.HapticFeedback.impactOccurred('heavy');
+            if(tg && tg.BackButton) tg.BackButton.hide();
+            if(tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy');
         }
 
         window.openCategorySelector = function() {
             const data = window.currentUserData;
-            const customTags = Object.keys(data?.category_colors || {});
-            const allTags = [...new Set([...defaultTags, ...customTags])];
+            let customTags = [];
+            if(data && data.category_colors) customTags = Object.keys(data.category_colors);
             
-            let html = allTags.map(tag => {
+            const allTagsRaw = defaultTags.concat(customTags);
+            const allTags = allTagsRaw.filter(function(item, pos) { return allTagsRaw.indexOf(item) === pos; });
+            
+            let html = '';
+            allTags.forEach(tag => {
                 const color = getCategoryColor(tag);
-                return `<div class="tag-pill" style="border-color: ${color}; color: ${color};" onclick="applyCat('${tag}')">${tag}</div>`;
-            }).join('');
+                html += '<div class="tag-pill" style="border-color: ' + color + '; color: ' + color + ';" onclick="applyCat(\'' + tag + '\')">' + tag + '</div>';
+            });
             
-            html += `<div class="tag-pill" style="border-style: dashed;" onclick="document.getElementById('zeCustomTagInput').style.display='block'; document.getElementById('zeCustomTagInput').focus();">+ NEW</div>`;
+            html += '<div class="tag-pill" style="border-style: dashed;" onclick="document.getElementById(\'zeCustomTagInput\').style.display=\'block\'; document.getElementById(\'zeCustomTagInput\').focus();">+ NEW</div>';
             document.getElementById('zeTagsContainer').innerHTML = html;
             
             document.getElementById('modalOverlay').classList.add('active');
             document.getElementById('catSelectorMenu').classList.add('active');
-            if(tg.BackButton) tg.BackButton.show();
+            if(initData && initData.user && tg && tg.BackButton) tg.BackButton.show();
         }
 
         window.closeCategorySelector = function() {
@@ -702,16 +732,17 @@
             if(val) { applyCat(val); document.getElementById('zeCustomTagInput').value = ""; document.getElementById('zeCustomTagInput').style.display = "none"; }
         }
 
+        // --- REMINDERS MODAL ---
         window.openReminderModal = function(index) {
             closeAllModals();
-            tg.HapticFeedback.impactOccurred('light');
+            if(tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
             
             document.getElementById('remEditIndex').value = index;
             document.getElementById('remBtnDelete').style.display = index === -1 ? "none" : "block";
             
             let content = "";
             const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1); tomorrow.setHours(10, 0, 0, 0);
-            let timeStr = (new Date(tomorrow - tomorrow.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+            let timeStr = (new Date(tomorrow.getTime() - tomorrow.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
 
             if (index !== -1) {
                 document.getElementById('remModalTitle').innerText = "Edit Reminder";
@@ -720,7 +751,7 @@
                 content = parsed.content;
                 if(item.datetime) {
                     const dt = new Date(item.datetime.replace(' ', 'T'));
-                    timeStr = (new Date(dt - dt.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+                    timeStr = (new Date(dt.getTime() - dt.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
                 }
             } else {
                 document.getElementById('remModalTitle').innerText = "Set Reminder";
@@ -731,7 +762,7 @@
 
             document.getElementById('modalOverlay').classList.add('active');
             document.getElementById('reminderModal').classList.add('active');
-            if(tg.BackButton) tg.BackButton.show();
+            if(initData && initData.user && tg && tg.BackButton) tg.BackButton.show();
         }
 
         window.setQuickTime = function(type) {
@@ -742,8 +773,8 @@
             else if (type === 'tmw_eve') { d.setDate(d.getDate() + 1); d.setHours(19, 0, 0); }
             
             const offset = d.getTimezoneOffset() * 60000;
-            document.getElementById('remDate').value = (new Date(d - offset)).toISOString().slice(0, 16);
-            tg.HapticFeedback.impactOccurred('light');
+            document.getElementById('remDate').value = (new Date(d.getTime() - offset)).toISOString().slice(0, 16);
+            if(tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
         }
 
         window.saveReminder = async function() {
@@ -754,79 +785,91 @@
             if(!text || !dateVal) return;
             
             const idx = parseInt(document.getElementById('remEditIndex').value);
-            let reminders = [...(data.reminders || [])];
+            let reminders = [];
+            if(data && data.reminders) reminders = [...data.reminders];
             
-            const formattedText = `[Agenda] ${text}`; 
+            const formattedText = "[Agenda] " + text; 
             
             if (idx !== -1) reminders.splice(idx, 1);
             reminders.push({ text: formattedText, datetime: dateVal.replace('T', ' ') + ":00" });
 
-            await updateDoc(window.userDocRef, { reminders });
+            await updateDoc(window.userDocRef, { reminders: reminders });
             closeAllModals();
-            if(tg.BackButton) tg.BackButton.hide();
-            tg.HapticFeedback.impactOccurred('heavy');
+            if(tg && tg.BackButton) tg.BackButton.hide();
+            if(tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy');
         }
 
         window.deleteReminder = async function() {
             if(!window.userDocRef) return;
             const idx = parseInt(document.getElementById('remEditIndex').value);
             const data = window.currentUserData;
-            let reminders = [...(data.reminders || [])];
+            let reminders = [];
+            if(data && data.reminders) reminders = [...data.reminders];
             reminders.splice(idx, 1);
-            await updateDoc(window.userDocRef, { reminders });
+            await updateDoc(window.userDocRef, { reminders: reminders });
             closeAllModals();
-            if(tg.BackButton) tg.BackButton.hide();
-            tg.HapticFeedback.impactOccurred('medium');
+            if(tg && tg.BackButton) tg.BackButton.hide();
+            if(tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
         }
 
         window.completeReminder = async function(index) {
             if(!window.userDocRef) return;
             const data = window.currentUserData;
-            tg.HapticFeedback.impactOccurred('medium');
+            if(tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
             document.querySelectorAll('#tasksList .list-item')[index].classList.add('done');
-            let reminders = [...(data.reminders || [])];
+            let reminders = [];
+            if(data && data.reminders) reminders = [...data.reminders];
             reminders.splice(index, 1);
             const completed = (data.completed_tasks || 0) + 1;
-            setTimeout(async () => { await updateDoc(window.userDocRef, { reminders, completed_tasks: completed }); }, 300);
+            setTimeout(async () => { await updateDoc(window.userDocRef, { reminders: reminders, completed_tasks: completed }); }, 300);
         }
         
         window.openCategorySettings = function(event, category) {
             event.stopPropagation();
-            tg.HapticFeedback.impactOccurred('medium');
+            if(tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
             document.getElementById('oldCatName').value = category;
             document.getElementById('catEditName').value = category;
             document.getElementById('modalOverlay').classList.add('active');
             document.getElementById('categoryModal').classList.add('active');
-            if(tg.BackButton) tg.BackButton.show();
+            if(initData && initData.user && tg && tg.BackButton) tg.BackButton.show();
         }
         
         window.closeCategoryModal = function() {
             document.getElementById('categoryModal').classList.remove('active');
             document.getElementById('modalOverlay').classList.remove('active');
-            if(tg.BackButton) tg.BackButton.hide();
+            if(tg && tg.BackButton) tg.BackButton.hide();
         }
 
         window.saveCategorySettings = async function() {
             if(!window.userDocRef) return;
             const data = window.currentUserData; 
             const oldName = document.getElementById('oldCatName').value;
-            const newName = document.getElementById('catEditName').value.trim() || oldName;
+            let newName = document.getElementById('catEditName').value.trim();
+            if(!newName) newName = oldName;
             
-            let newColors = { ...data.category_colors };
+            let newColors = {};
+            if(data && data.category_colors) newColors = { ...data.category_colors };
+            
             if (oldName !== newName) { 
                 newColors[newName] = newColors[oldName] || getUniqueColor(newColors); 
                 delete newColors[oldName]; 
             }
 
-            let notes = [...(data.notes || [])];
+            let notes = [];
+            if(data && data.notes) notes = [...data.notes];
+
             if (oldName !== newName) {
-                notes = notes.map(n => n.startsWith(`[${oldName}]`) ? n.replace(`[${oldName}]`, `[${newName}]`) : n);
+                for(let i = 0; i < notes.length; i++) {
+                    if(notes[i].indexOf("[" + oldName + "]") === 0) {
+                        notes[i] = notes[i].replace("[" + oldName + "]", "[" + newName + "]");
+                    }
+                }
             }
             
             if (oldName !== newName && openSections[oldName]) {
                 openSections[newName] = true;
                 delete openSections[oldName];
-                localStorage.setItem('lunexOpenSections', JSON.stringify(openSections));
+                try { localStorage.setItem('lunexOpenSections', JSON.stringify(openSections)); } catch(e) {}
             }
 
             await updateDoc(window.userDocRef, { notes: notes, category_colors: newColors });
