@@ -38,15 +38,6 @@
                 <i class="fab fa-telegram-plane" style="font-size: 20px;"></i> Continue with Telegram
             </button>
             <p style="font-size: 11px; color: var(--text-muted); margin-top: 15px;">Fast, secure, and passwordless.</p>
-
-            <div id="telegramWidgetContainer" style="display: none;">
-                <script async src="https://telegram.org/js/telegram-widget.js?22" 
-                        data-telegram-login="test2813913dddbot" 
-                        data-size="large" 
-                        data-radius="16"
-                        data-onauth="onTelegramAuth(user)" 
-                        data-request-access="write"></script>
-            </div>
         </div>
     </div>
 
@@ -223,14 +214,12 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
         import { getFirestore, doc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
 
-        // --- БЕЗОПАСНАЯ ИНИЦИАЛИЗАЦИЯ И СИСТЕМНЫЕ ФУНКЦИИ ---
         const tg = window.Telegram?.WebApp || {};
         try {
             if (tg.expand) tg.expand();
             if (tg.requestFullscreen) tg.requestFullscreen();
         } catch(e) { console.warn("Not in Telegram context"); }
 
-        // Безопасные обертки для нативных функций (работают и в браузере и в ТГ)
         window.appAlert = function(msg) {
             if (tg.platform && tg.platform !== "unknown" && tg.showAlert) { tg.showAlert(msg); } 
             else { alert(msg); }
@@ -279,7 +268,7 @@
             }
         }
 
-        // --- УВЕДОМЛЕНИЯ (БРАУЗЕР-СОВМЕСТИМЫЕ) ---
+        // --- УВЕДОМЛЕНИЯ ---
         window.requestNotificationPermission = function() {
             window.appHaptic('light');
             if (!("Notification" in window)) {
@@ -349,7 +338,7 @@
         // --- ЛОГИКА АВТОРИЗАЦИИ OIDC ---
         window.doOidcLogin = function() {
             Telegram.Login.auth(
-                { client_id: 8597789604, request_access: ['write'] }, // Твой Client ID (test2813913dddbot)
+                { client_id: 8597789604, request_access: ['write'] }, // Исправлен на твой Client ID
                 function(data) {
                     if (data.user) {
                         localStorage.setItem('lunexWebUser', JSON.stringify(data.user));
@@ -432,17 +421,6 @@
             forceHideSplash();
             document.getElementById('loginScreen').style.display = 'flex';
         }
-
-        // Альтернативный вход через старый виджет (fallback)
-        window.onTelegramAuth = function(user) {
-            localStorage.setItem('lunexWebUser', JSON.stringify(user));
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('splashScreen').style.opacity = '1';
-            document.getElementById('splashScreen').style.display = 'flex';
-            document.getElementById('logoutBtn').style.display = 'flex';
-            applyUserDataToUI(user);
-            initFirebase(userId);
-        };
 
         window.logoutBrowser = function() {
             localStorage.removeItem('lunexWebUser');
@@ -763,26 +741,6 @@
             dlAnchorElem.setAttribute("download", `${title}.txt`);
             dlAnchorElem.click();
             window.appHaptic('success');
-            closeContextMenu();
-        }
-
-        window.printNote = function() {
-            const content = document.getElementById('zeTextarea').value;
-            const printWindow = window.open('', '', 'height=600,width=800');
-            printWindow.document.write('<html><head><title>Print Note</title><style>body{font-family:sans-serif; padding:20px; white-space:pre-wrap;}</style></head><body>');
-            printWindow.document.write(`<h1>${document.getElementById('zeCategory').innerText}</h1>`);
-            printWindow.document.write(`<p style="color:gray;">${document.getElementById('zeDate').innerText}</p>`);
-            printWindow.document.write(`<p>${content}</p>`);
-            printWindow.document.write('</body></html>');
-            printWindow.document.close();
-            printWindow.print();
-            closeContextMenu();
-        }
-
-        window.shareNote = function() {
-            const text = document.getElementById('zeTextarea').value;
-            if (navigator.share) { navigator.share({ text: text }); } 
-            else { navigator.clipboard.writeText(text).then(() => window.appAlert("Copied to clipboard!")); }
             closeContextMenu();
         }
 
