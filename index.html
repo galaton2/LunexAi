@@ -25,7 +25,7 @@
                     }
                 }, 500);
             }
-        }, 2500);
+        }, 3000);
     </script>
 
     <div id="loginScreen">
@@ -38,15 +38,6 @@
                 <i class="fab fa-telegram-plane" style="font-size: 20px;"></i> Continue with Telegram
             </button>
             <p style="font-size: 11px; color: var(--text-muted); margin-top: 15px;">Fast, secure, and passwordless.</p>
-
-            <div id="telegramWidgetContainer" style="display: none;">
-                <script async src="https://telegram.org/js/telegram-widget.js?22" 
-                        data-telegram-login="test2813913dddbot" 
-                        data-size="large" 
-                        data-radius="16"
-                        data-onauth="onTelegramAuth(user)" 
-                        data-request-access="write"></script>
-            </div>
         </div>
     </div>
 
@@ -222,15 +213,15 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
         import { getFirestore, doc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
+        import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-messaging.js";
 
-        // --- БЕЗОПАСНАЯ ИНИЦИАЛИЗАЦИЯ И СИСТЕМНЫЕ ФУНКЦИИ ---
+        // --- БЕЗОПАСНАЯ ИНИЦИАЛИЗАЦИЯ TELEGRAM ---
         const tg = window.Telegram?.WebApp || {};
         try {
             if (tg.expand) tg.expand();
             if (tg.requestFullscreen) tg.requestFullscreen();
         } catch(e) { console.warn("Not in Telegram context"); }
 
-        // Безопасные обертки для нативных функций (работают и в браузере и в ТГ)
         window.appAlert = function(msg) {
             if (tg.platform && tg.platform !== "unknown" && tg.showAlert) { tg.showAlert(msg); } 
             else { alert(msg); }
@@ -262,10 +253,12 @@
             });
         }
 
+        // --- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ---
         let userId = null; 
         let userName = "User";
         window.userDocRef = null;
         window.currentUserData = null;
+        window.fcmToken = null;
         
         let openSections = JSON.parse(localStorage.getItem('lunexOpenSections')) || {};
         let currentFontSize = 16; 
@@ -279,44 +272,51 @@
             }
         }
 
-        // --- УВЕДОМЛЕНИЯ ---
-        window.requestNotificationPermission = function() {
+        // --- УВЕДОМЛЕНИЯ И SERVICE WORKER ---
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./firebase-messaging-sw.js')
+            .then(function(registration) { console.log('SW registered:', registration.scope); })
+            .catch(function(err) { console.log('SW failed:', err); });
+        }
+
+        window.requestNotificationPermission = async function() {
             window.appHaptic('light');
             if (!("Notification" in window)) {
-                window.appAlert("This browser does not support web push notifications. Please use Chrome or Android.");
+                window.appAlert("Browser does not support web push.");
                 return;
             }
-            Notification.requestPermission().then(function (permission) {
-                if (permission === "granted") {
-                    window.appAlert("Notifications enabled successfully!");
-                } else {
-                    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-                    if(isIOS) {
-                        window.appAlert("To enable notifications on iOS, please tap 'Share' -> 'Add to Home Screen', and open the app from your home screen.");
-                    } else {
-                        window.appAlert("Notifications were denied by your browser settings.");
+            const permission = await Notification.requestPermission();
+            if (permission === "granted") {
+                try {
+                    const messaging = getMessaging(window.firebaseApp);
+                    // Токен может не сгенерироваться без VAPID ключа, но локальные пуши будут работать
+                    const token = await getToken(messaging);
+                    if (token) {
+                        window.fcmToken = token;
+                        if (window.userDocRef) await updateDoc(window.userDocRef, { fcm_token: token });
+                        window.appAlert("Notifications fully enabled!");
                     }
+                } catch (e) {
+                    console.log('FCM setup requires valid VAPID, using local fallback.');
+                    window.appAlert("Notifications enabled (Local Mode). Background push requires FCM setup.");
                 }
-            });
+            } else {
+                window.appAlert("Notifications denied. iOS requires adding app to Home Screen first.");
+            }
         }
 
         window.testNotification = function() {
             window.appHaptic('medium');
-            window.appAlert("Test notification scheduled! You will receive an alert in exactly 1 minute. 🚀");
-
+            window.appAlert("Test scheduled! Closing the app? The background worker will try to catch it.");
             setTimeout(() => {
-                if (tg.platform && tg.platform !== "unknown" && tg.HapticFeedback) {
-                    tg.HapticFeedback.notificationOccurred('success');
-                }
-                
+                window.appHaptic('success');
                 if ("Notification" in window && Notification.permission === "granted") {
-                    new Notification("Lunex System", { body: "This is your 1-minute test notification! 🚀 It works perfectly in the background." });
-                } else {
-                    window.appAlert("🔔 Test Alert: 1 minute has passed! 🚀");
+                    new Notification("Lunex System", { body: "Test notification! It works." });
                 }
             }, 60000); 
         }
 
+        // Локальный таймер для открытой вкладки
         let notifiedReminders = new Set();
         setInterval(() => {
             if(!window.currentUserData) return;
@@ -330,11 +330,7 @@
                         const uniqueId = r.text + r.datetime;
                         if(!notifiedReminders.has(uniqueId)) {
                             notifiedReminders.add(uniqueId);
-                            
-                            if (tg.platform && tg.platform !== "unknown" && tg.HapticFeedback) {
-                                tg.HapticFeedback.notificationOccurred('warning');
-                            }
-
+                            window.appHaptic('warning');
                             if ("Notification" in window && Notification.permission === "granted") {
                                 new Notification("Lunex Reminder", { body: r.text.replace(/\[.*?\]\s*/, '') });
                             } else {
@@ -356,6 +352,7 @@
                         document.getElementById('loginScreen').style.display = 'none';
                         document.getElementById('splashScreen').style.opacity = '1';
                         document.getElementById('splashScreen').style.display = 'flex';
+                        document.getElementById('logoutBtn').style.display = 'flex';
                         applyUserDataToUI(data.user);
                         initFirebase(userId);
                     } else if (data.error) {
@@ -438,7 +435,7 @@
             location.reload(); 
         };
 
-        // --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ И UI ---
+        // --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ---
         window.switchTab = function(tabId, btn) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
@@ -509,6 +506,7 @@
             const notes = data.notes || []; let reminders = data.reminders || [];
             document.getElementById('dbItemCount').innerText = `${notes.length + reminders.length}`;
 
+            // THE VAULT
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const vault = document.getElementById('notesVault');
             const groupedNotes = {};
@@ -559,6 +557,7 @@
                 vault.innerHTML = vaultHTML;
             }
 
+            // TASKS
             const tList = document.getElementById('tasksList');
             const dReminders = document.getElementById('dashReminders');
             const todayStr = new Date().toLocaleDateString();
@@ -750,26 +749,6 @@
             dlAnchorElem.setAttribute("download", `${title}.txt`);
             dlAnchorElem.click();
             window.appHaptic('success');
-            closeContextMenu();
-        }
-
-        window.printNote = function() {
-            const content = document.getElementById('zeTextarea').value;
-            const printWindow = window.open('', '', 'height=600,width=800');
-            printWindow.document.write('<html><head><title>Print Note</title><style>body{font-family:sans-serif; padding:20px; white-space:pre-wrap;}</style></head><body>');
-            printWindow.document.write(`<h1>${document.getElementById('zeCategory').innerText}</h1>`);
-            printWindow.document.write(`<p style="color:gray;">${document.getElementById('zeDate').innerText}</p>`);
-            printWindow.document.write(`<p>${content}</p>`);
-            printWindow.document.write('</body></html>');
-            printWindow.document.close();
-            printWindow.print();
-            closeContextMenu();
-        }
-
-        window.shareNote = function() {
-            const text = document.getElementById('zeTextarea').value;
-            if (navigator.share) { navigator.share({ text: text }); } 
-            else { navigator.clipboard.writeText(text).then(() => window.appAlert("Copied to clipboard!")); }
             closeContextMenu();
         }
 
