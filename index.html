@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Lunex Premium</title>
-    <script src="https://telegram.org/js/telegram-login.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
@@ -18,223 +17,189 @@
             const splash = document.getElementById('splashScreen');
             if(splash && splash.style.display !== 'none') {
                 splash.style.opacity = '0';
-                setTimeout(() => { 
-                    splash.style.display = 'none'; 
-                    if(document.getElementById('tab-dashboard').style.display !== 'block') {
-                        document.getElementById('loginScreen').style.display = 'flex';
-                    }
-                }, 500);
+                setTimeout(() => splash.style.display = 'none', 500);
             }
-        }, 3000);
+        }, 2500);
     </script>
 
-    <div id="loginScreen">
-        <div class="login-card">
-            <i class="fas fa-star splash-logo" style="animation: none; font-size: 60px;"></i>
-            <h1 class="login-title">Lunex Premium</h1>
-            <p class="login-subtitle">Connect your Telegram account to seamlessly access your Vault across all devices.</p>
-            
-            <button class="telegram-login-btn" onclick="doOidcLogin()">
-                <i class="fab fa-telegram-plane" style="font-size: 20px;"></i> Continue with Telegram
-            </button>
-            <p style="font-size: 11px; color: var(--text-muted); margin-top: 15px;">Fast, secure, and passwordless.</p>
-        </div>
+    <div id="errorScreen" style="display: none; position: fixed; inset: 0; background: var(--bg-dark); z-index: 10000; flex-direction: column; justify-content: center; align-items: center; padding: 20px; text-align: center;">
+        <i class="fab fa-telegram-plane" style="font-size: 60px; color: var(--pink-main); margin-bottom: 20px;"></i>
+        <h1 style="font-size: 24px; font-weight: 700; margin-bottom: 10px;">Telegram Only</h1>
+        <p style="font-size: 14px; color: var(--text-muted); line-height: 1.5;">Please open this application directly inside the Lunex AI Telegram bot.</p>
     </div>
 
-    <div class="top-bar">
-        <div class="premium-btn">Lunex AI v2.4 <i class="fas fa-star" style="font-size: 10px;"></i></div>
-    </div>
-
-    <main id="tab-dashboard" class="tab-content active">
-        <div class="greeting">
-            <h1 id="userName">Hi User,</h1>
-            <p>Your unified digital intelligence system.</p>
+    <div id="mainApp" style="display: none;">
+        <div class="top-bar">
+            <div class="premium-btn">Lunex AI v2.4 <i class="fas fa-star" style="font-size: 10px;"></i></div>
         </div>
 
-        <h2 class="section-title">Today's Activity</h2>
-        <div class="ring-container">
-            <svg viewBox="0 0 36 36" class="circular-chart">
-                <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                <path class="circle" id="activityRing" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                <text x="18" y="20.35" class="percentage" id="activityPct">0%</text>
-            </svg>
-            <div class="ring-stats">
-                <div class="ring-stat-item"><span class="ring-stat-value" id="statCompleted">0</span><span class="ring-stat-label">Tasks Done</span></div>
-                <div class="ring-stat-item"><span class="ring-stat-value" id="statPending">0</span><span class="ring-stat-label">Pending Today</span></div>
+        <main id="tab-dashboard" class="tab-content active">
+            <div class="greeting">
+                <h1 id="userName">Hi User,</h1>
+                <p>Your unified digital intelligence system.</p>
             </div>
-        </div>
-
-        <h2 class="section-title" style="margin-top: 30px;">Active Reminders</h2>
-        <div id="dashReminders"></div>
-    </main>
-
-    <main id="tab-notes" class="tab-content">
-        <div class="greeting" style="padding-bottom: 5px;"><h1>The Vault</h1><p>Structured knowledge base.</p></div>
-        <div class="search-bar">
-            <i class="fas fa-search" style="color: var(--text-muted);"></i>
-            <input type="text" id="searchInput" placeholder="Search records..." oninput="filterNotes()">
-        </div>
-        <div id="notesVault"></div>
-    </main>
-
-    <main id="tab-tasks" class="tab-content">
-        <div class="greeting" style="padding-bottom: 5px;"><h1>To-Do List</h1><p>Manage your schedule.</p></div>
-        <div class="filter-tabs">
-            <div class="filter-btn active" id="fltAll" onclick="setTaskFilter('all')">All Tasks</div>
-            <div class="filter-btn" id="fltToday" onclick="setTaskFilter('today')">Today Only</div>
-        </div>
-        <div id="tasksList"></div>
-    </main>
-
-    <main id="tab-settings" class="tab-content">
-        <div class="greeting"><h1>Settings</h1></div>
-        
-        <div class="list-item" style="background: transparent; border: none; padding: 0 16px 20px;">
-            <div style="display:flex; align-items:center; gap:15px;">
-                <div class="settings-avatar"><img id="setAvatar" src=""></div>
-                <div><h3 id="setName" style="font-size:18px;">Name</h3><p style="color:var(--text-muted); font-size:13px;">ID: <span id="setID"></span></p></div>
-            </div>
-        </div>
-
-        <h2 class="section-title">Notifications</h2>
-        <div class="list-item" onclick="requestNotificationPermission()">
-            <div class="list-info"><span class="list-title"><i class="fas fa-bell"></i> Enable Notifications</span></div>
-            <i class="fas fa-chevron-right" style="color: var(--text-muted);"></i>
-        </div>
-        <div class="list-item" onclick="testNotification()">
-            <div class="list-info"><span class="list-title"><i class="fas fa-stopwatch"></i> Test Alert (1 min)</span></div>
-            <i class="fas fa-chevron-right" style="color: var(--text-muted);"></i>
-        </div>
-
-        <h2 class="section-title">System Data</h2>
-        <div class="list-item"><div class="list-info"><span class="list-title"><i class="fas fa-database"></i> Database Items</span></div><span style="font-size:14px; font-weight:bold;" id="dbItemCount">0</span></div>
-        <div class="list-item" onclick="exportData()"><div class="list-info"><span class="list-title"><i class="fas fa-file-download"></i> Export Backup</span></div><i class="fas fa-chevron-right" style="color: var(--text-muted);"></i></div>
-        <div class="list-item" onclick="logoutBrowser()" id="logoutBtn" style="display: none;"><div class="list-info"><span class="list-title" style="color:#ff4d4d;"><i class="fas fa-sign-out-alt"></i> Logout</span></div></div>
-    </main>
-
-    <div class="bottom-panel">
-        <div class="nav-bar">
-            <div class="nav-item active" onclick="switchTab('dashboard', this)"><i class="fas fa-home"></i></div>
-            <div class="nav-item" onclick="switchTab('notes', this)"><i class="fas fa-folder-open"></i></div>
-            <button class="fab-btn" onclick="openCreationRouter()"><i class="fas fa-plus"></i></button>
-            <div class="nav-item" onclick="switchTab('tasks', this)"><i class="fas fa-check-circle"></i></div>
-            <div class="nav-item" onclick="switchTab('settings', this)"><i class="fas fa-cog"></i></div>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="modalOverlay" onclick="closeAllModals()"></div>
-    
-    <div class="modal-sheet" id="creationRouterModal">
-        <div class="modal-close-btn" onclick="closeAllModals()"><i class="fas fa-times"></i></div>
-        <h2 class="section-title" style="margin-top:0;">Create New</h2>
-        <div class="creation-grid">
-            <div class="creation-btn" onclick="openZenEditor(-1)"><i class="fas fa-pen-nib"></i> New Note</div>
-            <div class="creation-btn" onclick="openReminderModal(-1)"><i class="fas fa-clock"></i> New Reminder</div>
-        </div>
-    </div>
-
-    <div class="modal-sheet" id="reminderModal" style="z-index: 1001;">
-        <div class="modal-close-btn" onclick="closeAllModals()"><i class="fas fa-times"></i></div>
-        <h2 class="section-title" id="remModalTitle" style="margin-top:0;">Set Reminder</h2>
-        <div class="form-group"><input type="text" class="form-control" id="remText" placeholder="What to do?"></div>
-        <div class="form-group">
-            <input type="datetime-local" class="form-control" id="remDate">
-            <div class="quick-time-row">
-                <div class="tag-pill" onclick="setQuickTime('1h')">+1 Hour</div>
-                <div class="tag-pill" onclick="setQuickTime('3h')">+3 Hours</div>
-                <div class="tag-pill" onclick="setQuickTime('tmw_morn')">Tmw 9 AM</div>
-                <div class="tag-pill" onclick="setQuickTime('tmw_eve')">Tmw 7 PM</div>
-            </div>
-        </div>
-        <input type="hidden" id="remEditIndex" value="-1">
-        <div class="modal-actions">
-            <button class="btn btn-danger" id="remBtnDelete" style="display:none;" onclick="deleteReminder()">Delete</button>
-            <button class="btn btn-primary" onclick="saveReminder()" style="width: 100%;">Save Reminder</button>
-        </div>
-    </div>
-
-    <div id="zenEditor" class="zen-editor">
-        <div class="ze-header" id="zeHeader">
-            <button class="ze-close-btn" onclick="saveAndCloseZenEditor()"><i class="fas fa-chevron-left"></i></button>
-            <div class="ze-meta" onclick="openCategorySelector()"><span id="zeCategory">Personal</span> <i class="fas fa-caret-down"></i></div>
-            <div style="width: 36px;"></div> 
-        </div>
-        <div class="ze-body">
-            <div class="ze-paper" id="zePaper">
-                <div class="ze-paper-header">
-                    <div class="ze-date"><span id="zeDate">17 Apr 2026</span> <span id="zeSaveStatus">Saving...</span></div>
-                    <div style="display:flex; align-items:center;">
-                        <span class="ze-words" id="zeWordCount">0 words</span>
-                        <button class="ze-menu-btn-small" onclick="openContextOptions()"><i class="fas fa-ellipsis-v"></i></button>
-                    </div>
+            <h2 class="section-title">Today's Activity</h2>
+            <div class="ring-container">
+                <svg viewBox="0 0 36 36" class="circular-chart">
+                    <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    <path class="circle" id="activityRing" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    <text x="18" y="20.35" class="percentage" id="activityPct">0%</text>
+                </svg>
+                <div class="ring-stats">
+                    <div class="ring-stat-item"><span class="ring-stat-value" id="statCompleted">0</span><span class="ring-stat-label">Tasks Done</span></div>
+                    <div class="ring-stat-item"><span class="ring-stat-value" id="statPending">0</span><span class="ring-stat-label">Pending Today</span></div>
                 </div>
-                <textarea id="zeTextarea" placeholder="Start writing..." oninput="handleTyping()"></textarea>
+            </div>
+            <h2 class="section-title" style="margin-top: 30px;">Active Reminders</h2>
+            <div id="dashReminders"></div>
+        </main>
+
+        <main id="tab-notes" class="tab-content">
+            <div class="greeting" style="padding-bottom: 5px;"><h1>The Vault</h1><p>Structured knowledge base.</p></div>
+            <div class="search-bar">
+                <i class="fas fa-search" style="color: var(--text-muted);"></i>
+                <input type="text" id="searchInput" placeholder="Search records..." oninput="filterNotes()">
+            </div>
+            <div id="notesVault"></div>
+        </main>
+
+        <main id="tab-tasks" class="tab-content">
+            <div class="greeting" style="padding-bottom: 5px;"><h1>To-Do List</h1><p>Manage your schedule.</p></div>
+            <div class="filter-tabs">
+                <div class="filter-btn active" id="fltAll" onclick="setTaskFilter('all')">All Tasks</div>
+                <div class="filter-btn" id="fltToday" onclick="setTaskFilter('today')">Today Only</div>
+            </div>
+            <div id="tasksList"></div>
+        </main>
+
+        <main id="tab-settings" class="tab-content">
+            <div class="greeting"><h1>Settings</h1></div>
+            <div class="list-item" style="background: transparent; border: none; padding: 0 16px 20px;">
+                <div style="display:flex; align-items:center; gap:15px;">
+                    <div class="settings-avatar"><img id="setAvatar" src=""></div>
+                    <div><h3 id="setName" style="font-size:18px;">Name</h3><p style="color:var(--text-muted); font-size:13px;">ID: <span id="setID"></span></p></div>
+                </div>
+            </div>
+            
+            <h2 class="section-title">Notifications</h2>
+            <div class="list-item" onclick="tg.showAlert('Your reminders are safely managed and will be sent directly by Lunex Bot in this chat! 🤖')">
+                <div class="list-info"><span class="list-title"><i class="fas fa-robot"></i> Bot Push Notifications</span></div>
+                <i class="fas fa-check-circle" style="color: var(--pink-main); font-size: 18px;"></i>
+            </div>
+
+            <h2 class="section-title">System Data</h2>
+            <div class="list-item"><div class="list-info"><span class="list-title"><i class="fas fa-database"></i> Database Items</span></div><span style="font-size:14px; font-weight:bold;" id="dbItemCount">0</span></div>
+            <div class="list-item" onclick="exportData()"><div class="list-info"><span class="list-title"><i class="fas fa-file-download"></i> Export Backup</span></div><i class="fas fa-chevron-right" style="color: var(--text-muted);"></i></div>
+        </main>
+
+        <div class="bottom-panel">
+            <div class="nav-bar">
+                <div class="nav-item active" onclick="switchTab('dashboard', this)"><i class="fas fa-home"></i></div>
+                <div class="nav-item" onclick="switchTab('notes', this)"><i class="fas fa-folder-open"></i></div>
+                <button class="fab-btn" onclick="openCreationRouter()"><i class="fas fa-plus"></i></button>
+                <div class="nav-item" onclick="switchTab('tasks', this)"><i class="fas fa-check-circle"></i></div>
+                <div class="nav-item" onclick="switchTab('settings', this)"><i class="fas fa-cog"></i></div>
             </div>
         </div>
-        <input type="hidden" id="zeEditIndex" value="-1">
-    </div>
 
-    <div class="modal-sheet" id="contextOptionsMenu" style="z-index: 2005;">
-        <div class="modal-close-btn" onclick="closeContextMenu()"><i class="fas fa-times"></i></div>
-        <h2 class="section-title" style="margin-top:0;">Typography</h2>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
-            <div class="creation-btn" onclick="changeFontSize(2)" style="justify-content: center; padding: 12px;"><i class="fas fa-search-plus"></i> A+</div>
-            <div class="creation-btn" onclick="changeFontSize(-2)" style="justify-content: center; padding: 12px;"><i class="fas fa-search-minus"></i> A-</div>
+        <div class="modal-overlay" id="modalOverlay" onclick="closeAllModals()"></div>
+        
+        <div class="modal-sheet" id="creationRouterModal">
+            <div class="modal-close-btn" onclick="closeAllModals()"><i class="fas fa-times"></i></div>
+            <h2 class="section-title" style="margin-top:0;">Create New</h2>
+            <div class="creation-grid">
+                <div class="creation-btn" onclick="openZenEditor(-1)"><i class="fas fa-pen-nib"></i> New Note</div>
+                <div class="creation-btn" onclick="openReminderModal(-1)"><i class="fas fa-clock"></i> New Reminder</div>
+            </div>
         </div>
-        <h2 class="section-title" style="margin-top:0;">Appearance</h2>
-        <div class="menu-list" style="margin-bottom: 20px;">
-            <div class="menu-item" onclick="toggleFocusMode()"><i class="fas fa-eye-slash"></i> Zen Focus Mode</div>
-            <div class="menu-item" onclick="toggleInvertColors()"><i class="fas fa-adjust"></i> Dark/Light Paper</div>
-            <div class="menu-item" onclick="toggleFontFamily()"><i class="fas fa-font"></i> Change Font Style</div>
-            <div class="menu-item" onclick="toggleTextWidth()"><i class="fas fa-arrows-alt-h"></i> Toggle Reading Width</div>
+
+        <div class="modal-sheet" id="reminderModal" style="z-index: 1001;">
+            <div class="modal-close-btn" onclick="closeAllModals()"><i class="fas fa-times"></i></div>
+            <h2 class="section-title" id="remModalTitle" style="margin-top:0;">Set Reminder</h2>
+            <div class="form-group"><input type="text" class="form-control" id="remText" placeholder="What to do?"></div>
+            <div class="form-group">
+                <input type="datetime-local" class="form-control" id="remDate">
+                <div class="quick-time-row">
+                    <div class="tag-pill" onclick="setQuickTime('1h')">+1 Hour</div>
+                    <div class="tag-pill" onclick="setQuickTime('3h')">+3 Hours</div>
+                    <div class="tag-pill" onclick="setQuickTime('tmw_morn')">Tmw 9 AM</div>
+                    <div class="tag-pill" onclick="setQuickTime('tmw_eve')">Tmw 7 PM</div>
+                </div>
+            </div>
+            <input type="hidden" id="remEditIndex" value="-1">
+            <div class="modal-actions">
+                <button class="btn btn-danger" id="remBtnDelete" style="display:none;" onclick="deleteReminder()">Delete</button>
+                <button class="btn btn-primary" onclick="saveReminder()" style="width: 100%;">Save Reminder</button>
+            </div>
         </div>
-        <h2 class="section-title" style="margin-top:0;">Document Actions</h2>
-        <div class="menu-list">
-            <div class="menu-item" onclick="exportNoteTxt()"><i class="fas fa-file-export"></i> Export as TXT</div>
-            <div class="menu-item danger" onclick="deleteZenNote()"><i class="fas fa-trash-alt"></i> Delete Note</div>
+
+        <div id="zenEditor" class="zen-editor">
+            <div class="ze-header" id="zeHeader">
+                <button class="ze-close-btn" onclick="saveAndCloseZenEditor()"><i class="fas fa-times"></i></button>
+                <div class="ze-meta" onclick="openCategorySelector()"><span id="zeCategory">Personal</span> <i class="fas fa-caret-down"></i></div>
+                <div style="width: 36px;"></div> 
+            </div>
+            <div class="ze-body">
+                <div class="ze-paper" id="zePaper">
+                    <div class="ze-paper-header">
+                        <div class="ze-date"><span id="zeDate">17 Apr 2026</span> <span id="zeSaveStatus">Saving...</span></div>
+                        <div style="display:flex; align-items:center;">
+                            <span class="ze-words" id="zeWordCount">0 words</span>
+                            <button class="ze-menu-btn-small" onclick="openContextOptions()"><i class="fas fa-ellipsis-v"></i></button>
+                        </div>
+                    </div>
+                    <textarea id="zeTextarea" placeholder="Start writing..." oninput="handleTyping()"></textarea>
+                </div>
+            </div>
+            <input type="hidden" id="zeEditIndex" value="-1">
         </div>
-    </div>
 
-    <div class="modal-sheet" id="catSelectorMenu" style="z-index: 2005;">
-        <div class="modal-close-btn" onclick="closeCategorySelector()"><i class="fas fa-times"></i></div>
-        <h2 class="section-title" style="margin-top:0;">Select Category</h2>
-        <div class="tags-container" id="zeTagsContainer"></div>
-        <input type="text" id="zeCustomTagInput" class="tag-custom-input" placeholder="Type new category & press Enter..." onkeypress="if(event.key === 'Enter') applyNewCategory()">
-    </div>
+        <div class="modal-sheet" id="contextOptionsMenu" style="z-index: 2005;">
+            <div class="modal-close-btn" onclick="closeContextMenu()"><i class="fas fa-times"></i></div>
+            <h2 class="section-title" style="margin-top:0;">Typography</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+                <div class="creation-btn" onclick="changeFontSize(2)" style="justify-content: center; padding: 12px;"><i class="fas fa-search-plus"></i> A+</div>
+                <div class="creation-btn" onclick="changeFontSize(-2)" style="justify-content: center; padding: 12px;"><i class="fas fa-search-minus"></i> A-</div>
+            </div>
+            <h2 class="section-title" style="margin-top:0;">Appearance</h2>
+            <div class="menu-list" style="margin-bottom: 20px;">
+                <div class="menu-item" onclick="toggleFocusMode()"><i class="fas fa-eye-slash"></i> Zen Focus Mode</div>
+                <div class="menu-item" onclick="toggleInvertColors()"><i class="fas fa-adjust"></i> Dark/Light Paper</div>
+                <div class="menu-item" onclick="toggleFontFamily()"><i class="fas fa-font"></i> Change Font Style</div>
+                <div class="menu-item" onclick="toggleTextWidth()"><i class="fas fa-arrows-alt-h"></i> Toggle Reading Width</div>
+            </div>
+            <h2 class="section-title" style="margin-top:0;">Document Actions</h2>
+            <div class="menu-list">
+                <div class="menu-item" onclick="exportNoteTxt()"><i class="fas fa-file-export"></i> Export as TXT</div>
+                <div class="menu-item danger" onclick="deleteZenNote()"><i class="fas fa-trash-alt"></i> Delete Note</div>
+            </div>
+        </div>
 
-    <div class="modal-sheet" id="categoryModal" style="z-index: 1001;">
-        <div class="modal-close-btn" onclick="closeCategoryModal()"><i class="fas fa-times"></i></div>
-        <h2 class="section-title" style="margin-top:0;">Rename Category</h2>
-        <div class="form-group"><input type="text" class="form-control" id="catEditName" placeholder="Category Name"></div>
-        <input type="hidden" id="oldCatName" value="">
-        <div class="modal-actions"><button class="btn btn-primary" onclick="saveCategorySettings()" style="width: 100%;">Apply & Save</button></div>
-    </div>
+        <div class="modal-sheet" id="catSelectorMenu" style="z-index: 2005;">
+            <div class="modal-close-btn" onclick="closeCategorySelector()"><i class="fas fa-times"></i></div>
+            <h2 class="section-title" style="margin-top:0;">Select Category</h2>
+            <div class="tags-container" id="zeTagsContainer"></div>
+            <input type="text" id="zeCustomTagInput" class="tag-custom-input" placeholder="Type new category & press Enter..." onkeypress="if(event.key === 'Enter') applyNewCategory()">
+        </div>
 
-    <script type="module">
+        <div class="modal-sheet" id="categoryModal" style="z-index: 1001;">
+            <div class="modal-close-btn" onclick="closeCategoryModal()"><i class="fas fa-times"></i></div>
+            <h2 class="section-title" style="margin-top:0;">Rename Category</h2>
+            <div class="form-group"><input type="text" class="form-control" id="catEditName" placeholder="Category Name"></div>
+            <input type="hidden" id="oldCatName" value="">
+            <div class="modal-actions"><button class="btn btn-primary" onclick="saveCategorySettings()" style="width: 100%;">Apply & Save</button></div>
+        </div>
+    </div> <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
         import { getFirestore, doc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
-        import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-messaging.js";
 
-        // --- БЕЗОПАСНАЯ ИНИЦИАЛИЗАЦИЯ TELEGRAM ---
+        // --- ИНИЦИАЛИЗАЦИЯ И НАТИВНЫЕ ФИЧИ ТЕЛЕГРАМА ---
         const tg = window.Telegram?.WebApp || {};
+        
         try {
             if (tg.expand) tg.expand();
             if (tg.requestFullscreen) tg.requestFullscreen();
-        } catch(e) { console.warn("Not in Telegram context"); }
-
-        window.appAlert = function(msg) {
-            if (tg.platform && tg.platform !== "unknown" && tg.showAlert) { tg.showAlert(msg); } 
-            else { alert(msg); }
-        };
-        window.appHaptic = function(style) {
-            if (tg.platform && tg.platform !== "unknown" && tg.HapticFeedback) { tg.HapticFeedback.impactOccurred(style); }
-        };
-        window.showBackBtn = function() {
-            if (tg.platform && tg.platform !== "unknown" && tg.BackButton) { tg.BackButton.show(); }
-        };
-        window.hideBackBtn = function() {
-            if (tg.platform && tg.platform !== "unknown" && tg.BackButton) { tg.BackButton.hide(); }
-        };
+        } catch(e) {}
 
         if (tg.BackButton) {
             tg.BackButton.onClick(function() {
@@ -258,190 +223,71 @@
         let userName = "User";
         window.userDocRef = null;
         window.currentUserData = null;
-        window.fcmToken = null;
         
         let openSections = JSON.parse(localStorage.getItem('lunexOpenSections')) || {};
         let currentFontSize = 16; 
         let typingTimer;
 
-        function forceHideSplash() {
-            const splash = document.getElementById('splashScreen');
-            if(splash && splash.style.display !== 'none') {
-                splash.style.opacity = '0';
-                setTimeout(() => splash.style.display = 'none', 500);
-            }
-        }
-
-        // --- УВЕДОМЛЕНИЯ И SERVICE WORKER ---
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./firebase-messaging-sw.js')
-            .then(function(registration) { console.log('SW registered:', registration.scope); })
-            .catch(function(err) { console.log('SW failed:', err); });
-        }
-
-        window.requestNotificationPermission = async function() {
-            window.appHaptic('light');
-            if (!("Notification" in window)) {
-                window.appAlert("Browser does not support web push.");
-                return;
-            }
-            const permission = await Notification.requestPermission();
-            if (permission === "granted") {
-                try {
-                    const messaging = getMessaging(window.firebaseApp);
-                    // Токен может не сгенерироваться без VAPID ключа, но локальные пуши будут работать
-                    const token = await getToken(messaging);
-                    if (token) {
-                        window.fcmToken = token;
-                        if (window.userDocRef) await updateDoc(window.userDocRef, { fcm_token: token });
-                        window.appAlert("Notifications fully enabled!");
-                    }
-                } catch (e) {
-                    console.log('FCM setup requires valid VAPID, using local fallback.');
-                    window.appAlert("Notifications enabled (Local Mode). Background push requires FCM setup.");
-                }
-            } else {
-                window.appAlert("Notifications denied. iOS requires adding app to Home Screen first.");
-            }
-        }
-
-        window.testNotification = function() {
-            window.appHaptic('medium');
-            window.appAlert("Test scheduled! Closing the app? The background worker will try to catch it.");
-            setTimeout(() => {
-                window.appHaptic('success');
-                if ("Notification" in window && Notification.permission === "granted") {
-                    new Notification("Lunex System", { body: "Test notification! It works." });
-                }
-            }, 60000); 
-        }
-
-        // Локальный таймер для открытой вкладки
-        let notifiedReminders = new Set();
-        setInterval(() => {
-            if(!window.currentUserData) return;
-            const now = new Date();
-            const reminders = window.currentUserData.reminders || [];
+        // ПРОВЕРКА КОНТЕКСТА: Если мы в Telegram, загружаем базу. Иначе - показываем ошибку.
+        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+            document.getElementById('mainApp').style.display = 'block'; // Показываем интерфейс
             
-            reminders.forEach((r) => {
-                if(r.datetime) {
-                    const rd = new Date(r.datetime.replace(' ', 'T'));
-                    if(rd.getFullYear() === now.getFullYear() && rd.getMonth() === now.getMonth() && rd.getDate() === now.getDate() && rd.getHours() === now.getHours() && rd.getMinutes() === now.getMinutes()) {
-                        const uniqueId = r.text + r.datetime;
-                        if(!notifiedReminders.has(uniqueId)) {
-                            notifiedReminders.add(uniqueId);
-                            window.appHaptic('warning');
-                            if ("Notification" in window && Notification.permission === "granted") {
-                                new Notification("Lunex Reminder", { body: r.text.replace(/\[.*?\]\s*/, '') });
-                            } else {
-                                window.appAlert("🔔 Reminder: \n" + r.text.replace(/\[.*?\]\s*/, ''));
-                            }
-                        }
-                    }
-                }
-            });
-        }, 30000);
-
-        // --- ЛОГИКА АВТОРИЗАЦИИ OIDC ---
-        window.doOidcLogin = function() {
-            Telegram.Login.auth(
-                { client_id: 8597789604, request_access: ['write'] }, 
-                function(data) {
-                    if (data.user) {
-                        localStorage.setItem('lunexWebUser', JSON.stringify(data.user));
-                        document.getElementById('loginScreen').style.display = 'none';
-                        document.getElementById('splashScreen').style.opacity = '1';
-                        document.getElementById('splashScreen').style.display = 'flex';
-                        document.getElementById('logoutBtn').style.display = 'flex';
-                        applyUserDataToUI(data.user);
-                        initFirebase(userId);
-                    } else if (data.error) {
-                        window.appAlert("Telegram Auth Error: " + data.error);
-                    }
-                }
-            );
-        };
-
-        function initFirebase(uid) {
-            try {
-                const firebaseConfig = {
-                    apiKey: "AIzaSyDY8g42qsSkoN36i-DIeptehoDWXSEUlU0",
-                    authDomain: "lunex-f5362.firebaseapp.com",
-                    projectId: "lunex-f5362",
-                    storageBucket: "lunex-f5362.firebasestorage.app",
-                    messagingSenderId: "364220464927",
-                    appId: "1:364220464927:web:95531c2ac9de3aaa343a2a"
-                };
-                
-                let app;
-                try { app = initializeApp(firebaseConfig); } 
-                catch (e) { app = window.firebaseApp; } 
-                window.firebaseApp = app;
-
-                const db = getFirestore(app);
-                window.userDocRef = doc(db, "users", uid);
-
-                onSnapshot(window.userDocRef, (docSnap) => {
-                    forceHideSplash();
-                    if (docSnap.exists()) {
-                        window.currentUserData = docSnap.data();
-                        if (!window.currentUserData.category_colors) window.currentUserData.category_colors = {};
-                        renderUI();
-                        renderActivityRing();
-                    } else {
-                        window.currentUserData = { notes: [], reminders: [], category_colors: {} };
-                        renderUI();
-                    }
-                }, (error) => {
-                    console.error(error); forceHideSplash(); 
-                    window.appAlert("Database connection error");
-                });
-            } catch (err) {
-                console.error("Firebase init failed", err);
-                forceHideSplash();
-            }
-        }
-
-        function applyUserDataToUI(userObj) {
-            userId = userObj.id.toString();
-            userName = userObj.first_name || userObj.name || "User";
+            userId = tg.initDataUnsafe.user.id.toString();
+            userName = tg.initDataUnsafe.user.first_name || "User";
             
             document.getElementById('userName').innerText = "Hi " + userName + ",";
             document.getElementById('setName').innerText = userName;
             document.getElementById('setID').innerText = userId;
             
             let avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=ff477e&color=fff&bold=true`;
-            if (userObj.photo_url) avatarUrl = userObj.photo_url;
-            if (userObj.picture) avatarUrl = userObj.picture;
+            if (tg.initDataUnsafe.user.photo_url) avatarUrl = tg.initDataUnsafe.user.photo_url;
             document.getElementById('setAvatar').src = avatarUrl;
-        }
 
-        // --- ПРОВЕРКА СОСТОЯНИЯ ВХОДА ---
-        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-            applyUserDataToUI(tg.initDataUnsafe.user);
-            initFirebase(userId);
-        } else if (localStorage.getItem('lunexWebUser')) {
-            const savedUser = JSON.parse(localStorage.getItem('lunexWebUser'));
-            applyUserDataToUI(savedUser);
-            document.getElementById('logoutBtn').style.display = 'flex'; 
-            initFirebase(userId);
+            // Подключение к Firebase
+            const firebaseConfig = {
+                apiKey: "AIzaSyDY8g42qsSkoN36i-DIeptehoDWXSEUlU0",
+                authDomain: "lunex-f5362.firebaseapp.com",
+                projectId: "lunex-f5362",
+                storageBucket: "lunex-f5362.firebasestorage.app",
+                messagingSenderId: "364220464927",
+                appId: "1:364220464927:web:95531c2ac9de3aaa343a2a"
+            };
+            const app = initializeApp(firebaseConfig);
+            const db = getFirestore(app);
+            window.userDocRef = doc(db, "users", userId);
+
+            onSnapshot(window.userDocRef, (docSnap) => {
+                const splash = document.getElementById('splashScreen');
+                if(splash) { splash.style.opacity = '0'; setTimeout(() => splash.style.display = 'none', 500); }
+                
+                if (docSnap.exists()) {
+                    window.currentUserData = docSnap.data();
+                    if (!window.currentUserData.category_colors) window.currentUserData.category_colors = {};
+                    renderUI();
+                    renderActivityRing();
+                } else {
+                    window.currentUserData = { notes: [], reminders: [], category_colors: {} };
+                    renderUI();
+                }
+            }, (error) => {
+                console.error(error); 
+                if(tg.showAlert) tg.showAlert("Database connection error");
+            });
+
         } else {
-            forceHideSplash();
-            document.getElementById('loginScreen').style.display = 'flex';
+            // МЫ НЕ В ТЕЛЕГРАМЕ (Открыто в браузере по прямой ссылке)
+            const splash = document.getElementById('splashScreen');
+            if(splash) splash.style.display = 'none';
+            document.getElementById('errorScreen').style.display = 'flex';
         }
 
-        window.logoutBrowser = function() {
-            localStorage.removeItem('lunexWebUser');
-            location.reload(); 
-        };
-
-        // --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ---
+        // --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ И ЛОГИКА ---
         window.switchTab = function(tabId, btn) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
             document.getElementById(`tab-${tabId}`).classList.add('active');
             btn.classList.add('active');
-            window.appHaptic('light');
+            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
             window.scrollTo(0,0);
         };
 
@@ -477,7 +323,7 @@
             window.currentTaskFilter = filter;
             document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById(filter === 'all' ? 'fltAll' : 'fltToday').classList.add('active');
-            window.appHaptic('light');
+            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
             renderUI();
         }
 
@@ -490,7 +336,7 @@
             dlAnchorElem.setAttribute("href", dataStr);
             dlAnchorElem.setAttribute("download", "lunex_backup.json");
             dlAnchorElem.click();
-            window.appHaptic('success');
+            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('success');
         }
 
         window.toggleSection = function(category) {
@@ -498,7 +344,7 @@
             sec.classList.toggle('open');
             openSections[category] = sec.classList.contains('open');
             localStorage.setItem('lunexOpenSections', JSON.stringify(openSections));
-            window.appHaptic('light');
+            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
         }
 
         function renderUI() {
@@ -605,22 +451,26 @@
             document.getElementById('activityPct').innerText = `${Math.floor(pct)}%`;
         }
 
+        // --- МОДАЛЬНЫЕ ОКНА ---
         window.closeAllModals = function() {
             document.querySelectorAll('.modal-sheet').forEach(m => m.classList.remove('active'));
             document.getElementById('modalOverlay').classList.remove('active');
-            if (!document.getElementById('zenEditor').classList.contains('active')) { window.hideBackBtn(); }
+            if (tg.BackButton && !document.getElementById('zenEditor').classList.contains('active')) { 
+                tg.BackButton.hide(); 
+            }
         }
 
         window.openCreationRouter = function() {
-            window.appHaptic('medium');
+            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
             document.getElementById('modalOverlay').classList.add('active');
             document.getElementById('creationRouterModal').classList.add('active');
-            window.showBackBtn();
+            if(tg.BackButton) tg.BackButton.show();
         }
 
+        // ZEN EDITOR
         window.openZenEditor = function(index) {
             closeAllModals();
-            window.appHaptic('light');
+            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
             
             const data = window.currentUserData;
             document.getElementById('zeEditIndex').value = index;
@@ -643,7 +493,7 @@
             
             updateWordCount();
             document.getElementById('zenEditor').classList.add('active');
-            window.showBackBtn();
+            if(tg.BackButton) tg.BackButton.show();
 
             if (index === -1) { setTimeout(() => document.getElementById('zeTextarea').focus(), 350); }
         }
@@ -665,8 +515,8 @@
 
         window.saveAndCloseZenEditor = async function() {
             document.getElementById('zenEditor').classList.remove('active');
-            window.hideBackBtn();
-            window.appHaptic('medium');
+            if(tg.BackButton) tg.BackButton.hide();
+            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
 
             if(!window.userDocRef) return;
             const data = window.currentUserData; 
@@ -695,10 +545,10 @@
         }
 
         window.openContextOptions = function() {
-            window.appHaptic('light');
+            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
             document.getElementById('modalOverlay').classList.add('active');
             document.getElementById('contextOptionsMenu').classList.add('active');
-            window.showBackBtn();
+            if(tg.BackButton) tg.BackButton.show();
         }
         window.closeContextMenu = function() {
             document.getElementById('contextOptionsMenu').classList.remove('active');
@@ -710,7 +560,7 @@
             if(currentFontSize < 12) currentFontSize = 12;
             if(currentFontSize > 30) currentFontSize = 30;
             document.getElementById('zeTextarea').style.fontSize = `${currentFontSize}px`;
-            window.appHaptic('light');
+            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
         }
 
         window.toggleInvertColors = function() {
@@ -728,7 +578,7 @@
             if (paper.style.fontFamily === 'serif') paper.style.fontFamily = 'sans-serif';
             else if (paper.style.fontFamily === 'sans-serif') paper.style.fontFamily = 'monospace';
             else paper.style.fontFamily = 'serif';
-            window.appHaptic('light');
+            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
             closeContextMenu();
         }
 
@@ -736,7 +586,7 @@
             const paper = document.getElementById('zePaper');
             if (paper.style.maxWidth === '750px' || !paper.style.maxWidth) paper.style.maxWidth = '100%';
             else paper.style.maxWidth = '750px';
-            window.appHaptic('light');
+            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
             closeContextMenu();
         }
 
@@ -748,7 +598,7 @@
             dlAnchorElem.setAttribute("href", dataStr);
             dlAnchorElem.setAttribute("download", `${title}.txt`);
             dlAnchorElem.click();
-            window.appHaptic('success');
+            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('success');
             closeContextMenu();
         }
 
@@ -762,8 +612,8 @@
             }
             closeContextMenu();
             document.getElementById('zenEditor').classList.remove('active');
-            window.hideBackBtn();
-            window.appHaptic('heavy');
+            if(tg.BackButton) tg.BackButton.hide();
+            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy');
         }
 
         window.openCategorySelector = function() {
@@ -781,7 +631,7 @@
             
             document.getElementById('modalOverlay').classList.add('active');
             document.getElementById('catSelectorMenu').classList.add('active');
-            window.showBackBtn();
+            if(tg.BackButton) tg.BackButton.show();
         }
 
         window.closeCategorySelector = function() {
@@ -798,9 +648,10 @@
             if(val) { applyCat(val); document.getElementById('zeCustomTagInput').value = ""; document.getElementById('zeCustomTagInput').style.display = "none"; }
         }
 
+        // REMINDERS
         window.openReminderModal = function(index) {
             closeAllModals();
-            window.appHaptic('light');
+            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
             
             document.getElementById('remEditIndex').value = index;
             document.getElementById('remBtnDelete').style.display = index === -1 ? "none" : "block";
@@ -827,7 +678,7 @@
 
             document.getElementById('modalOverlay').classList.add('active');
             document.getElementById('reminderModal').classList.add('active');
-            window.showBackBtn();
+            if(tg.BackButton) tg.BackButton.show();
         }
 
         window.setQuickTime = function(type) {
@@ -839,7 +690,7 @@
             
             const offset = d.getTimezoneOffset() * 60000;
             document.getElementById('remDate').value = (new Date(d - offset)).toISOString().slice(0, 16);
-            window.appHaptic('light');
+            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
         }
 
         window.saveReminder = async function() {
@@ -859,8 +710,8 @@
 
             await updateDoc(window.userDocRef, { reminders });
             closeAllModals();
-            window.hideBackBtn();
-            window.appHaptic('heavy');
+            if(tg.BackButton) tg.BackButton.hide();
+            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy');
         }
 
         window.deleteReminder = async function() {
@@ -871,14 +722,14 @@
             reminders.splice(idx, 1);
             await updateDoc(window.userDocRef, { reminders });
             closeAllModals();
-            window.hideBackBtn();
-            window.appHaptic('medium');
+            if(tg.BackButton) tg.BackButton.hide();
+            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
         }
 
         window.completeReminder = async function(index) {
             if(!window.userDocRef) return;
             const data = window.currentUserData;
-            window.appHaptic('medium');
+            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
             document.querySelectorAll('#tasksList .list-item')[index].classList.add('done');
             let reminders = [...(data.reminders || [])];
             reminders.splice(index, 1);
@@ -888,18 +739,18 @@
         
         window.openCategorySettings = function(event, category) {
             event.stopPropagation();
-            window.appHaptic('medium');
+            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
             document.getElementById('oldCatName').value = category;
             document.getElementById('catEditName').value = category;
             document.getElementById('modalOverlay').classList.add('active');
             document.getElementById('categoryModal').classList.add('active');
-            window.showBackBtn();
+            if(tg.BackButton) tg.BackButton.show();
         }
         
         window.closeCategoryModal = function() {
             document.getElementById('categoryModal').classList.remove('active');
             document.getElementById('modalOverlay').classList.remove('active');
-            window.hideBackBtn();
+            if(tg.BackButton) tg.BackButton.hide();
         }
 
         window.saveCategorySettings = async function() {
