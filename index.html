@@ -132,9 +132,24 @@
                     <div class="ze-date"><span id="zeDate">17 Apr 2026</span> <span id="zeSaveStatus">Saving...</span></div>
                     <div style="display:flex; align-items:center;">
                         <span class="ze-words" id="zeWordCount">0 words</span>
+                        <button class="ze-menu-btn-small" onclick="toggleCanvas()"><i class="fas fa-palette"></i></button>
                         <button class="ze-menu-btn-small" onclick="openContextOptions()"><i class="fas fa-ellipsis-v"></i></button>
                     </div>
                 </div>
+                
+                <div id="canvasArea" class="canvas-area" style="display: none;">
+                    <div class="drawing-tools">
+                        <div class="color-dot active" style="background: #ffffff;" onclick="setDrawColor('#ffffff', this)"></div>
+                        <div class="color-dot" style="background: #ff477e;" onclick="setDrawColor('#ff477e', this)"></div>
+                        <div class="color-dot" style="background: #00f0ff;" onclick="setDrawColor('#00f0ff', this)"></div>
+                        <div class="color-dot" style="background: #ffd700;" onclick="setDrawColor('#ffd700', this)"></div>
+                        <div style="flex-grow:1;"></div>
+                        <button class="tool-btn" onclick="setEraser(this)"><i class="fas fa-eraser"></i></button>
+                        <button class="tool-btn" onclick="clearCanvas()"><i class="fas fa-trash"></i></button>
+                    </div>
+                    <canvas id="zeCanvas"></canvas>
+                </div>
+
                 <textarea id="zeTextarea" placeholder="Start writing..." oninput="handleTyping()"></textarea>
             </div>
         </div>
@@ -181,13 +196,13 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
         import { getFirestore, doc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
 
-        // --- БЛОКИРОВКА СВАЙПОВ И ИНИЦИАЛИЗАЦИЯ ТЕЛЕГРАМА ---
+        // --- БЛОКИРОВКА СВАЙПОВ И ИНИЦИАЛИЗАЦИЯ ---
         const tg = window.Telegram?.WebApp || {};
         try {
             if (tg.expand) tg.expand();
             if (tg.requestFullscreen) tg.requestFullscreen();
             
-            // ВАЖНО: Запрет закрытия свайпом вниз
+            // ВАЖНО: Запрет закрытия приложения свайпом вниз
             if (tg.disableVerticalSwipes) tg.disableVerticalSwipes();
             if (tg.isVerticalSwipesEnabled !== undefined) tg.isVerticalSwipesEnabled = false;
         } catch(e) {}
@@ -209,11 +224,10 @@
             });
         }
 
-        // --- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ---
         let userId = null; let userName = "User"; window.userDocRef = null; window.currentUserData = null;
         let openSections = JSON.parse(localStorage.getItem('lunexOpenSections')) || {}; let currentFontSize = 16; let typingTimer;
 
-        // ПРОВЕРКА КОНТЕКСТА: Если мы в Telegram, загружаем базу.
+        // ПРОВЕРКА КОНТЕКСТА: Если мы в Telegram, загружаем базу. Иначе - показываем заглушку
         if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
             userId = tg.initDataUnsafe.user.id.toString();
             userName = tg.initDataUnsafe.user.first_name || "User";
@@ -226,7 +240,6 @@
             if (tg.initDataUnsafe.user.photo_url) avatarUrl = tg.initDataUnsafe.user.photo_url;
             document.getElementById('setAvatar').src = avatarUrl;
 
-            // Подключение к Firebase
             const firebaseConfig = { apiKey: "AIzaSyDY8g42qsSkoN36i-DIeptehoDWXSEUlU0", authDomain: "lunex-f5362.firebaseapp.com", projectId: "lunex-f5362", storageBucket: "lunex-f5362.firebasestorage.app", messagingSenderId: "364220464927", appId: "1:364220464927:web:95531c2ac9de3aaa343a2a" };
             const app = initializeApp(firebaseConfig); const db = getFirestore(app); window.userDocRef = doc(db, "users", userId);
 
@@ -253,7 +266,7 @@
             const touch = e.touches[0];
             window.startX = touch.clientX; window.startY = touch.clientY;
             
-            // Если держим палец 400мс - активируем Drag режим
+            // Если держим палец 400мс - активируем Drag
             window.dragTimer = setTimeout(() => {
                 window.isDragging = true;
                 window.dragOrigIndex = index;
@@ -273,16 +286,14 @@
                 window.dragClone.style.transition = 'none';
                 document.body.appendChild(window.dragClone);
 
-                cardEl.style.opacity = '0.3'; // Затеняем оригинал
+                cardEl.style.opacity = '0.3'; 
                 
-                // Выдвигаем мусорку снизу
                 const tz = document.getElementById('trashZone');
                 tz.style.transform = 'translateY(0)';
                 tz.style.background = 'rgba(255, 50, 50, 0.15)';
             }, 400);
         }
 
-        // Глобальный перехват движения (чтобы не блокировал скролл, если не тащим)
         document.addEventListener('touchmove', function(e) {
             if (!window.isDragging) {
                 if (window.dragTimer) {
@@ -293,7 +304,7 @@
                 }
                 return;
             }
-            e.preventDefault(); // Блокируем скролл пока тащим карточку
+            e.preventDefault(); 
             const touch = e.touches[0];
             window.dragClone.style.left = (touch.clientX - window.dragClone.offsetWidth / 2) + 'px';
             window.dragClone.style.top = (touch.clientY - window.dragClone.offsetHeight / 2) + 'px';
@@ -341,27 +352,20 @@
                 } else if (window.currentDroppable.type === 'trash') {
                     window.deleteNoteByIndex(window.dragOrigIndex);
                 }
-            } else {
-                renderUI(); // Обновляем UI, чтобы вернуть opacity
-            }
+            } else { renderUI(); }
             window.currentDroppable = null;
         });
 
-        // ФУНКЦИИ ДЛЯ DRAG & DROP
         window.moveNoteToCategory = async function(index, newCategory) {
             if (!window.userDocRef) return;
             const data = window.currentUserData; let notes = [...(data.notes || [])];
             const parsed = parseItem(notes[index]);
-            
             let newCategoryColors = { ...data.category_colors };
             if (!defaultTags.includes(newCategory) && !newCategoryColors[newCategory]) { newCategoryColors[newCategory] = getUniqueColor(newCategoryColors); }
-
             const dateStr = parsed.date ? `{${parsed.date}} ` : '';
-            const newText = `[${newCategory}] ${dateStr}${parsed.content}`;
-            
-            notes.splice(index, 1); // Удаляем со старого места
-            notes.unshift(newText); // Добавляем наверх в новую категорию
-            
+            const imgStr = parsed.image ? `||IMG:${parsed.image}` : '';
+            const newText = `[${newCategory}] ${dateStr}${parsed.content}${imgStr}`;
+            notes.splice(index, 1); notes.unshift(newText); 
             await updateDoc(window.userDocRef, { notes, category_colors: newCategoryColors });
             if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('success');
         }
@@ -374,16 +378,124 @@
             if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy');
         }
 
+        // --- ДВИЖОК РИСОВАНИЯ (CANVAS API) ---
+        window.canvasHasContent = false;
+        window.drawColor = '#ffffff';
+        window.isErasing = false;
+        let isDrawing = false; let lastX = 0; let lastY = 0;
+
+        function initCanvas(preserveContent = false) {
+            const canvas = document.getElementById('zeCanvas');
+            if (!preserveContent) {
+                const rect = canvas.getBoundingClientRect();
+                canvas.width = rect.width || 350;
+                canvas.height = rect.height || 350;
+            }
+            const ctx = canvas.getContext('2d');
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+        }
+
+        window.toggleCanvas = function() {
+            const area = document.getElementById('canvasArea');
+            if (area.style.display === 'none') {
+                area.style.display = 'flex';
+                initCanvas(true);
+                if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+            } else {
+                area.style.display = 'none';
+            }
+        }
+
+        window.setDrawColor = function(color, btn) {
+            window.drawColor = color; window.isErasing = false;
+            document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
+        window.setEraser = function(btn) {
+            window.isErasing = true;
+            document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
+        window.clearCanvas = function() {
+            const canvas = document.getElementById('zeCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            window.canvasHasContent = false;
+            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+        }
+
+        function drawStart(e) {
+            isDrawing = true; window.canvasHasContent = true;
+            const canvas = document.getElementById('zeCanvas');
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            lastX = clientX - rect.left; lastY = clientY - rect.top;
+        }
+
+        function drawMove(e) {
+            if (!isDrawing) return;
+            e.preventDefault(); 
+            const canvas = document.getElementById('zeCanvas');
+            const ctx = canvas.getContext('2d');
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            const currentX = clientX - rect.left; const currentY = clientY - rect.top;
+
+            ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(currentX, currentY);
+            if (window.isErasing) {
+                ctx.globalCompositeOperation = "destination-out";
+                ctx.lineWidth = 20; ctx.strokeStyle = "rgba(0,0,0,1)";
+            } else {
+                ctx.globalCompositeOperation = "source-over";
+                ctx.lineWidth = 3;
+                let renderColor = window.drawColor;
+                const isInv = document.getElementById('zePaper').classList.contains('inverted');
+                if (isInv && renderColor === '#ffffff') renderColor = '#000000';
+                ctx.strokeStyle = renderColor;
+            }
+            ctx.stroke();
+            lastX = currentX; lastY = currentY;
+        }
+        function drawEnd() { isDrawing = false; }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const canvas = document.getElementById('zeCanvas');
+            canvas.addEventListener('touchstart', drawStart, {passive: false});
+            canvas.addEventListener('touchmove', drawMove, {passive: false});
+            canvas.addEventListener('touchend', drawEnd);
+            canvas.addEventListener('mousedown', drawStart);
+            canvas.addEventListener('mousemove', drawMove);
+            canvas.addEventListener('mouseup', drawEnd);
+            canvas.addEventListener('mouseleave', drawEnd);
+        });
+
         // --- ОСНОВНЫЕ ФУНКЦИИ И РЕНДЕР ---
         window.switchTab = function(tabId, btn) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active')); document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-            document.getElementById(`tab-${tabId}`).classList.add('active'); btn.classList.add('active'); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); window.scrollTo(0,0);
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+            document.getElementById(`tab-${tabId}`).classList.add('active'); btn.classList.add('active');
+            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); window.scrollTo(0,0);
         };
 
         const defaultTags = ['Personal', 'Work', 'Finance', 'Ideas']; const sectionIcons = { 'Personal': 'fa-user', 'Work': 'fa-briefcase', 'Finance': 'fa-wallet', 'Ideas': 'fa-lightbulb' }; const neonHues = [330, 180, 45, 120, 270, 15, 210, 90, 30, 300, 60, 150];
         function getUniqueColor(existingColorsObj) { const usedColors = Object.values(existingColorsObj); for (let hue of neonHues) { const color = `hsl(${hue}, 100%, 65%)`; if (!usedColors.includes(color)) return color; } return `hsl(${Math.floor(Math.random()*360)}, 100%, 65%)`; }
         function getCategoryColor(category) { const predefined = { 'Personal': '#ff477e', 'Work': '#00f0ff', 'Finance': '#ffd700', 'Ideas': '#b554ff' }; if (window.currentUserData?.category_colors?.[category]) return window.currentUserData.category_colors[category]; if (predefined[category]) return predefined[category]; return '#ffffff'; }
-        function parseItem(rawText) { const match = rawText.match(/^\[(.*?)\](?:\s*\{([^\}]+)\})?\s*([\s\S]*)/); if (match) { return { category: match[1], date: match[2] || '', content: match[3], rawText }; } return { category: "Personal", date: '', content: rawText, rawText }; }
+        
+        // НОВЫЙ ПАРСЕР ДЛЯ КАРТИНОК
+        function parseItem(rawText) { 
+            let contentStr = rawText; let imgBase64 = null;
+            if (rawText.includes('||IMG:')) { const parts = rawText.split('||IMG:'); contentStr = parts[0]; imgBase64 = parts[1]; }
+            const match = contentStr.match(/^\[(.*?)\](?:\s*\{([^\}]+)\})?\s*([\s\S]*)/); 
+            if (match) { return { category: match[1], date: match[2] || '', content: match[3], image: imgBase64, rawText }; } 
+            return { category: "Personal", date: '', content: contentStr, image: imgBase64, rawText }; 
+        }
         function formatCardText(text) { return text.replace(/^#\s+(.*)$/gm, '<b>$1</b>'); }
 
         window.setTaskFilter = function(filter) { window.currentTaskFilter = filter; document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active')); document.getElementById(filter === 'all' ? 'fltAll' : 'fltToday').classList.add('active'); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); renderUI(); }
@@ -403,19 +515,8 @@
                 let vaultHTML = '';
                 sortedKeys.forEach(category => {
                     const color = getCategoryColor(category); const isOpen = (searchTerm !== "" || openSections[category]) ? "open" : ""; const icon = sectionIcons[category] || 'fa-folder';
-                    
-                    /* ДОБАВЛЕН DATA-CATEGORY В ЗАГОЛОВОК ДЛЯ DRAG & DROP */
                     vaultHTML += `<div class="category-section ${isOpen}" id="section-${category}"><div class="category-header" data-category="${category}" onclick="toggleSection('${category}')"><div class="category-title" style="color: ${color}"><i class="fas ${icon}"></i> ${category}</div><div class="category-controls"><div class="category-settings-btn" onclick="openCategorySettings(event, '${category}')"><i class="fas fa-cog"></i></div><i class="fas fa-chevron-down chevron"></i></div></div><div class="category-content"><div class="grid-cards">`;
-                    
-                    /* ДОБАВЛЕНЫ TOUCH СОБЫТИЯ В КАРТОЧКУ ДЛЯ DRAG & DROP */
-                    vaultHTML += groupedNotes[category].map(nObj => `
-                        <div class="card" 
-                             ontouchstart="handleTouchStart(event, ${nObj.origIndex})" 
-                             onclick="if(!window.justDragged) openZenEditor(${nObj.origIndex})">
-                            <div class="card-text">${formatCardText(nObj.content)}</div>
-                        </div>
-                    `).join('');
-                    
+                    vaultHTML += groupedNotes[category].map(nObj => `<div class="card" ontouchstart="handleTouchStart(event, ${nObj.origIndex})" onclick="if(!window.justDragged) openZenEditor(${nObj.origIndex})"><div class="card-text">${formatCardText(nObj.content)}</div></div>`).join('');
                     vaultHTML += `</div></div></div>`;
                 }); vault.innerHTML = vaultHTML;
             }
@@ -442,20 +543,44 @@
 
         window.openZenEditor = function(index) {
             closeAllModals(); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); const data = window.currentUserData; document.getElementById('zeEditIndex').value = index;
+            
+            // Очистка холста перед открытием
+            window.canvasHasContent = false;
+            document.getElementById('canvasArea').style.display = 'none';
+            const canvas = document.getElementById('zeCanvas'); const ctx = canvas.getContext('2d'); ctx.clearRect(0, 0, canvas.width, canvas.height);
+
             let category = "Personal"; let content = ""; let dateStr = new Date().toLocaleDateString('en-US', {day:'numeric', month:'short', year:'numeric'});
-            if (index !== -1) { const parsed = parseItem(data.notes[index]); category = parsed.category; content = parsed.content; if (parsed.date) dateStr = parsed.date; }
+            if (index !== -1) { 
+                const parsed = parseItem(data.notes[index]); category = parsed.category; content = parsed.content; if (parsed.date) dateStr = parsed.date; 
+                if (parsed.image) {
+                    document.getElementById('canvasArea').style.display = 'flex';
+                    initCanvas(false);
+                    const img = new Image();
+                    img.onload = () => { ctx.drawImage(img, 0, 0, canvas.width, canvas.height); window.canvasHasContent = true; };
+                    img.src = parsed.image;
+                }
+            }
+
             document.getElementById('zeCategory').innerText = category; document.getElementById('zeDate').innerText = dateStr; document.getElementById('zeTextarea').value = content; document.getElementById('zeTextarea').style.fontSize = `${currentFontSize}px`;
             updateWordCount(); document.getElementById('zenEditor').classList.add('active'); if(tg.BackButton) tg.BackButton.show();
             if (index === -1) { setTimeout(() => document.getElementById('zeTextarea').focus(), 350); }
         }
+
         window.handleTyping = function() { updateWordCount(); const status = document.getElementById('zeSaveStatus'); status.style.opacity = '1'; clearTimeout(typingTimer); typingTimer = setTimeout(() => { status.style.opacity = '0'; }, 800); }
         window.updateWordCount = function() { const text = document.getElementById('zeTextarea').value.trim(); const words = text ? text.split(/\s+/).length : 0; const readTime = Math.ceil(words / 200) || 1; document.getElementById('zeWordCount').innerText = `${words} words • ${readTime} min read`; }
 
         window.saveAndCloseZenEditor = async function() {
             document.getElementById('zenEditor').classList.remove('active'); if(tg.BackButton) tg.BackButton.hide(); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
             if(!window.userDocRef) return; const data = window.currentUserData; const text = document.getElementById('zeTextarea').value; const idx = parseInt(document.getElementById('zeEditIndex').value); let notes = [...(data.notes || [])];
-            if (!text.trim()) { if (idx !== -1) { notes.splice(idx, 1); await updateDoc(window.userDocRef, { notes }); } return; }
-            const category = document.getElementById('zeCategory').innerText; const dateStr = document.getElementById('zeDate').innerText; const formattedText = `[${category}] {${dateStr}} ${text}`;
+            
+            if (!text.trim() && !window.canvasHasContent) { if (idx !== -1) { notes.splice(idx, 1); await updateDoc(window.userDocRef, { notes }); } return; }
+
+            const category = document.getElementById('zeCategory').innerText; const dateStr = document.getElementById('zeDate').innerText; 
+            let formattedText = `[${category}] {${dateStr}} ${text}`;
+            
+            // Если есть рисунок, конвертируем в Base64 и приклеиваем
+            if (window.canvasHasContent) { formattedText += `||IMG:${document.getElementById('zeCanvas').toDataURL('image/png')}`; }
+
             let newCategoryColors = { ...data.category_colors }; if (!defaultTags.includes(category) && !newCategoryColors[category]) { newCategoryColors[category] = getUniqueColor(newCategoryColors); }
             if (idx !== -1) notes.splice(idx, 1); notes.unshift(formattedText); await updateDoc(window.userDocRef, { notes, category_colors: newCategoryColors });
         }
