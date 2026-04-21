@@ -13,8 +13,14 @@
     <div id="splashScreen"><i class="fas fa-star splash-logo"></i></div>
     <script>setTimeout(() => { const s = document.getElementById('splashScreen'); if(s) s.style.opacity='0'; setTimeout(()=>s.style.display='none',500); }, 3000);</script>
 
-    <div id="trashZone">
-        <i class="fas fa-trash-alt"></i> <span style="font-size:16px; font-weight:bold;">Drop to Delete</span>
+    <div id="trashZone"><i class="fas fa-trash-alt"></i> <span style="font-size:16px; font-weight:bold;">Drop to Delete</span></div>
+
+    <div id="formatToolbar" class="format-toolbar">
+        <button onclick="formatText('bold')"><i class="fas fa-bold"></i></button>
+        <button onclick="formatText('italic')"><i class="fas fa-italic"></i></button>
+        <button onclick="formatText('underline')"><i class="fas fa-underline"></i></button>
+        <button onclick="addLink()"><i class="fas fa-link"></i></button>
+        <button onclick="formatText('hiliteColor', '#ff477e')"><i class="fas fa-highlighter"></i></button>
     </div>
 
     <div class="top-bar">
@@ -22,10 +28,7 @@
     </div>
 
     <main id="tab-dashboard" class="tab-content active">
-        <div class="greeting">
-            <h1 id="userName">Hi User,</h1>
-            <p>Your unified digital intelligence system.</p>
-        </div>
+        <div class="greeting"><h1 id="userName">Hi User,</h1><p>Your unified digital intelligence system.</p></div>
         <h2 class="section-title">Today's Activity</h2>
         <div class="ring-container">
             <svg viewBox="0 0 36 36" class="circular-chart">
@@ -44,10 +47,7 @@
 
     <main id="tab-notes" class="tab-content">
         <div class="greeting" style="padding-bottom: 5px;"><h1>The Vault</h1><p>Structured knowledge base.</p></div>
-        <div class="search-bar">
-            <i class="fas fa-search" style="color: var(--text-muted);"></i>
-            <input type="text" id="searchInput" placeholder="Search records..." oninput="filterNotes()">
-        </div>
+        <div class="search-bar"><i class="fas fa-search" style="color: var(--text-muted);"></i><input type="text" id="searchInput" placeholder="Search records..." oninput="filterNotes()"></div>
         <div id="notesVault"></div>
     </main>
 
@@ -115,49 +115,27 @@
             </div>
         </div>
         <input type="hidden" id="remEditIndex" value="-1">
-        <div class="modal-actions">
-            <button class="btn btn-danger" id="remBtnDelete" style="display:none;" onclick="deleteReminder()">Delete</button>
-            <button class="btn btn-primary" onclick="saveReminder()" style="width: 100%;">Save Reminder</button>
-        </div>
+        <div class="modal-actions"><button class="btn btn-primary" onclick="saveReminder()" style="width: 100%;">Save Reminder</button></div>
     </div>
 
     <div id="zenEditor" class="zen-editor">
-        <div class="ze-header" id="zeHeader">
-            <div class="ze-meta" onclick="openCategorySelector()"><span id="zeCategory">Personal</span> <i class="fas fa-caret-down"></i></div>
-        </div>
         <div class="ze-body">
             <div class="ze-paper" id="zePaper">
                 <div class="ze-paper-header">
-                    <div class="ze-date"><span id="zeDate">17 Apr 2026</span> <span id="zeSaveStatus">Saving...</span></div>
-                    <div style="display:flex; align-items:center; gap: 15px;">
+                    <div class="ze-date">
+                        <span id="zeCategoryDisp">Personal</span> <span id="zeDate">17 Apr 2026</span> <span id="zeSaveStatus">Saving...</span>
+                    </div>
+                    <div style="display:flex; align-items:center;">
                         <span class="ze-words" id="zeWordCount">0 words</span>
-                        <button class="ze-menu-btn-small" onclick="openDrawing()"><i class="fas fa-paint-brush"></i></button>
                         <button class="ze-menu-btn-small" onclick="openContextOptions()"><i class="fas fa-ellipsis-v"></i></button>
                     </div>
                 </div>
-                
-                <div style="position: relative; width: 100%;">
-                    <img id="zeDrawingPreview" src="" style="display:none; width:100%; border-radius: 12px; margin-bottom: 15px; border: 1px solid var(--card-border);">
-                    <button id="btnRemoveDrawing" onclick="removeDrawing()" style="display:none; position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.7); color:white; border:none; border-radius:50%; width:30px; height:30px; align-items:center; justify-content:center;"><i class="fas fa-times"></i></button>
-                </div>
-
-                <textarea id="zeTextarea" placeholder="Start writing..." oninput="handleTyping()"></textarea>
+                <input type="text" id="zeTitle" class="ze-title-input" placeholder="Title" oninput="handleTyping()">
+                <div id="zeTextarea" contenteditable="true" data-placeholder="Start writing..." oninput="handleTyping()"></div>
             </div>
         </div>
         <input type="hidden" id="zeEditIndex" value="-1">
-    </div>
-
-    <div class="modal-sheet" id="drawingModal" style="height: 100vh; max-height: 100vh; border-radius: 0; padding:0; display:flex; flex-direction:column; z-index: 3000; bottom: -100%; transition: bottom 0.4s;">
-        <div style="padding: max(50px, env(safe-area-inset-top)) 20px 15px; background: var(--bg-dark); display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid var(--card-border);">
-            <button class="ze-close-btn" onclick="closeDrawing()"><i class="fas fa-times"></i></button>
-            <div style="display:flex; gap:20px; font-size: 20px;">
-                <i class="fas fa-paint-brush" id="btnBrush" onclick="setDrawMode('brush')" style="color: var(--pink-main);"></i>
-                <i class="fas fa-eraser" id="btnEraser" onclick="setDrawMode('eraser')" style="color: white;"></i>
-                <i class="fas fa-trash-alt" onclick="clearCanvas()" style="color: white;"></i>
-            </div>
-            <button class="premium-btn" onclick="saveDrawing()" style="box-shadow: none; border:none;">Done</button>
-        </div>
-        <canvas id="drawingCanvas" style="flex-grow:1; background: #000; touch-action: none; width: 100%;"></canvas>
+        <input type="hidden" id="zeHiddenCategory" value="Personal">
     </div>
 
     <div class="modal-sheet" id="contextOptionsMenu" style="z-index: 2005;">
@@ -167,9 +145,9 @@
             <div class="creation-btn" onclick="changeFontSize(2)" style="justify-content: center; padding: 12px;"><i class="fas fa-search-plus"></i> A+</div>
             <div class="creation-btn" onclick="changeFontSize(-2)" style="justify-content: center; padding: 12px;"><i class="fas fa-search-minus"></i> A-</div>
         </div>
-        <h2 class="section-title" style="margin-top:0;">Appearance</h2>
+        <h2 class="section-title" style="margin-top:0;">Settings</h2>
         <div class="menu-list" style="margin-bottom: 20px;">
-            <div class="menu-item" onclick="toggleFocusMode()"><i class="fas fa-eye-slash"></i> Zen Focus Mode</div>
+            <div class="menu-item" onclick="openCategorySelector()"><i class="fas fa-folder-open" style="color:var(--pink-main);"></i> Move to Category</div>
             <div class="menu-item" onclick="toggleInvertColors()"><i class="fas fa-adjust"></i> Dark/Light Paper</div>
             <div class="menu-item" onclick="toggleFontFamily()"><i class="fas fa-font"></i> Change Font Style</div>
             <div class="menu-item" onclick="toggleTextWidth()"><i class="fas fa-arrows-alt-h"></i> Toggle Reading Width</div>
@@ -181,7 +159,7 @@
         </div>
     </div>
 
-    <div class="modal-sheet" id="catSelectorMenu" style="z-index: 2005;">
+    <div class="modal-sheet" id="catSelectorMenu" style="z-index: 2010;">
         <div class="modal-close-btn" onclick="closeCategorySelector()"><i class="fas fa-times"></i></div>
         <h2 class="section-title" style="margin-top:0;">Select Category</h2>
         <div class="tags-container" id="zeTagsContainer"></div>
@@ -200,33 +178,23 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
         import { getFirestore, doc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
 
-        // --- БЛОКИРОВКА СВАЙПОВ И ИНИЦИАЛИЗАЦИЯ ТЕЛЕГРАМА ---
+        // --- ИНИЦИАЛИЗАЦИЯ И БЛОКИРОВКА СВАЙПОВ ТЕЛЕГРАМА ---
         const tg = window.Telegram?.WebApp || {};
         try {
             if (tg.expand) tg.expand();
             if (tg.requestFullscreen) tg.requestFullscreen();
             
-            // ВАЖНО: Запрет закрытия мини-аппа свайпом вниз
+            // ВАЖНО: Запрет закрытия свайпом вниз
             if (tg.disableVerticalSwipes) tg.disableVerticalSwipes();
             if (tg.isVerticalSwipesEnabled !== undefined) tg.isVerticalSwipesEnabled = false;
         } catch(e) {}
 
-        // --- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ---
-        let userId = null; let userName = "User"; window.userDocRef = null; window.currentUserData = null;
-        let openSections = JSON.parse(localStorage.getItem('lunexOpenSections')) || {}; 
-        let currentFontSize = 16; let typingTimer;
-        window.currentDrawingBase64 = "";
-
-        // Универсальная кнопка "Назад"
         if (tg.BackButton) {
             tg.BackButton.onClick(function() {
-                if (document.getElementById('drawingModal').classList.contains('active')) {
-                    closeDrawing();
-                } else if (document.getElementById('catSelectorMenu').classList.contains('active') || 
-                           document.getElementById('contextOptionsMenu').classList.contains('active')) {
-                    document.getElementById('catSelectorMenu').classList.remove('active');
-                    document.getElementById('contextOptionsMenu').classList.remove('active');
-                    document.getElementById('modalOverlay').classList.remove('active');
+                if (document.getElementById('catSelectorMenu').classList.contains('active')) {
+                    closeCategorySelector();
+                } else if (document.getElementById('contextOptionsMenu').classList.contains('active')) {
+                    closeContextMenu();
                 } else if (document.getElementById('zenEditor').classList.contains('active')) {
                     saveAndCloseZenEditor();
                 } else if (document.getElementById('categoryModal').classList.contains('active')) {
@@ -237,26 +205,53 @@
             });
         }
 
-        // ПРОВЕРКА КОНТЕКСТА
+        // --- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ---
+        let userId = null; let userName = "User"; window.userDocRef = null; window.currentUserData = null;
+        let openSections = JSON.parse(localStorage.getItem('lunexOpenSections')) || {}; let currentFontSize = 16; let typingTimer;
+
+        // --- ЛОГИКА ФОРМАТИРОВАНИЯ (RICH TEXT) ---
+        document.addEventListener('selectionchange', () => {
+            const selection = window.getSelection();
+            const toolbar = document.getElementById('formatToolbar');
+            const editor = document.getElementById('zeTextarea');
+            
+            if (selection.rangeCount > 0 && selection.toString().trim().length > 0 && editor.contains(selection.anchorNode)) {
+                const range = selection.getRangeAt(0);
+                const rect = range.getBoundingClientRect();
+                toolbar.style.display = 'flex';
+                toolbar.style.top = Math.max(10, rect.top - 50) + 'px';
+                toolbar.style.left = Math.max(10, rect.left + (rect.width / 2) - (toolbar.offsetWidth / 2)) + 'px';
+            } else {
+                toolbar.style.display = 'none';
+            }
+        });
+
+        window.formatText = function(command, value = null) {
+            document.execCommand(command, false, value);
+            document.getElementById('zeTextarea').focus();
+            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+        };
+
+        window.addLink = function() {
+            const url = prompt("Enter link URL:", "https://");
+            if (url) formatText('createLink', url);
+        };
+
+        // --- ВХОД И БАЗА ДАННЫХ ---
         if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
             userId = tg.initDataUnsafe.user.id.toString();
             userName = tg.initDataUnsafe.user.first_name || "User";
-            
             document.getElementById('userName').innerText = "Hi " + userName + ",";
             document.getElementById('setName').innerText = userName;
             document.getElementById('setID').innerText = userId;
-            
             let avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=ff477e&color=fff&bold=true`;
             if (tg.initDataUnsafe.user.photo_url) avatarUrl = tg.initDataUnsafe.user.photo_url;
             document.getElementById('setAvatar').src = avatarUrl;
 
-            // Подключение к Firebase
             const firebaseConfig = { apiKey: "AIzaSyDY8g42qsSkoN36i-DIeptehoDWXSEUlU0", authDomain: "lunex-f5362.firebaseapp.com", projectId: "lunex-f5362", storageBucket: "lunex-f5362.firebasestorage.app", messagingSenderId: "364220464927", appId: "1:364220464927:web:95531c2ac9de3aaa343a2a" };
             const app = initializeApp(firebaseConfig); const db = getFirestore(app); window.userDocRef = doc(db, "users", userId);
 
             onSnapshot(window.userDocRef, (docSnap) => {
-                const splash = document.getElementById('splashScreen');
-                if(splash) { splash.style.opacity = '0'; setTimeout(() => splash.style.display = 'none', 500); }
                 if (docSnap.exists()) {
                     window.currentUserData = docSnap.data();
                     if (!window.currentUserData.category_colors) window.currentUserData.category_colors = {};
@@ -265,45 +260,55 @@
                     window.currentUserData = { notes: [], reminders: [], category_colors: {} };
                     renderUI();
                 }
-            }, (error) => { console.error(error); if(tg.showAlert) tg.showAlert("Database connection error"); });
-        } else {
-            document.body.innerHTML = "<h2 style='text-align:center; margin-top:50px; color:#ff477e;'>Please open this inside Telegram Mini App</h2>";
+            });
         }
 
         // --- ДВИЖОК ПЕРЕТАСКИВАНИЯ (DRAG & DROP) ---
         window.isDragging = false; window.justDragged = false; window.dragTimer = null; window.dragClone = null; window.dragOrigIndex = -1; window.startX = 0; window.startY = 0; window.currentDroppable = null;
 
         window.handleTouchStart = function(e, index) {
-            const touch = e.touches[0]; window.startX = touch.clientX; window.startY = touch.clientY;
+            const touch = e.touches[0];
+            window.startX = touch.clientX; window.startY = touch.clientY;
             
-            // Если держим палец 400мс - активируем Drag режим
             window.dragTimer = setTimeout(() => {
-                window.isDragging = true; window.dragOrigIndex = index;
+                window.isDragging = true;
+                window.dragOrigIndex = index;
                 if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy');
                 
                 const cardEl = e.target.closest('.card');
                 window.dragClone = cardEl.cloneNode(true);
-                window.dragClone.style.position = 'fixed'; window.dragClone.style.zIndex = '9999';
-                window.dragClone.style.width = cardEl.offsetWidth + 'px'; window.dragClone.style.height = cardEl.offsetHeight + 'px';
-                window.dragClone.style.opacity = '0.9'; window.dragClone.style.boxShadow = '0 15px 35px rgba(0,0,0,0.5)';
+                window.dragClone.style.position = 'fixed';
+                window.dragClone.style.zIndex = '9999';
+                window.dragClone.style.width = cardEl.offsetWidth + 'px';
+                window.dragClone.style.height = cardEl.offsetHeight + 'px';
+                window.dragClone.style.opacity = '0.9';
+                window.dragClone.style.boxShadow = '0 15px 35px rgba(0,0,0,0.5)';
                 window.dragClone.style.left = (touch.clientX - cardEl.offsetWidth / 2) + 'px';
                 window.dragClone.style.top = (touch.clientY - cardEl.offsetHeight / 2) + 'px';
-                window.dragClone.style.pointerEvents = 'none'; window.dragClone.style.transition = 'none';
+                window.dragClone.style.pointerEvents = 'none'; 
+                window.dragClone.style.transition = 'none';
                 document.body.appendChild(window.dragClone);
 
                 cardEl.style.opacity = '0.3'; 
-                const tz = document.getElementById('trashZone'); tz.style.transform = 'translateY(0)'; tz.style.background = 'rgba(255, 50, 50, 0.15)';
+                
+                const tz = document.getElementById('trashZone');
+                tz.style.transform = 'translateY(0)';
+                tz.style.background = 'rgba(255, 50, 50, 0.15)';
             }, 400);
         }
 
         document.addEventListener('touchmove', function(e) {
             if (!window.isDragging) {
-                if (window.dragTimer) { const touch = e.touches[0]; if (Math.abs(touch.clientX - window.startX) > 10 || Math.abs(touch.clientY - window.startY) > 10) { clearTimeout(window.dragTimer); window.dragTimer = null; } }
+                if (window.dragTimer) {
+                    const touch = e.touches[0];
+                    if (Math.abs(touch.clientX - window.startX) > 10 || Math.abs(touch.clientY - window.startY) > 10) { clearTimeout(window.dragTimer); window.dragTimer = null; }
+                }
                 return;
             }
             e.preventDefault(); 
             const touch = e.touches[0];
-            window.dragClone.style.left = (touch.clientX - window.dragClone.offsetWidth / 2) + 'px'; window.dragClone.style.top = (touch.clientY - window.dragClone.offsetHeight / 2) + 'px';
+            window.dragClone.style.left = (touch.clientX - window.dragClone.offsetWidth / 2) + 'px';
+            window.dragClone.style.top = (touch.clientY - window.dragClone.offsetHeight / 2) + 'px';
 
             window.dragClone.style.visibility = 'hidden';
             const elem = document.elementFromPoint(touch.clientX, touch.clientY);
@@ -313,14 +318,18 @@
             document.getElementById('trashZone').style.transform = 'translateY(0)';
 
             if (elem) {
-                const header = elem.closest('.category-header'); const trash = elem.closest('#trashZone');
+                const header = elem.closest('.category-header');
+                const trash = elem.closest('#trashZone');
                 if (header) {
-                    header.style.border = '2px dashed var(--pink-main)'; header.style.background = 'rgba(255, 71, 126, 0.1)';
+                    header.style.border = '2px dashed var(--pink-main)';
+                    header.style.background = 'rgba(255, 71, 126, 0.1)';
                     window.currentDroppable = { type: 'category', el: header };
                 } else if (trash) {
-                    trash.style.background = 'rgba(255, 50, 50, 0.4)'; window.currentDroppable = { type: 'trash' };
+                    trash.style.background = 'rgba(255, 50, 50, 0.4)';
+                    window.currentDroppable = { type: 'trash' };
                 } else {
-                    document.getElementById('trashZone').style.background = 'rgba(255, 50, 50, 0.15)'; window.currentDroppable = null;
+                    document.getElementById('trashZone').style.background = 'rgba(255, 50, 50, 0.15)';
+                    window.currentDroppable = null;
                 }
             }
         }, { passive: false });
@@ -329,70 +338,47 @@
             clearTimeout(window.dragTimer); window.dragTimer = null;
             if (!window.isDragging) return;
             
-            window.isDragging = false; window.justDragged = true; setTimeout(() => window.justDragged = false, 100);
+            window.isDragging = false;
+            window.justDragged = true;
+            setTimeout(() => window.justDragged = false, 100);
+
             if (window.dragClone) window.dragClone.remove();
             document.getElementById('trashZone').style.transform = 'translateY(100%)';
             document.querySelectorAll('.category-header').forEach(el => { el.style.border = '2px solid transparent'; el.style.background = 'transparent'; });
 
             if (window.currentDroppable) {
-                if (window.currentDroppable.type === 'category') { window.moveNoteToCategory(window.dragOrigIndex, window.currentDroppable.el.dataset.category); } 
-                else if (window.currentDroppable.type === 'trash') { window.deleteNoteByIndex(window.dragOrigIndex); }
-            } else { renderUI(); }
+                if (window.currentDroppable.type === 'category') {
+                    const newCat = window.currentDroppable.el.dataset.category;
+                    window.moveNoteToCategory(window.dragOrigIndex, newCat);
+                } else if (window.currentDroppable.type === 'trash') {
+                    window.deleteNoteByIndex(window.dragOrigIndex);
+                }
+            } else {
+                renderUI(); 
+            }
             window.currentDroppable = null;
         });
 
         window.moveNoteToCategory = async function(index, newCategory) {
-            if (!window.userDocRef) return; const data = window.currentUserData; let notes = [...(data.notes || [])];
+            if (!window.userDocRef) return;
+            const data = window.currentUserData; let notes = [...(data.notes || [])];
             const parsed = parseItem(notes[index]);
-            let newCategoryColors = { ...data.category_colors }; if (!defaultTags.includes(newCategory) && !newCategoryColors[newCategory]) { newCategoryColors[newCategory] = getUniqueColor(newCategoryColors); }
+            let newCategoryColors = { ...data.category_colors };
+            if (!defaultTags.includes(newCategory) && !newCategoryColors[newCategory]) { newCategoryColors[newCategory] = getUniqueColor(newCategoryColors); }
             const dateStr = parsed.date ? `{${parsed.date}} ` : '';
-            const drawTag = parsed.draw ? `[DRAW:${parsed.draw}] ` : '';
-            const newText = `[${newCategory}] ${dateStr}${drawTag}${parsed.content}`;
-            
+            const newText = `[${newCategory}] ${dateStr}${parsed.content}`;
             notes.splice(index, 1); notes.unshift(newText); 
             await updateDoc(window.userDocRef, { notes, category_colors: newCategoryColors });
             if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('success');
         }
 
         window.deleteNoteByIndex = async function(index) {
-            if (!window.userDocRef) return; const data = window.currentUserData; let notes = [...(data.notes || [])];
-            notes.splice(index, 1); await updateDoc(window.userDocRef, { notes });
+            if (!window.userDocRef) return;
+            const data = window.currentUserData; let notes = [...(data.notes || [])];
+            notes.splice(index, 1);
+            await updateDoc(window.userDocRef, { notes });
             if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy');
         }
-
-        // --- ДВИЖОК РИСОВАНИЯ (CANVAS) ---
-        const canvas = document.getElementById('drawingCanvas'); const ctx = canvas.getContext('2d');
-        let isCanvasDrawing = false; window.drawMode = 'brush';
-
-        window.openDrawing = function() {
-            document.getElementById('drawingModal').classList.add('active');
-            canvas.width = document.getElementById('drawingModal').clientWidth; canvas.height = document.getElementById('drawingModal').clientHeight - 90;
-            ctx.fillStyle = '#000000'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            if (window.currentDrawingBase64) {
-                const img = new Image(); img.onload = () => ctx.drawImage(img, 0, 0, canvas.width, canvas.height); img.src = window.currentDrawingBase64;
-            }
-            window.setDrawMode('brush');
-        }
-
-        window.closeDrawing = function() { document.getElementById('drawingModal').classList.remove('active'); }
-        window.setDrawMode = function(mode) { window.drawMode = mode; document.getElementById('btnBrush').style.color = mode === 'brush' ? 'var(--pink-main)' : 'white'; document.getElementById('btnEraser').style.color = mode === 'eraser' ? 'var(--pink-main)' : 'white'; if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); }
-        window.clearCanvas = function() { ctx.fillStyle = '#000000'; ctx.fillRect(0, 0, canvas.width, canvas.height); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium'); }
-        
-        window.saveDrawing = function() {
-            window.currentDrawingBase64 = canvas.toDataURL('image/jpeg', 0.5); // Сжимаем рисунок
-            document.getElementById('zeDrawingPreview').src = window.currentDrawingBase64; document.getElementById('zeDrawingPreview').style.display = 'block'; document.getElementById('btnRemoveDrawing').style.display = 'flex';
-            closeDrawing(); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('success');
-        }
-
-        window.removeDrawing = function() { window.currentDrawingBase64 = ""; document.getElementById('zeDrawingPreview').src = ""; document.getElementById('zeDrawingPreview').style.display = 'none'; document.getElementById('btnRemoveDrawing').style.display = 'none'; if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); }
-
-        canvas.addEventListener('touchstart', e => { isCanvasDrawing = true; const touch = e.touches[0]; const rect = canvas.getBoundingClientRect(); ctx.beginPath(); ctx.moveTo(touch.clientX - rect.left, touch.clientY - rect.top); });
-        canvas.addEventListener('touchmove', e => {
-            if(!isCanvasDrawing) return; e.preventDefault(); const touch = e.touches[0]; const rect = canvas.getBoundingClientRect();
-            ctx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top); ctx.strokeStyle = window.drawMode === 'eraser' ? '#000000' : '#ffffff'; ctx.lineWidth = window.drawMode === 'eraser' ? 30 : 4; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.stroke();
-        }, {passive: false});
-        canvas.addEventListener('touchend', () => isCanvasDrawing = false);
 
         // --- ОСНОВНЫЕ ФУНКЦИИ И РЕНДЕР ---
         window.switchTab = function(tabId, btn) {
@@ -404,16 +390,19 @@
         function getUniqueColor(existingColorsObj) { const usedColors = Object.values(existingColorsObj); for (let hue of neonHues) { const color = `hsl(${hue}, 100%, 65%)`; if (!usedColors.includes(color)) return color; } return `hsl(${Math.floor(Math.random()*360)}, 100%, 65%)`; }
         function getCategoryColor(category) { const predefined = { 'Personal': '#ff477e', 'Work': '#00f0ff', 'Finance': '#ffd700', 'Ideas': '#b554ff' }; if (window.currentUserData?.category_colors?.[category]) return window.currentUserData.category_colors[category]; if (predefined[category]) return predefined[category]; return '#ffffff'; }
         
-        // Умный парсер, который понимает рисунки
-        function parseItem(rawText) { 
-            let drawData = ""; let cleanText = rawText;
-            const drawMatch = rawText.match(/\[DRAW:(data:image\/[a-zA-Z0-9+;/=]+)\]/);
-            if (drawMatch) { drawData = drawMatch[1]; cleanText = rawText.replace(drawMatch[0], ''); }
-            const match = cleanText.match(/^\[(.*?)\](?:\s*\{([^\}]+)\})?\s*([\s\S]*)/); 
-            if (match) { return { category: match[1], date: match[2] || '', content: match[3].trim(), draw: drawData, rawText }; } 
-            return { category: "Personal", date: '', content: cleanText.trim(), draw: drawData, rawText }; 
+        function parseItem(rawText) { const match = rawText.match(/^\[(.*?)\](?:\s*\{([^\}]+)\})?\s*([\s\S]*)/); if (match) { return { category: match[1], date: match[2] || '', content: match[3], rawText }; } return { category: "Personal", date: '', content: rawText, rawText }; }
+        
+        // Умный парсинг карточки (вытаскивает заголовок, удаляет HTML для превью)
+        function formatCardText(text) { 
+            let title = ""; let body = text;
+            const match = text.match(/^#\s+(.*?)\n+/);
+            if (match) {
+                title = `<b style="font-size:15px; color:#fff; display:block; margin-bottom:4px;">${match[1]}</b>`;
+                body = text.replace(/^#\s+(.*?)\n+/, '');
+            }
+            let temp = document.createElement('div'); temp.innerHTML = body;
+            return title + (temp.textContent || temp.innerText || ""); 
         }
-        function formatCardText(text) { return text.replace(/^#\s+(.*)$/gm, '<b>$1</b>'); }
 
         window.setTaskFilter = function(filter) { window.currentTaskFilter = filter; document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active')); document.getElementById(filter === 'all' ? 'fltAll' : 'fltToday').classList.add('active'); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); renderUI(); }
         window.filterNotes = function() { renderUI(); }
@@ -434,13 +423,11 @@
                     const color = getCategoryColor(category); const isOpen = (searchTerm !== "" || openSections[category]) ? "open" : ""; const icon = sectionIcons[category] || 'fa-folder';
                     
                     vaultHTML += `<div class="category-section ${isOpen}" id="section-${category}"><div class="category-header" data-category="${category}" onclick="toggleSection('${category}')"><div class="category-title" style="color: ${color}"><i class="fas ${icon}"></i> ${category}</div><div class="category-controls"><div class="category-settings-btn" onclick="openCategorySettings(event, '${category}')"><i class="fas fa-cog"></i></div><i class="fas fa-chevron-down chevron"></i></div></div><div class="category-content"><div class="grid-cards">`;
-                    
                     vaultHTML += groupedNotes[category].map(nObj => `
                         <div class="card" ontouchstart="handleTouchStart(event, ${nObj.origIndex})" onclick="if(!window.justDragged) openZenEditor(${nObj.origIndex})">
-                            <div class="card-text">${nObj.draw ? '<i class="fas fa-paint-brush" style="color:var(--pink-main); margin-bottom:8px; display:block; font-size:16px;"></i>' : ''}${formatCardText(nObj.content)}</div>
+                            <div class="card-text">${formatCardText(nObj.content)}</div>
                         </div>
                     `).join('');
-                    
                     vaultHTML += `</div></div></div>`;
                 }); vault.innerHTML = vaultHTML;
             }
@@ -465,55 +452,62 @@
         window.closeAllModals = function() { document.querySelectorAll('.modal-sheet').forEach(m => m.classList.remove('active')); document.getElementById('modalOverlay').classList.remove('active'); if (tg.BackButton && !document.getElementById('zenEditor').classList.contains('active')) { tg.BackButton.hide(); } }
         window.openCreationRouter = function() { if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium'); document.getElementById('modalOverlay').classList.add('active'); document.getElementById('creationRouterModal').classList.add('active'); if(tg.BackButton) tg.BackButton.show(); }
 
+        // --- УМНЫЙ РЕДАКТОР ЗАМЕТОК ---
         window.openZenEditor = function(index) {
             closeAllModals(); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); const data = window.currentUserData; document.getElementById('zeEditIndex').value = index;
-            let category = "Personal"; let content = ""; let dateStr = new Date().toLocaleDateString('en-US', {day:'numeric', month:'short', year:'numeric'}); window.currentDrawingBase64 = "";
+            
+            let category = "Personal"; let title = ""; let content = ""; let dateStr = new Date().toLocaleDateString('en-US', {day:'numeric', month:'short', year:'numeric'});
 
             if (index !== -1) { 
                 const parsed = parseItem(data.notes[index]); category = parsed.category; content = parsed.content; if (parsed.date) dateStr = parsed.date; 
-                window.currentDrawingBase64 = parsed.draw || "";
+                // Вытаскиваем заголовок
+                const match = content.match(/^#\s+(.*?)\n+/);
+                if(match) { title = match[1]; content = content.replace(/^#\s+(.*?)\n+/, ''); }
             }
 
-            document.getElementById('zeCategory').innerText = category; document.getElementById('zeDate').innerText = dateStr; document.getElementById('zeTextarea').value = content; document.getElementById('zeTextarea').style.fontSize = `${currentFontSize}px`;
+            document.getElementById('zeHiddenCategory').value = category;
+            document.getElementById('zeCategoryDisp').innerText = category;
+            document.getElementById('zeDate').innerText = dateStr;
+            document.getElementById('zeTitle').value = title;
+            document.getElementById('zeTextarea').innerHTML = content;
+            document.getElementById('zeTextarea').style.fontSize = `${currentFontSize}px`;
             
-            if(window.currentDrawingBase64) { document.getElementById('zeDrawingPreview').src = window.currentDrawingBase64; document.getElementById('zeDrawingPreview').style.display = 'block'; document.getElementById('btnRemoveDrawing').style.display = 'flex'; } 
-            else { document.getElementById('zeDrawingPreview').style.display = 'none'; document.getElementById('btnRemoveDrawing').style.display = 'none'; }
-
             updateWordCount(); document.getElementById('zenEditor').classList.add('active'); if(tg.BackButton) tg.BackButton.show();
             if (index === -1) { setTimeout(() => document.getElementById('zeTextarea').focus(), 350); }
         }
+        
         window.handleTyping = function() { updateWordCount(); const status = document.getElementById('zeSaveStatus'); status.style.opacity = '1'; clearTimeout(typingTimer); typingTimer = setTimeout(() => { status.style.opacity = '0'; }, 800); }
-        window.updateWordCount = function() { const text = document.getElementById('zeTextarea').value.trim(); const words = text ? text.split(/\s+/).length : 0; const readTime = Math.ceil(words / 200) || 1; document.getElementById('zeWordCount').innerText = `${words} words • ${readTime} min read`; }
+        window.updateWordCount = function() { const text = document.getElementById('zeTextarea').innerText.trim(); const words = text ? text.split(/\s+/).length : 0; const readTime = Math.ceil(words / 200) || 1; document.getElementById('zeWordCount').innerText = `${words} words • ${readTime} min`; }
 
         window.saveAndCloseZenEditor = async function() {
             document.getElementById('zenEditor').classList.remove('active'); if(tg.BackButton) tg.BackButton.hide(); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
-            if(!window.userDocRef) return; const data = window.currentUserData; const text = document.getElementById('zeTextarea').value; const idx = parseInt(document.getElementById('zeEditIndex').value); let notes = [...(data.notes || [])];
+            if(!window.userDocRef) return; const data = window.currentUserData; const title = document.getElementById('zeTitle').value.trim(); const htmlContent = document.getElementById('zeTextarea').innerHTML; const plainContent = document.getElementById('zeTextarea').innerText.trim(); const idx = parseInt(document.getElementById('zeEditIndex').value); let notes = [...(data.notes || [])];
             
-            if (!text.trim() && !window.currentDrawingBase64) { if (idx !== -1) { notes.splice(idx, 1); await updateDoc(window.userDocRef, { notes }); } return; }
+            if (!plainContent && !title) { if (idx !== -1) { notes.splice(idx, 1); await updateDoc(window.userDocRef, { notes }); } return; }
             
-            const category = document.getElementById('zeCategory').innerText; const dateStr = document.getElementById('zeDate').innerText; 
-            const drawTag = window.currentDrawingBase64 ? `[DRAW:${window.currentDrawingBase64}] ` : '';
-            const formattedText = `[${category}] {${dateStr}} ${drawTag}${text}`;
+            const category = document.getElementById('zeHiddenCategory').value; const dateStr = document.getElementById('zeDate').innerText; 
+            const finalContent = title ? `# ${title}\n\n${htmlContent}` : htmlContent;
+            const formattedText = `[${category}] {${dateStr}} ${finalContent}`;
 
             let newCategoryColors = { ...data.category_colors }; if (!defaultTags.includes(category) && !newCategoryColors[category]) { newCategoryColors[category] = getUniqueColor(newCategoryColors); }
             if (idx !== -1) notes.splice(idx, 1); notes.unshift(formattedText); await updateDoc(window.userDocRef, { notes, category_colors: newCategoryColors });
         }
 
-        window.openContextOptions = function() { if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); document.getElementById('modalOverlay').classList.add('active'); document.getElementById('contextOptionsMenu').classList.add('active'); if(tg.BackButton) tg.BackButton.show(); }
+        window.openContextOptions = function() { if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); document.getElementById('modalOverlay').classList.add('active'); document.getElementById('contextOptionsMenu').classList.add('active'); }
         window.closeContextMenu = function() { document.getElementById('contextOptionsMenu').classList.remove('active'); document.getElementById('modalOverlay').classList.remove('active'); }
         window.changeFontSize = function(delta) { currentFontSize += delta; if(currentFontSize < 12) currentFontSize = 12; if(currentFontSize > 30) currentFontSize = 30; document.getElementById('zeTextarea').style.fontSize = `${currentFontSize}px`; if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); }
         window.toggleInvertColors = function() { document.getElementById('zePaper').classList.toggle('inverted'); closeContextMenu(); }
         window.toggleFocusMode = function() { document.getElementById('zeHeader').classList.toggle('hidden'); closeContextMenu(); }
         window.toggleFontFamily = function() { const paper = document.getElementById('zeTextarea'); if (paper.style.fontFamily === 'serif') paper.style.fontFamily = 'sans-serif'; else if (paper.style.fontFamily === 'sans-serif') paper.style.fontFamily = 'monospace'; else paper.style.fontFamily = 'serif'; if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); closeContextMenu(); }
         window.toggleTextWidth = function() { const paper = document.getElementById('zePaper'); if (paper.style.maxWidth === '750px' || !paper.style.maxWidth) paper.style.maxWidth = '100%'; else paper.style.maxWidth = '750px'; if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); closeContextMenu(); }
-        window.exportNoteTxt = function() { const text = document.getElementById('zeTextarea').value; const title = document.getElementById('zeCategory').innerText + "_Note"; const dataStr = "data:text/plain;charset=utf-8," + encodeURIComponent(text); const dlAnchorElem = document.createElement('a'); dlAnchorElem.setAttribute("href", dataStr); dlAnchorElem.setAttribute("download", `${title}.txt`); dlAnchorElem.click(); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('success'); closeContextMenu(); }
-        window.deleteZenNote = async function() { const idx = parseInt(document.getElementById('zeEditIndex').value); if (idx !== -1 && window.userDocRef) { const data = window.currentUserData; let notes = [...(data.notes || [])]; notes.splice(idx, 1); await updateDoc(window.userDocRef, { notes }); } closeContextMenu(); document.getElementById('zenEditor').classList.remove('active'); if(tg.BackButton) tg.BackButton.hide(); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy'); }
+        window.exportNoteTxt = function() { const title = document.getElementById('zeTitle').value || "Note"; const text = document.getElementById('zeTextarea').innerText; const dataStr = "data:text/plain;charset=utf-8," + encodeURIComponent(text); const dlAnchorElem = document.createElement('a'); dlAnchorElem.setAttribute("href", dataStr); dlAnchorElem.setAttribute("download", `${title}.txt`); dlAnchorElem.click(); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('success'); closeContextMenu(); }
 
-        window.openCategorySelector = function() { const data = window.currentUserData; const customTags = Object.keys(data?.category_colors || {}); const allTags = [...new Set([...defaultTags, ...customTags])]; let html = allTags.map(tag => { const color = getCategoryColor(tag); return `<div class="tag-pill" style="border-color: ${color}; color: ${color};" onclick="applyCat('${tag}')">${tag}</div>`; }).join(''); html += `<div class="tag-pill" style="border-style: dashed;" onclick="document.getElementById('zeCustomTagInput').style.display='block'; document.getElementById('zeCustomTagInput').focus();">+ NEW</div>`; document.getElementById('zeTagsContainer').innerHTML = html; document.getElementById('modalOverlay').classList.add('active'); document.getElementById('catSelectorMenu').classList.add('active'); if(tg.BackButton) tg.BackButton.show(); }
+        window.openCategorySelector = function() { closeContextMenu(); const data = window.currentUserData; const customTags = Object.keys(data?.category_colors || {}); const allTags = [...new Set([...defaultTags, ...customTags])]; let html = allTags.map(tag => { const color = getCategoryColor(tag); return `<div class="tag-pill" style="border-color: ${color}; color: ${color};" onclick="applyCat('${tag}')">${tag}</div>`; }).join(''); html += `<div class="tag-pill" style="border-style: dashed;" onclick="document.getElementById('zeCustomTagInput').style.display='block'; document.getElementById('zeCustomTagInput').focus();">+ NEW</div>`; document.getElementById('zeTagsContainer').innerHTML = html; document.getElementById('modalOverlay').classList.add('active'); document.getElementById('catSelectorMenu').classList.add('active'); }
         window.closeCategorySelector = function() { document.getElementById('catSelectorMenu').classList.remove('active'); document.getElementById('modalOverlay').classList.remove('active'); }
-        window.applyCat = function(cat) { document.getElementById('zeCategory').innerText = cat; closeCategorySelector(); }
+        window.applyCat = function(cat) { document.getElementById('zeHiddenCategory').value = cat; document.getElementById('zeCategoryDisp').innerText = cat; closeCategorySelector(); }
         window.applyNewCategory = function() { const val = document.getElementById('zeCustomTagInput').value.trim(); if(val) { applyCat(val); document.getElementById('zeCustomTagInput').value = ""; document.getElementById('zeCustomTagInput').style.display = "none"; } }
 
+        // REMINDERS
         window.openReminderModal = function(index) {
             closeAllModals(); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); document.getElementById('remEditIndex').value = index; document.getElementById('remBtnDelete').style.display = index === -1 ? "none" : "block";
             let content = ""; const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1); tomorrow.setHours(10, 0, 0, 0); let timeStr = (new Date(tomorrow - tomorrow.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
