@@ -17,16 +17,41 @@
         <i class="fas fa-trash-alt"></i> <span style="font-size:16px; font-weight:bold;">Drop to Delete</span>
     </div>
 
-    <div class="top-bar">
-        <div class="premium-btn">Lunex AI v2.4 <i class="fas fa-star" style="font-size: 10px;"></i></div>
-    </div>
-
     <main id="tab-dashboard" class="tab-content active">
-        <div class="greeting">
-            <h1 id="userName"></h1>
-            <p></p>
+        <div class="tab-header">
+            <div class="header-text">
+                <span class="header-date" id="dashDate">Today</span>
+                <span class="header-title">Dashboard</span>
+            </div>
+            <div class="header-avatar"><img id="setAvatarDash" src="" alt="User"></div>
         </div>
-        <h2 class="section-title">Today's Activity</h2>
+
+        <div class="calendar-strip" id="calendarStrip"></div>
+
+        <div class="quick-actions">
+            <div class="q-action" onclick="openZenEditor(-1)">
+                <div class="q-icon"><i class="fas fa-pen-nib"></i></div>
+                <span class="q-text">Note</span>
+            </div>
+            <div class="q-action" onclick="openReminderModal(-1)">
+                <div class="q-icon"><i class="fas fa-clock"></i></div>
+                <span class="q-text">Task</span>
+            </div>
+            <div class="q-action" onclick="switchTab('notes', document.querySelectorAll('.nav-item')[1])">
+                <div class="q-icon"><i class="fas fa-folder-open"></i></div>
+                <span class="q-text">Vault</span>
+            </div>
+            <div class="q-action" onclick="switchTab('settings', document.querySelectorAll('.nav-item')[4])">
+                <div class="q-icon"><i class="fas fa-cog"></i></div>
+                <span class="q-text">Settings</span>
+            </div>
+        </div>
+
+        <h2 class="section-title">Recent Notes</h2>
+        <div class="grid-cards" id="dashRecentNotes" style="margin-bottom: 25px;">
+            </div>
+
+        <h2 class="section-title">Activity Status</h2>
         <div class="ring-container">
             <svg viewBox="0 0 36 36" class="circular-chart">
                 <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
@@ -38,12 +63,12 @@
                 <div class="ring-stat-item"><span class="ring-stat-value" id="statPending">0</span><span class="ring-stat-label">Pending Today</span></div>
             </div>
         </div>
-        <h2 class="section-title" style="margin-top: 30px;">Active Reminders</h2>
-        <div id="dashReminders"></div>
     </main>
 
     <main id="tab-notes" class="tab-content">
-        <div class="greeting" style="padding-bottom: 5px;"><h1></h1><p></p></div>
+        <div class="tab-header">
+            <div class="header-text"><span class="header-title">The Vault</span></div>
+        </div>
         <div class="search-bar">
             <i class="fas fa-search" style="color: var(--text-muted);"></i>
             <input type="text" id="searchInput" placeholder="Search records..." oninput="filterNotes()">
@@ -52,7 +77,9 @@
     </main>
 
     <main id="tab-tasks" class="tab-content">
-        <div class="greeting" style="padding-bottom: 5px;"><h1></h1><p></p></div>
+        <div class="tab-header">
+            <div class="header-text"><span class="header-title">To-Do List</span></div>
+        </div>
         <div class="filter-tabs">
             <div class="filter-btn active" id="fltAll" onclick="setTaskFilter('all')">All Tasks</div>
             <div class="filter-btn" id="fltToday" onclick="setTaskFilter('today')">Today Only</div>
@@ -61,7 +88,9 @@
     </main>
 
     <main id="tab-settings" class="tab-content">
-        <div class="greeting"><h1>Settings</h1></div>
+        <div class="tab-header">
+            <div class="header-text"><span class="header-title">Settings</span></div>
+        </div>
         <div class="list-item" style="background: transparent; border: none; padding: 0 16px 20px;">
             <div style="display:flex; align-items:center; gap:15px;">
                 <div class="settings-avatar"><img id="setAvatar" src=""></div>
@@ -204,11 +233,10 @@
         try {
             if (tg.expand) tg.expand();
             if (tg.requestFullscreen) tg.requestFullscreen();
-            if (tg.disableVerticalSwipes) tg.disableVerticalSwipes(); // ЗАЩИТА ОТ СВАЙПОВ
+            if (tg.disableVerticalSwipes) tg.disableVerticalSwipes();
             if (tg.isVerticalSwipesEnabled !== undefined) tg.isVerticalSwipesEnabled = false;
         } catch(e) {}
 
-        // НАТИВНАЯ КНОПКА НАЗАД (Единственный способ выйти из редактора)
         if (tg.BackButton) {
             tg.BackButton.onClick(function() {
                 if (document.getElementById('catSelectorMenu').classList.contains('active') || 
@@ -230,6 +258,23 @@
         let openSections = JSON.parse(localStorage.getItem('lunexOpenSections')) || {}; let currentFontSize = 16; let typingTimer;
         window.currentZenCategory = "Personal";
 
+        // Рендер Календаря на Дашборде
+        function renderCalendar() {
+            const strip = document.getElementById('calendarStrip');
+            if(!strip) return;
+            let html = ''; const today = new Date(); const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            document.getElementById('dashDate').innerText = `${today.getDate()} ${months[today.getMonth()]}, ${today.getFullYear()}`;
+
+            for(let i=0; i<7; i++) {
+                const d = new Date(today); d.setDate(today.getDate() + i);
+                const isToday = i === 0 ? 'active' : '';
+                html += `<div class="cal-day ${isToday}"><span class="cal-weekday">${days[d.getDay()]}</span><span class="cal-date">${d.getDate()}</span></div>`;
+            }
+            strip.innerHTML = html;
+        }
+        renderCalendar();
+
         if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
             userId = tg.initDataUnsafe.user.id.toString();
             userName = tg.initDataUnsafe.user.first_name || "User";
@@ -241,6 +286,7 @@
             let avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=ff477e&color=fff&bold=true`;
             if (tg.initDataUnsafe.user.photo_url) avatarUrl = tg.initDataUnsafe.user.photo_url;
             document.getElementById('setAvatar').src = avatarUrl;
+            document.getElementById('setAvatarDash').src = avatarUrl; // Аватарка в дашборде
 
             const firebaseConfig = { apiKey: "AIzaSyDY8g42qsSkoN36i-DIeptehoDWXSEUlU0", authDomain: "lunex-f5362.firebaseapp.com", projectId: "lunex-f5362", storageBucket: "lunex-f5362.firebasestorage.app", messagingSenderId: "364220464927", appId: "1:364220464927:web:95531c2ac9de3aaa343a2a" };
             const app = initializeApp(firebaseConfig); const db = getFirestore(app); window.userDocRef = doc(db, "users", userId);
@@ -351,10 +397,9 @@
         
         function parseItem(rawText) { const match = rawText.match(/^\[(.*?)\](?:\s*\{([^\}]+)\})?\s*([\s\S]*)/); if (match) { return { category: match[1], date: match[2] || '', content: match[3], rawText }; } return { category: "Personal", date: '', content: rawText, rawText }; }
         
-        // Рендер карточек с учетом HTML/Markdown
         function formatCardText(text) { 
-            // Fallback для старых заметок + поддержка HTML
-            return text.replace(/^#\s+(.*)$/gm, '<b>$1</b><br>')
+            return text.replace(/^<div class="note-title">(.*?)<\/div>/, '<span class="note-title">$1</span>')
+                       .replace(/^#\s+(.*)$/gm, '<span class="note-title">$1</span>')
                        .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
                        .replace(/_(.*?)_/g, '<i>$1</i>');
         }
@@ -368,6 +413,19 @@
             const data = window.currentUserData; if(!data) return;
             const notes = data.notes || []; let reminders = data.reminders || [];
             document.getElementById('dbItemCount').innerText = `${notes.length + reminders.length}`;
+
+            // --- РЕНДЕР RECENT NOTES НА DASHBOARD ---
+            const recentNotesContainer = document.getElementById('dashRecentNotes');
+            if (recentNotesContainer) {
+                if (notes.length === 0) { recentNotesContainer.innerHTML = '<p class="empty-state" style="grid-column: 1 / -1;">No notes yet.</p>'; }
+                else {
+                    const recent = notes.slice(0, 2);
+                    recentNotesContainer.innerHTML = recent.map((n, i) => {
+                        const parsed = parseItem(n);
+                        return `<div class="card" ontouchstart="handleTouchStart(event, ${i})" onclick="if(!window.justDragged) openZenEditor(${i})"><div class="card-text">${formatCardText(parsed.content)}</div></div>`;
+                    }).join('');
+                }
+            }
 
             const searchTerm = document.getElementById('searchInput').value.toLowerCase(); const vault = document.getElementById('notesVault'); const groupedNotes = {};
             notes.forEach((n, i) => { const parsed = parseItem(n); if (parsed.content.toLowerCase().includes(searchTerm)) { if (!groupedNotes[parsed.category]) groupedNotes[parsed.category] = []; groupedNotes[parsed.category].push({ ...parsed, origIndex: i }); } });
@@ -414,14 +472,9 @@
             if (index !== -1) { const parsed = parseItem(data.notes[index]); category = parsed.category; rawContent = parsed.content; if (parsed.date) dateStr = parsed.date; }
             
             let titleStr = ""; let bodyStr = rawContent;
-            
-            // Расшифровка нового HTML и старого Markdown
             const titleMatch = rawContent.match(/^<div class="note-title">(.*?)<\/div>([\s\S]*)/);
-            if (titleMatch) {
-                titleStr = titleMatch[1]; bodyStr = titleMatch[2];
-            } else if (rawContent.startsWith('# ')) {
-                const lines = rawContent.split('\n'); titleStr = lines[0].substring(2).trim(); bodyStr = lines.slice(1).join('\n').trim();
-            }
+            if (titleMatch) { titleStr = titleMatch[1]; bodyStr = titleMatch[2]; } 
+            else if (rawContent.startsWith('# ')) { const lines = rawContent.split('\n'); titleStr = lines[0].substring(2).trim(); bodyStr = lines.slice(1).join('\n').trim(); }
 
             window.currentZenCategory = category;
             document.getElementById('zeCategoryBadge').innerText = category; document.getElementById('zeDate').innerText = dateStr; 
@@ -442,7 +495,6 @@
             const title = document.getElementById('zeTitle').value.trim(); const textHTML = document.getElementById('zeTextarea').innerHTML; const textPlain = document.getElementById('zeTextarea').innerText.trim();
             const idx = parseInt(document.getElementById('zeEditIndex').value); let notes = [...(data.notes || [])];
 
-            // Если удалили всё
             if (!title && !textPlain) { if (idx !== -1) { notes.splice(idx, 1); await updateDoc(window.userDocRef, { notes }); } return; }
 
             const category = window.currentZenCategory; const dateStr = document.getElementById('zeDate').innerText; 
