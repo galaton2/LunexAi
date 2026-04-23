@@ -123,15 +123,14 @@
 
     <div id="zenEditor" class="zen-editor">
         <div class="ze-header" id="zeHeader">
-            </div>
+            <div style="width: 36px;"></div> 
+            <div class="ze-meta" onclick="openCategorySelector()"><span id="zeCategoryBadge">Personal</span> <i class="fas fa-caret-down"></i></div>
+            <div style="width: 36px;"></div> 
+        </div>
         <div class="ze-body">
             <div class="ze-paper" id="zePaper">
                 <div class="ze-paper-header">
-                    <div class="ze-date">
-                        <span id="zeCategoryBadge" style="color: var(--pink-main); font-weight: bold; margin-right: 10px;">Personal</span>
-                        <span id="zeDate">17 Apr 2026</span> 
-                        <span id="zeSaveStatus">Saving...</span>
-                    </div>
+                    <div class="ze-date"><span id="zeDate">17 Apr 2026</span> <span id="zeSaveStatus">Saving...</span></div>
                     <div style="display:flex; align-items:center;">
                         <span class="ze-words" id="zeWordCount">0 words</span>
                         <button class="ze-menu-btn-small" onclick="openContextOptions()"><i class="fas fa-ellipsis-v"></i></button>
@@ -139,7 +138,7 @@
                 </div>
                 
                 <input type="text" id="zeTitle" placeholder="Note Title" autocomplete="off">
-                <textarea id="zeTextarea" placeholder="Start writing..." oninput="handleTyping()"></textarea>
+                <div id="zeTextarea" contenteditable="true" data-placeholder="Start writing..." oninput="handleTyping()"></div>
             </div>
         </div>
         <input type="hidden" id="zeEditIndex" value="-1">
@@ -209,7 +208,7 @@
             if (tg.isVerticalSwipesEnabled !== undefined) tg.isVerticalSwipesEnabled = false;
         } catch(e) {}
 
-        // НАТИВНАЯ КНОПКА ЗАКРЫТИЯ/НАЗАД (Единственный способ выйти из редактора)
+        // НАТИВНАЯ КНОПКА НАЗАД (Единственный способ выйти из редактора)
         if (tg.BackButton) {
             tg.BackButton.onClick(function() {
                 if (document.getElementById('catSelectorMenu').classList.contains('active') || 
@@ -266,65 +265,41 @@
             window.startX = touch.clientX; window.startY = touch.clientY;
             
             window.dragTimer = setTimeout(() => {
-                window.isDragging = true;
-                window.dragOrigIndex = index;
+                window.isDragging = true; window.dragOrigIndex = index;
                 if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy');
                 
                 const cardEl = e.target.closest('.card');
                 window.dragClone = cardEl.cloneNode(true);
-                window.dragClone.style.position = 'fixed';
-                window.dragClone.style.zIndex = '9999';
-                window.dragClone.style.width = cardEl.offsetWidth + 'px';
-                window.dragClone.style.height = cardEl.offsetHeight + 'px';
-                window.dragClone.style.opacity = '0.9';
-                window.dragClone.style.boxShadow = '0 15px 35px rgba(0,0,0,0.5)';
-                window.dragClone.style.left = (touch.clientX - cardEl.offsetWidth / 2) + 'px';
-                window.dragClone.style.top = (touch.clientY - cardEl.offsetHeight / 2) + 'px';
-                window.dragClone.style.pointerEvents = 'none'; 
-                window.dragClone.style.transition = 'none';
+                window.dragClone.style.position = 'fixed'; window.dragClone.style.zIndex = '9999';
+                window.dragClone.style.width = cardEl.offsetWidth + 'px'; window.dragClone.style.height = cardEl.offsetHeight + 'px';
+                window.dragClone.style.opacity = '0.9'; window.dragClone.style.boxShadow = '0 15px 35px rgba(0,0,0,0.5)';
+                window.dragClone.style.left = (touch.clientX - cardEl.offsetWidth / 2) + 'px'; window.dragClone.style.top = (touch.clientY - cardEl.offsetHeight / 2) + 'px';
+                window.dragClone.style.pointerEvents = 'none'; window.dragClone.style.transition = 'none';
                 document.body.appendChild(window.dragClone);
 
                 cardEl.style.opacity = '0.3';
-                
-                const tz = document.getElementById('trashZone');
-                tz.style.transform = 'translateY(0)';
-                tz.style.background = 'rgba(255, 50, 50, 0.15)';
+                const tz = document.getElementById('trashZone'); tz.style.transform = 'translateY(0)'; tz.style.background = 'rgba(255, 50, 50, 0.15)';
             }, 400);
         }
 
         document.addEventListener('touchmove', function(e) {
             if (!window.isDragging) {
-                if (window.dragTimer) {
-                    const touch = e.touches[0];
-                    if (Math.abs(touch.clientX - window.startX) > 10 || Math.abs(touch.clientY - window.startY) > 10) { clearTimeout(window.dragTimer); window.dragTimer = null; }
-                }
+                if (window.dragTimer) { const touch = e.touches[0]; if (Math.abs(touch.clientX - window.startX) > 10 || Math.abs(touch.clientY - window.startY) > 10) { clearTimeout(window.dragTimer); window.dragTimer = null; } }
                 return;
             }
             e.preventDefault(); 
             const touch = e.touches[0];
-            window.dragClone.style.left = (touch.clientX - window.dragClone.offsetWidth / 2) + 'px';
-            window.dragClone.style.top = (touch.clientY - window.dragClone.offsetHeight / 2) + 'px';
+            window.dragClone.style.left = (touch.clientX - window.dragClone.offsetWidth / 2) + 'px'; window.dragClone.style.top = (touch.clientY - window.dragClone.offsetHeight / 2) + 'px';
 
-            window.dragClone.style.visibility = 'hidden';
-            const elem = document.elementFromPoint(touch.clientX, touch.clientY);
-            window.dragClone.style.visibility = 'visible';
-
+            window.dragClone.style.visibility = 'hidden'; const elem = document.elementFromPoint(touch.clientX, touch.clientY); window.dragClone.style.visibility = 'visible';
             document.querySelectorAll('.category-header').forEach(el => { el.style.border = '2px solid transparent'; el.style.background = 'transparent'; });
             document.getElementById('trashZone').style.transform = 'translateY(0)';
 
             if (elem) {
-                const header = elem.closest('.category-header');
-                const trash = elem.closest('#trashZone');
-                if (header) {
-                    header.style.border = '2px dashed var(--pink-main)'; header.style.background = 'rgba(255, 71, 126, 0.1)';
-                    window.currentDroppable = { type: 'category', el: header };
-                } else if (trash) {
-                    trash.style.background = 'rgba(255, 50, 50, 0.4)';
-                    window.currentDroppable = { type: 'trash' };
-                } else {
-                    document.getElementById('trashZone').style.background = 'rgba(255, 50, 50, 0.15)';
-                    window.currentDroppable = null;
-                }
+                const header = elem.closest('.category-header'); const trash = elem.closest('#trashZone');
+                if (header) { header.style.border = '2px dashed var(--pink-main)'; header.style.background = 'rgba(255, 71, 126, 0.1)'; window.currentDroppable = { type: 'category', el: header };
+                } else if (trash) { trash.style.background = 'rgba(255, 50, 50, 0.4)'; window.currentDroppable = { type: 'trash' };
+                } else { document.getElementById('trashZone').style.background = 'rgba(255, 50, 50, 0.15)'; window.currentDroppable = null; }
             }
         }, { passive: false });
 
@@ -332,21 +307,14 @@
             clearTimeout(window.dragTimer); window.dragTimer = null;
             if (!window.isDragging) return;
             
-            window.isDragging = false;
-            window.justDragged = true;
-            setTimeout(() => window.justDragged = false, 100);
-
+            window.isDragging = false; window.justDragged = true; setTimeout(() => window.justDragged = false, 100);
             if (window.dragClone) window.dragClone.remove();
             document.getElementById('trashZone').style.transform = 'translateY(100%)';
             document.querySelectorAll('.category-header').forEach(el => { el.style.border = '2px solid transparent'; el.style.background = 'transparent'; });
 
             if (window.currentDroppable) {
-                if (window.currentDroppable.type === 'category') {
-                    const newCat = window.currentDroppable.el.dataset.category;
-                    window.moveNoteToCategory(window.dragOrigIndex, newCat);
-                } else if (window.currentDroppable.type === 'trash') {
-                    window.deleteNoteByIndex(window.dragOrigIndex);
-                }
+                if (window.currentDroppable.type === 'category') { window.moveNoteToCategory(window.dragOrigIndex, window.currentDroppable.el.dataset.category); } 
+                else if (window.currentDroppable.type === 'trash') { window.deleteNoteByIndex(window.dragOrigIndex); }
             } else { renderUI(); }
             window.currentDroppable = null;
         });
@@ -359,7 +327,6 @@
             if (!defaultTags.includes(newCategory) && !newCategoryColors[newCategory]) { newCategoryColors[newCategory] = getUniqueColor(newCategoryColors); }
             const dateStr = parsed.date ? `{${parsed.date}} ` : '';
             const newText = `[${newCategory}] ${dateStr}${parsed.content}`;
-            
             notes.splice(index, 1); notes.unshift(newText); 
             await updateDoc(window.userDocRef, { notes, category_colors: newCategoryColors });
             if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('success');
@@ -368,8 +335,7 @@
         window.deleteNoteByIndex = async function(index) {
             if (!window.userDocRef) return;
             const data = window.currentUserData; let notes = [...(data.notes || [])];
-            notes.splice(index, 1);
-            await updateDoc(window.userDocRef, { notes });
+            notes.splice(index, 1); await updateDoc(window.userDocRef, { notes });
             if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy');
         }
 
@@ -385,13 +351,12 @@
         
         function parseItem(rawText) { const match = rawText.match(/^\[(.*?)\](?:\s*\{([^\}]+)\})?\s*([\s\S]*)/); if (match) { return { category: match[1], date: match[2] || '', content: match[3], rawText }; } return { category: "Personal", date: '', content: rawText, rawText }; }
         
-        // Рендер Markdown в карточках
+        // Рендер карточек с учетом HTML/Markdown
         function formatCardText(text) { 
-            let html = text.replace(/^#\s+(.*)$/gm, '<b>$1</b><br>')
-                           .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
-                           .replace(/_(.*?)_/g, '<i>$1</i>')
-                           .replace(/\[(.*?)\]\((.*?)\)/g, '<span style="color:var(--pink-main)">$1</span>');
-            return html; 
+            // Fallback для старых заметок + поддержка HTML
+            return text.replace(/^#\s+(.*)$/gm, '<b>$1</b><br>')
+                       .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+                       .replace(/_(.*?)_/g, '<i>$1</i>');
         }
 
         window.setTaskFilter = function(filter) { window.currentTaskFilter = filter; document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active')); document.getElementById(filter === 'all' ? 'fltAll' : 'fltToday').classList.add('active'); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); renderUI(); }
@@ -411,7 +376,13 @@
                 let vaultHTML = '';
                 sortedKeys.forEach(category => {
                     const color = getCategoryColor(category); const isOpen = (searchTerm !== "" || openSections[category]) ? "open" : ""; const icon = sectionIcons[category] || 'fa-folder';
-                    vaultHTML += `<div class="category-section ${isOpen}" id="section-${category}"><div class="category-header" data-category="${category}" onclick="toggleSection('${category}')"><div class="category-title" style="color: ${color}"><i class="fas ${icon}"></i> ${category}</div><div class="category-controls"><div class="category-settings-btn" onclick="openCategorySettings(event, '${category}')"><i class="fas fa-cog"></i></div><i class="fas fa-chevron-down chevron"></i></div></div><div class="category-content"><div class="grid-cards">${groupedNotes[category].map(nObj => `<div class="card" ontouchstart="handleTouchStart(event, ${nObj.origIndex})" onclick="if(!window.justDragged) openZenEditor(${nObj.origIndex})"><div class="card-text">${formatCardText(nObj.content)}</div></div>`).join('')}</div></div></div>`;
+                    vaultHTML += `<div class="category-section ${isOpen}" id="section-${category}"><div class="category-header" data-category="${category}" onclick="toggleSection('${category}')"><div class="category-title" style="color: ${color}"><i class="fas ${icon}"></i> ${category}</div><div class="category-controls"><div class="category-settings-btn" onclick="openCategorySettings(event, '${category}')"><i class="fas fa-cog"></i></div><i class="fas fa-chevron-down chevron"></i></div></div><div class="category-content"><div class="grid-cards">`;
+                    vaultHTML += groupedNotes[category].map(nObj => `
+                        <div class="card" ontouchstart="handleTouchStart(event, ${nObj.origIndex})" onclick="if(!window.justDragged) openZenEditor(${nObj.origIndex})">
+                            <div class="card-text">${formatCardText(nObj.content)}</div>
+                        </div>
+                    `).join('');
+                    vaultHTML += `</div></div></div>`;
                 }); vault.innerHTML = vaultHTML;
             }
 
@@ -435,67 +406,64 @@
         window.closeAllModals = function() { document.querySelectorAll('.modal-sheet').forEach(m => m.classList.remove('active')); document.getElementById('modalOverlay').classList.remove('active'); if (tg.BackButton && !document.getElementById('zenEditor').classList.contains('active')) { tg.BackButton.hide(); } }
         window.openCreationRouter = function() { if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium'); document.getElementById('modalOverlay').classList.add('active'); document.getElementById('creationRouterModal').classList.add('active'); if(tg.BackButton) tg.BackButton.show(); }
 
-        // --- ZEN EDITOR С TITLE ---
+        // --- УМНЫЙ ZEN EDITOR ---
         window.openZenEditor = function(index) {
             closeAllModals(); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); const data = window.currentUserData; document.getElementById('zeEditIndex').value = index;
             let category = "Personal"; let rawContent = ""; let dateStr = new Date().toLocaleDateString('en-US', {day:'numeric', month:'short', year:'numeric'});
 
             if (index !== -1) { const parsed = parseItem(data.notes[index]); category = parsed.category; rawContent = parsed.content; if (parsed.date) dateStr = parsed.date; }
             
-            // Парсинг заголовка
             let titleStr = ""; let bodyStr = rawContent;
-            if (rawContent.startsWith('# ')) {
-                const lines = rawContent.split('\n');
-                titleStr = lines[0].substring(2);
-                bodyStr = lines.slice(1).join('\n');
+            
+            // Расшифровка нового HTML и старого Markdown
+            const titleMatch = rawContent.match(/^<div class="note-title">(.*?)<\/div>([\s\S]*)/);
+            if (titleMatch) {
+                titleStr = titleMatch[1]; bodyStr = titleMatch[2];
+            } else if (rawContent.startsWith('# ')) {
+                const lines = rawContent.split('\n'); titleStr = lines[0].substring(2).trim(); bodyStr = lines.slice(1).join('\n').trim();
             }
 
             window.currentZenCategory = category;
             document.getElementById('zeCategoryBadge').innerText = category; document.getElementById('zeDate').innerText = dateStr; 
-            document.getElementById('zeTitle').value = titleStr; document.getElementById('zeTextarea').value = bodyStr; 
+            document.getElementById('zeTitle').value = titleStr; document.getElementById('zeTextarea').innerHTML = bodyStr; 
             document.getElementById('zeTextarea').style.fontSize = `${currentFontSize}px`;
             
             updateWordCount(); document.getElementById('zenEditor').classList.add('active'); if(tg.BackButton) tg.BackButton.show();
         }
+
         window.handleTyping = function() { updateWordCount(); const status = document.getElementById('zeSaveStatus'); status.style.opacity = '1'; clearTimeout(typingTimer); typingTimer = setTimeout(() => { status.style.opacity = '0'; }, 800); }
-        window.updateWordCount = function() { const text = document.getElementById('zeTextarea').value.trim(); const words = text ? text.split(/\s+/).length : 0; const readTime = Math.ceil(words / 200) || 1; document.getElementById('zeWordCount').innerText = `${words} words • ${readTime} min read`; }
+        window.updateWordCount = function() { const text = document.getElementById('zeTextarea').innerText.trim(); const words = text ? text.split(/\s+/).length : 0; const readTime = Math.ceil(words / 200) || 1; document.getElementById('zeWordCount').innerText = `${words} words • ${readTime} min read`; }
 
         window.saveAndCloseZenEditor = async function() {
             document.getElementById('zenEditor').classList.remove('active'); document.getElementById('formatToolbar').classList.remove('active');
             if(tg.BackButton) tg.BackButton.hide(); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
 
             if(!window.userDocRef) return; const data = window.currentUserData; 
-            const title = document.getElementById('zeTitle').value.trim(); const text = document.getElementById('zeTextarea').value; 
+            const title = document.getElementById('zeTitle').value.trim(); const textHTML = document.getElementById('zeTextarea').innerHTML; const textPlain = document.getElementById('zeTextarea').innerText.trim();
             const idx = parseInt(document.getElementById('zeEditIndex').value); let notes = [...(data.notes || [])];
 
-            if (!title && !text.trim()) { if (idx !== -1) { notes.splice(idx, 1); await updateDoc(window.userDocRef, { notes }); } return; }
+            // Если удалили всё
+            if (!title && !textPlain) { if (idx !== -1) { notes.splice(idx, 1); await updateDoc(window.userDocRef, { notes }); } return; }
 
             const category = window.currentZenCategory; const dateStr = document.getElementById('zeDate').innerText; 
-            const finalContent = title ? `# ${title}\n${text}` : text;
+            const finalContent = title ? `<div class="note-title">${title}</div>${textHTML}` : textHTML;
             const formattedData = `[${category}] {${dateStr}} ${finalContent}`;
 
             let newCategoryColors = { ...data.category_colors }; if (!defaultTags.includes(category) && !newCategoryColors[category]) { newCategoryColors[category] = getUniqueColor(newCategoryColors); }
             if (idx !== -1) notes.splice(idx, 1); notes.unshift(formattedData); await updateDoc(window.userDocRef, { notes, category_colors: newCategoryColors });
         }
 
-        // --- FORMAT TOOLBAR ---
+        // --- FORMAT TOOLBAR LOGIC ---
         const textarea = document.getElementById('zeTextarea');
         textarea.addEventListener('focus', () => { document.getElementById('formatToolbar').classList.add('active'); });
         textarea.addEventListener('blur', () => { setTimeout(() => document.getElementById('formatToolbar').classList.remove('active'), 150); });
 
         window.applyFormat = function(type, e) {
-            e.preventDefault(); // Не теряем фокус
-            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-            const start = textarea.selectionStart; const end = textarea.selectionEnd;
-            const sel = textarea.value.substring(start, end); let replacement = sel;
-
-            if (type === 'bold') replacement = `**${sel || 'text'}**`;
-            else if (type === 'italic') replacement = `_${sel || 'text'}_`;
-            else if (type === 'link') { const url = prompt("Enter URL:", "https://"); if (url) replacement = `[${sel || 'Link text'}](${url})`; }
-            else if (type === 'list') replacement = `\n- ${sel || 'Item'}`;
-
-            textarea.value = textarea.value.substring(0, start) + replacement + textarea.value.substring(end);
-            textarea.selectionStart = start; textarea.selectionEnd = start + replacement.length;
+            e.preventDefault(); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+            if (type === 'bold') { document.execCommand('bold', false, null); }
+            else if (type === 'italic') { document.execCommand('italic', false, null); }
+            else if (type === 'link') { const url = prompt("Enter URL:", "https://"); if (url) document.execCommand('createLink', false, url); }
+            else if (type === 'list') { document.execCommand('insertUnorderedList', false, null); }
             updateWordCount();
         };
 
@@ -507,7 +475,7 @@
         window.toggleFocusMode = function() { document.getElementById('zeHeader').classList.toggle('hidden'); closeContextMenu(); }
         window.toggleFontFamily = function() { const paper = document.getElementById('zeTextarea'); if (paper.style.fontFamily === 'serif') paper.style.fontFamily = 'sans-serif'; else if (paper.style.fontFamily === 'sans-serif') paper.style.fontFamily = 'monospace'; else paper.style.fontFamily = 'serif'; if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); closeContextMenu(); }
         window.toggleTextWidth = function() { const paper = document.getElementById('zePaper'); if (paper.style.maxWidth === '750px' || !paper.style.maxWidth) paper.style.maxWidth = '100%'; else paper.style.maxWidth = '750px'; if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); closeContextMenu(); }
-        window.exportNoteTxt = function() { const text = document.getElementById('zeTextarea').value; const title = document.getElementById('zeTitle').value || window.currentZenCategory; const dataStr = "data:text/plain;charset=utf-8," + encodeURIComponent(text); const dlAnchorElem = document.createElement('a'); dlAnchorElem.setAttribute("href", dataStr); dlAnchorElem.setAttribute("download", `${title}.txt`); dlAnchorElem.click(); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('success'); closeContextMenu(); }
+        window.exportNoteTxt = function() { const text = document.getElementById('zeTextarea').innerText; const title = document.getElementById('zeTitle').value || window.currentZenCategory; const dataStr = "data:text/plain;charset=utf-8," + encodeURIComponent(text); const dlAnchorElem = document.createElement('a'); dlAnchorElem.setAttribute("href", dataStr); dlAnchorElem.setAttribute("download", `${title}.txt`); dlAnchorElem.click(); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('success'); closeContextMenu(); }
         window.deleteZenNote = async function() { const idx = parseInt(document.getElementById('zeEditIndex').value); if (idx !== -1 && window.userDocRef) { const data = window.currentUserData; let notes = [...(data.notes || [])]; notes.splice(idx, 1); await updateDoc(window.userDocRef, { notes }); } closeContextMenu(); document.getElementById('zenEditor').classList.remove('active'); if(tg.BackButton) tg.BackButton.hide(); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy'); }
 
         window.openCategorySelector = function() { closeContextMenu(); const data = window.currentUserData; const customTags = Object.keys(data?.category_colors || {}); const allTags = [...new Set([...defaultTags, ...customTags])]; let html = allTags.map(tag => { const color = getCategoryColor(tag); return `<div class="tag-pill" style="border-color: ${color}; color: ${color};" onclick="applyCat('${tag}')">${tag}</div>`; }).join(''); html += `<div class="tag-pill" style="border-style: dashed;" onclick="document.getElementById('zeCustomTagInput').style.display='block'; document.getElementById('zeCustomTagInput').focus();">+ NEW</div>`; document.getElementById('zeTagsContainer').innerHTML = html; document.getElementById('modalOverlay').classList.add('active'); document.getElementById('catSelectorMenu').classList.add('active'); if(tg.BackButton) tg.BackButton.show(); }
