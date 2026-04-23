@@ -17,41 +17,25 @@
         <i class="fas fa-trash-alt"></i> <span style="font-size:16px; font-weight:bold;">Drop to Delete</span>
     </div>
 
+    <div class="top-bar">
+        </div>
+
     <main id="tab-dashboard" class="tab-content active">
-        <div class="tab-header">
-            <div class="header-text">
-                <span class="header-date" id="dashDate">Today</span>
-                <span class="header-title">Dashboard</span>
-            </div>
-            <div class="header-avatar"><img id="setAvatarDash" src="" alt="User"></div>
+        <div class="greeting">
+            <h1 id="userName">Hello,</h1>
+            <p id="currentDateText">...</p>
         </div>
 
         <div class="calendar-strip" id="calendarStrip"></div>
 
         <div class="quick-actions">
-            <div class="q-action" onclick="openZenEditor(-1)">
-                <div class="q-icon"><i class="fas fa-pen-nib"></i></div>
-                <span class="q-text">Note</span>
-            </div>
-            <div class="q-action" onclick="openReminderModal(-1)">
-                <div class="q-icon"><i class="fas fa-clock"></i></div>
-                <span class="q-text">Task</span>
-            </div>
-            <div class="q-action" onclick="switchTab('notes', document.querySelectorAll('.nav-item')[1])">
-                <div class="q-icon"><i class="fas fa-folder-open"></i></div>
-                <span class="q-text">Vault</span>
-            </div>
-            <div class="q-action" onclick="switchTab('settings', document.querySelectorAll('.nav-item')[4])">
-                <div class="q-icon"><i class="fas fa-cog"></i></div>
-                <span class="q-text">Settings</span>
-            </div>
+            <div class="action-btn" onclick="openZenEditor(-1)"><i class="fas fa-pen-nib"></i><span>Note</span></div>
+            <div class="action-btn" onclick="openReminderModal(-1)"><i class="fas fa-clock"></i><span>Task</span></div>
+            <div class="action-btn" onclick="if(tg.showAlert) tg.showAlert('AI Chat feature is coming soon! 🚀')"><i class="fas fa-brain"></i><span>AI Chat</span></div>
+            <div class="action-btn" onclick="switchTab('notes', document.querySelectorAll('.nav-item')[1])"><i class="fas fa-folder-open"></i><span>Vault</span></div>
         </div>
 
-        <h2 class="section-title">Recent Notes</h2>
-        <div class="grid-cards" id="dashRecentNotes" style="margin-bottom: 25px;">
-            </div>
-
-        <h2 class="section-title">Activity Status</h2>
+        <h2 class="section-title">Productivity</h2>
         <div class="ring-container">
             <svg viewBox="0 0 36 36" class="circular-chart">
                 <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
@@ -66,9 +50,7 @@
     </main>
 
     <main id="tab-notes" class="tab-content">
-        <div class="tab-header">
-            <div class="header-text"><span class="header-title">The Vault</span></div>
-        </div>
+        <div class="greeting" style="padding-bottom: 5px;"><h1 style="font-size:28px">The Vault</h1><p>Structured knowledge base.</p></div>
         <div class="search-bar">
             <i class="fas fa-search" style="color: var(--text-muted);"></i>
             <input type="text" id="searchInput" placeholder="Search records..." oninput="filterNotes()">
@@ -77,9 +59,7 @@
     </main>
 
     <main id="tab-tasks" class="tab-content">
-        <div class="tab-header">
-            <div class="header-text"><span class="header-title">To-Do List</span></div>
-        </div>
+        <div class="greeting" style="padding-bottom: 5px;"><h1 style="font-size:28px">To-Do List</h1><p>Manage your schedule.</p></div>
         <div class="filter-tabs">
             <div class="filter-btn active" id="fltAll" onclick="setTaskFilter('all')">All Tasks</div>
             <div class="filter-btn" id="fltToday" onclick="setTaskFilter('today')">Today Only</div>
@@ -88,10 +68,8 @@
     </main>
 
     <main id="tab-settings" class="tab-content">
-        <div class="tab-header">
-            <div class="header-text"><span class="header-title">Settings</span></div>
-        </div>
-        <div class="list-item" style="background: transparent; border: none; padding: 0 16px 20px;">
+        <div class="greeting" style="padding-bottom: 5px;"><h1 style="font-size:28px">Settings</h1></div>
+        <div class="list-item" style="background: transparent; border: none; padding: 0 24px 20px;">
             <div style="display:flex; align-items:center; gap:15px;">
                 <div class="settings-avatar"><img id="setAvatar" src=""></div>
                 <div><h3 id="setName" style="font-size:18px;">Name</h3><p style="color:var(--text-muted); font-size:13px;">ID: <span id="setID"></span></p></div>
@@ -152,20 +130,20 @@
 
     <div id="zenEditor" class="zen-editor">
         <div class="ze-header" id="zeHeader">
-            <div style="width: 36px;"></div> 
-            <div class="ze-meta" onclick="openCategorySelector()"><span id="zeCategoryBadge">Personal</span> <i class="fas fa-caret-down"></i></div>
-            <div style="width: 36px;"></div> 
-        </div>
+            </div>
         <div class="ze-body">
             <div class="ze-paper" id="zePaper">
                 <div class="ze-paper-header">
-                    <div class="ze-date"><span id="zeDate">17 Apr 2026</span> <span id="zeSaveStatus">Saving...</span></div>
+                    <div class="ze-date">
+                        <span id="zeCategoryBadge" style="color: var(--pink-main); font-weight: bold; margin-right: 10px;">Personal</span>
+                        <span id="zeDate">17 Apr 2026</span> 
+                        <span id="zeSaveStatus">Saving...</span>
+                    </div>
                     <div style="display:flex; align-items:center;">
                         <span class="ze-words" id="zeWordCount">0 words</span>
                         <button class="ze-menu-btn-small" onclick="openContextOptions()"><i class="fas fa-ellipsis-v"></i></button>
                     </div>
                 </div>
-                
                 <input type="text" id="zeTitle" placeholder="Note Title" autocomplete="off">
                 <div id="zeTextarea" contenteditable="true" data-placeholder="Start writing..." oninput="handleTyping()"></div>
             </div>
@@ -233,10 +211,11 @@
         try {
             if (tg.expand) tg.expand();
             if (tg.requestFullscreen) tg.requestFullscreen();
-            if (tg.disableVerticalSwipes) tg.disableVerticalSwipes();
+            if (tg.disableVerticalSwipes) tg.disableVerticalSwipes(); // ЗАЩИТА ОТ СВАЙПОВ
             if (tg.isVerticalSwipesEnabled !== undefined) tg.isVerticalSwipesEnabled = false;
         } catch(e) {}
 
+        // НАТИВНАЯ КНОПКА НАЗАД
         if (tg.BackButton) {
             tg.BackButton.onClick(function() {
                 if (document.getElementById('catSelectorMenu').classList.contains('active') || 
@@ -258,35 +237,35 @@
         let openSections = JSON.parse(localStorage.getItem('lunexOpenSections')) || {}; let currentFontSize = 16; let typingTimer;
         window.currentZenCategory = "Personal";
 
-        // Рендер Календаря на Дашборде
-        function renderCalendar() {
+        // ГЕНЕРАЦИЯ КАЛЕНДАРЯ
+        function initCalendar() {
             const strip = document.getElementById('calendarStrip');
-            if(!strip) return;
-            let html = ''; const today = new Date(); const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-            document.getElementById('dashDate').innerText = `${today.getDate()} ${months[today.getMonth()]}, ${today.getFullYear()}`;
-
-            for(let i=0; i<7; i++) {
+            const dateText = document.getElementById('currentDateText');
+            const today = new Date();
+            dateText.innerText = today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+            
+            let html = '';
+            for (let i = -3; i <= 4; i++) {
                 const d = new Date(today); d.setDate(today.getDate() + i);
-                const isToday = i === 0 ? 'active' : '';
-                html += `<div class="cal-day ${isToday}"><span class="cal-weekday">${days[d.getDay()]}</span><span class="cal-date">${d.getDate()}</span></div>`;
+                const isActive = i === 0 ? 'active' : '';
+                html += `<div class="cal-day ${isActive}"><span class="cal-day-name">${d.toLocaleDateString('en-US', { weekday: 'short' })}</span><span class="cal-day-num">${d.getDate()}</span></div>`;
             }
             strip.innerHTML = html;
+            setTimeout(() => { const activeEl = strip.querySelector('.active'); if(activeEl) { strip.scrollTo({ left: activeEl.offsetLeft - (strip.offsetWidth / 2) + (activeEl.offsetWidth / 2), behavior: 'smooth' }); } }, 100);
         }
-        renderCalendar();
+        initCalendar();
 
         if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
             userId = tg.initDataUnsafe.user.id.toString();
             userName = tg.initDataUnsafe.user.first_name || "User";
             
-            document.getElementById('userName').innerText = "Hi " + userName + ",";
+            document.getElementById('userName').innerText = "Hello, " + userName;
             document.getElementById('setName').innerText = userName;
             document.getElementById('setID').innerText = userId;
             
             let avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=ff477e&color=fff&bold=true`;
             if (tg.initDataUnsafe.user.photo_url) avatarUrl = tg.initDataUnsafe.user.photo_url;
             document.getElementById('setAvatar').src = avatarUrl;
-            document.getElementById('setAvatarDash').src = avatarUrl; // Аватарка в дашборде
 
             const firebaseConfig = { apiKey: "AIzaSyDY8g42qsSkoN36i-DIeptehoDWXSEUlU0", authDomain: "lunex-f5362.firebaseapp.com", projectId: "lunex-f5362", storageBucket: "lunex-f5362.firebasestorage.app", messagingSenderId: "364220464927", appId: "1:364220464927:web:95531c2ac9de3aaa343a2a" };
             const app = initializeApp(firebaseConfig); const db = getFirestore(app); window.userDocRef = doc(db, "users", userId);
@@ -307,9 +286,7 @@
         window.isDragging = false; window.justDragged = false; window.dragTimer = null; window.dragClone = null; window.dragOrigIndex = -1; window.startX = 0; window.startY = 0; window.currentDroppable = null;
 
         window.handleTouchStart = function(e, index) {
-            const touch = e.touches[0];
-            window.startX = touch.clientX; window.startY = touch.clientY;
-            
+            const touch = e.touches[0]; window.startX = touch.clientX; window.startY = touch.clientY;
             window.dragTimer = setTimeout(() => {
                 window.isDragging = true; window.dragOrigIndex = index;
                 if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy');
@@ -414,19 +391,6 @@
             const notes = data.notes || []; let reminders = data.reminders || [];
             document.getElementById('dbItemCount').innerText = `${notes.length + reminders.length}`;
 
-            // --- РЕНДЕР RECENT NOTES НА DASHBOARD ---
-            const recentNotesContainer = document.getElementById('dashRecentNotes');
-            if (recentNotesContainer) {
-                if (notes.length === 0) { recentNotesContainer.innerHTML = '<p class="empty-state" style="grid-column: 1 / -1;">No notes yet.</p>'; }
-                else {
-                    const recent = notes.slice(0, 2);
-                    recentNotesContainer.innerHTML = recent.map((n, i) => {
-                        const parsed = parseItem(n);
-                        return `<div class="card" ontouchstart="handleTouchStart(event, ${i})" onclick="if(!window.justDragged) openZenEditor(${i})"><div class="card-text">${formatCardText(parsed.content)}</div></div>`;
-                    }).join('');
-                }
-            }
-
             const searchTerm = document.getElementById('searchInput').value.toLowerCase(); const vault = document.getElementById('notesVault'); const groupedNotes = {};
             notes.forEach((n, i) => { const parsed = parseItem(n); if (parsed.content.toLowerCase().includes(searchTerm)) { if (!groupedNotes[parsed.category]) groupedNotes[parsed.category] = []; groupedNotes[parsed.category].push({ ...parsed, origIndex: i }); } });
             if (Object.keys(groupedNotes).length === 0) { vault.innerHTML = '<p class="empty-state">Vault is empty.</p>'; } else {
@@ -530,7 +494,7 @@
         window.exportNoteTxt = function() { const text = document.getElementById('zeTextarea').innerText; const title = document.getElementById('zeTitle').value || window.currentZenCategory; const dataStr = "data:text/plain;charset=utf-8," + encodeURIComponent(text); const dlAnchorElem = document.createElement('a'); dlAnchorElem.setAttribute("href", dataStr); dlAnchorElem.setAttribute("download", `${title}.txt`); dlAnchorElem.click(); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('success'); closeContextMenu(); }
         window.deleteZenNote = async function() { const idx = parseInt(document.getElementById('zeEditIndex').value); if (idx !== -1 && window.userDocRef) { const data = window.currentUserData; let notes = [...(data.notes || [])]; notes.splice(idx, 1); await updateDoc(window.userDocRef, { notes }); } closeContextMenu(); document.getElementById('zenEditor').classList.remove('active'); if(tg.BackButton) tg.BackButton.hide(); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy'); }
 
-        window.openCategorySelector = function() { closeContextMenu(); const data = window.currentUserData; const customTags = Object.keys(data?.category_colors || {}); const allTags = [...new Set([...defaultTags, ...customTags])]; let html = allTags.map(tag => { const color = getCategoryColor(tag); return `<div class="tag-pill" style="border-color: ${color}; color: ${color};" onclick="applyCat('${tag}')">${tag}</div>`; }).join(''); html += `<div class="tag-pill" style="border-style: dashed;" onclick="document.getElementById('zeCustomTagInput').style.display='block'; document.getElementById('zeCustomTagInput').focus();">+ NEW</div>`; document.getElementById('zeTagsContainer').innerHTML = html; document.getElementById('modalOverlay').classList.add('active'); document.getElementById('catSelectorMenu').classList.add('active'); if(tg.BackButton) tg.BackButton.show(); }
+        window.openCategorySelector = function() { const data = window.currentUserData; const customTags = Object.keys(data?.category_colors || {}); const allTags = [...new Set([...defaultTags, ...customTags])]; let html = allTags.map(tag => { const color = getCategoryColor(tag); return `<div class="tag-pill" style="border-color: ${color}; color: ${color};" onclick="applyCat('${tag}')">${tag}</div>`; }).join(''); html += `<div class="tag-pill" style="border-style: dashed;" onclick="document.getElementById('zeCustomTagInput').style.display='block'; document.getElementById('zeCustomTagInput').focus();">+ NEW</div>`; document.getElementById('zeTagsContainer').innerHTML = html; document.getElementById('modalOverlay').classList.add('active'); document.getElementById('catSelectorMenu').classList.add('active'); if(tg.BackButton) tg.BackButton.show(); }
         window.closeCategorySelector = function() { document.getElementById('catSelectorMenu').classList.remove('active'); document.getElementById('modalOverlay').classList.remove('active'); }
         window.applyCat = function(cat) { window.currentZenCategory = cat; document.getElementById('zeCategoryBadge').innerText = cat; closeCategorySelector(); }
         window.applyNewCategory = function() { const val = document.getElementById('zeCustomTagInput').value.trim(); if(val) { applyCat(val); document.getElementById('zeCustomTagInput').value = ""; document.getElementById('zeCustomTagInput').style.display = "none"; } }
