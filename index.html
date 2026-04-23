@@ -18,39 +18,45 @@
     </div>
 
     <div class="top-bar">
-        </div>
+        <div class="premium-btn">Lunex AI v2.4 <i class="fas fa-star" style="font-size: 10px;"></i></div>
+    </div>
 
     <main id="tab-dashboard" class="tab-content active">
-        <div class="greeting">
-            <h1 id="userName">Hello,</h1>
-            <p id="currentDateText">...</p>
-        </div>
-
+        
         <div class="calendar-strip" id="calendarStrip"></div>
 
-        <div class="quick-actions">
-            <div class="action-btn" onclick="openZenEditor(-1)"><i class="fas fa-pen-nib"></i><span>Note</span></div>
-            <div class="action-btn" onclick="openReminderModal(-1)"><i class="fas fa-clock"></i><span>Task</span></div>
-            <div class="action-btn" onclick="if(tg.showAlert) tg.showAlert('AI Chat feature is coming soon! 🚀')"><i class="fas fa-brain"></i><span>AI Chat</span></div>
-            <div class="action-btn" onclick="switchTab('notes', document.querySelectorAll('.nav-item')[1])"><i class="fas fa-folder-open"></i><span>Vault</span></div>
-        </div>
-
-        <h2 class="section-title">Productivity</h2>
-        <div class="ring-container">
-            <svg viewBox="0 0 36 36" class="circular-chart">
-                <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                <path class="circle" id="activityRing" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                <text x="18" y="20.35" class="percentage" id="activityPct">0%</text>
-            </svg>
-            <div class="ring-stats">
-                <div class="ring-stat-item"><span class="ring-stat-value" id="statCompleted">0</span><span class="ring-stat-label">Tasks Done</span></div>
-                <div class="ring-stat-item"><span class="ring-stat-value" id="statPending">0</span><span class="ring-stat-label">Pending Today</span></div>
+        <div class="dash-grid">
+            <div class="dash-card">
+                <svg viewBox="0 0 36 36" class="circular-chart">
+                    <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    <path class="circle" id="activityRing" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    <text x="18" y="20.35" class="percentage" id="activityPct">0%</text>
+                </svg>
+            </div>
+            <div class="dash-card">
+                <div class="dash-stat-row">
+                    <div class="dash-stat-item">
+                        <span class="dash-stat-lbl">Tasks Done</span>
+                        <span class="dash-stat-val" id="statCompleted">0</span>
+                    </div>
+                    <div class="dash-stat-item">
+                        <span class="dash-stat-lbl">Total Notes</span>
+                        <span class="dash-stat-val" id="statTotalNotes">0</span>
+                    </div>
+                </div>
             </div>
         </div>
+
+        <h2 class="section-title">Recent Vaults</h2>
+        <div class="recent-scroll" id="dashRecentNotes">
+            <p class="empty-state" style="width:100%;">No recent notes.</p>
+        </div>
+
+        <h2 class="section-title" style="margin-top: 10px;">Active Reminders</h2>
+        <div id="dashReminders"></div>
     </main>
 
     <main id="tab-notes" class="tab-content">
-        <div class="greeting" style="padding-bottom: 5px;"><h1 style="font-size:28px">The Vault</h1><p>Structured knowledge base.</p></div>
         <div class="search-bar">
             <i class="fas fa-search" style="color: var(--text-muted);"></i>
             <input type="text" id="searchInput" placeholder="Search records..." oninput="filterNotes()">
@@ -59,7 +65,6 @@
     </main>
 
     <main id="tab-tasks" class="tab-content">
-        <div class="greeting" style="padding-bottom: 5px;"><h1 style="font-size:28px">To-Do List</h1><p>Manage your schedule.</p></div>
         <div class="filter-tabs">
             <div class="filter-btn active" id="fltAll" onclick="setTaskFilter('all')">All Tasks</div>
             <div class="filter-btn" id="fltToday" onclick="setTaskFilter('today')">Today Only</div>
@@ -68,8 +73,7 @@
     </main>
 
     <main id="tab-settings" class="tab-content">
-        <div class="greeting" style="padding-bottom: 5px;"><h1 style="font-size:28px">Settings</h1></div>
-        <div class="list-item" style="background: transparent; border: none; padding: 0 24px 20px;">
+        <div class="list-item" style="background: transparent; border: none; padding: 0 0 20px;">
             <div style="display:flex; align-items:center; gap:15px;">
                 <div class="settings-avatar"><img id="setAvatar" src=""></div>
                 <div><h3 id="setName" style="font-size:18px;">Name</h3><p style="color:var(--text-muted); font-size:13px;">ID: <span id="setID"></span></p></div>
@@ -130,20 +134,20 @@
 
     <div id="zenEditor" class="zen-editor">
         <div class="ze-header" id="zeHeader">
-            </div>
+            <div style="width: 36px;"></div> 
+            <div class="ze-meta" onclick="openCategorySelector()"><span id="zeCategoryBadge">Personal</span> <i class="fas fa-caret-down"></i></div>
+            <div style="width: 36px;"></div> 
+        </div>
         <div class="ze-body">
             <div class="ze-paper" id="zePaper">
                 <div class="ze-paper-header">
-                    <div class="ze-date">
-                        <span id="zeCategoryBadge" style="color: var(--pink-main); font-weight: bold; margin-right: 10px;">Personal</span>
-                        <span id="zeDate">17 Apr 2026</span> 
-                        <span id="zeSaveStatus">Saving...</span>
-                    </div>
+                    <div class="ze-date"><span id="zeDate">17 Apr 2026</span> <span id="zeSaveStatus">Saving...</span></div>
                     <div style="display:flex; align-items:center;">
                         <span class="ze-words" id="zeWordCount">0 words</span>
                         <button class="ze-menu-btn-small" onclick="openContextOptions()"><i class="fas fa-ellipsis-v"></i></button>
                     </div>
                 </div>
+                
                 <input type="text" id="zeTitle" placeholder="Note Title" autocomplete="off">
                 <div id="zeTextarea" contenteditable="true" data-placeholder="Start writing..." oninput="handleTyping()"></div>
             </div>
@@ -211,11 +215,10 @@
         try {
             if (tg.expand) tg.expand();
             if (tg.requestFullscreen) tg.requestFullscreen();
-            if (tg.disableVerticalSwipes) tg.disableVerticalSwipes(); // ЗАЩИТА ОТ СВАЙПОВ
+            if (tg.disableVerticalSwipes) tg.disableVerticalSwipes(); 
             if (tg.isVerticalSwipesEnabled !== undefined) tg.isVerticalSwipesEnabled = false;
         } catch(e) {}
 
-        // НАТИВНАЯ КНОПКА НАЗАД
         if (tg.BackButton) {
             tg.BackButton.onClick(function() {
                 if (document.getElementById('catSelectorMenu').classList.contains('active') || 
@@ -237,29 +240,10 @@
         let openSections = JSON.parse(localStorage.getItem('lunexOpenSections')) || {}; let currentFontSize = 16; let typingTimer;
         window.currentZenCategory = "Personal";
 
-        // ГЕНЕРАЦИЯ КАЛЕНДАРЯ
-        function initCalendar() {
-            const strip = document.getElementById('calendarStrip');
-            const dateText = document.getElementById('currentDateText');
-            const today = new Date();
-            dateText.innerText = today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
-            
-            let html = '';
-            for (let i = -3; i <= 4; i++) {
-                const d = new Date(today); d.setDate(today.getDate() + i);
-                const isActive = i === 0 ? 'active' : '';
-                html += `<div class="cal-day ${isActive}"><span class="cal-day-name">${d.toLocaleDateString('en-US', { weekday: 'short' })}</span><span class="cal-day-num">${d.getDate()}</span></div>`;
-            }
-            strip.innerHTML = html;
-            setTimeout(() => { const activeEl = strip.querySelector('.active'); if(activeEl) { strip.scrollTo({ left: activeEl.offsetLeft - (strip.offsetWidth / 2) + (activeEl.offsetWidth / 2), behavior: 'smooth' }); } }, 100);
-        }
-        initCalendar();
-
         if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
             userId = tg.initDataUnsafe.user.id.toString();
             userName = tg.initDataUnsafe.user.first_name || "User";
             
-            document.getElementById('userName').innerText = "Hello, " + userName;
             document.getElementById('setName').innerText = userName;
             document.getElementById('setID').innerText = userId;
             
@@ -274,7 +258,7 @@
                 if (docSnap.exists()) {
                     window.currentUserData = docSnap.data();
                     if (!window.currentUserData.category_colors) window.currentUserData.category_colors = {};
-                    renderUI(); renderActivityRing();
+                    renderUI(); 
                 } else {
                     window.currentUserData = { notes: [], reminders: [], category_colors: {} };
                     renderUI();
@@ -282,11 +266,31 @@
             }, (error) => { console.error(error); if(tg.showAlert) tg.showAlert("Database connection error"); });
         }
 
+        // --- CALENDAR RENDER ---
+        function renderCalendar() {
+            const strip = document.getElementById('calendarStrip');
+            const today = new Date();
+            let html = '';
+            for(let i = -3; i <= 3; i++) {
+                let d = new Date(today);
+                d.setDate(today.getDate() + i);
+                const dayName = d.toLocaleDateString('en-US', {weekday: 'short'});
+                const dateNum = d.getDate();
+                const isToday = i === 0 ? 'active' : '';
+                html += `<div class="cal-day ${isToday}"><span class="cal-name">${dayName}</span><span class="cal-num">${dateNum}</span></div>`;
+            }
+            strip.innerHTML = html;
+            // Скроллим в центр
+            setTimeout(() => { strip.scrollLeft = (strip.scrollWidth - strip.clientWidth) / 2; }, 100);
+        }
+
         // --- ДВИЖОК DRAG & DROP ---
         window.isDragging = false; window.justDragged = false; window.dragTimer = null; window.dragClone = null; window.dragOrigIndex = -1; window.startX = 0; window.startY = 0; window.currentDroppable = null;
 
         window.handleTouchStart = function(e, index) {
-            const touch = e.touches[0]; window.startX = touch.clientX; window.startY = touch.clientY;
+            const touch = e.touches[0];
+            window.startX = touch.clientX; window.startY = touch.clientY;
+            
             window.dragTimer = setTimeout(() => {
                 window.isDragging = true; window.dragOrigIndex = index;
                 if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy');
@@ -374,11 +378,18 @@
         
         function parseItem(rawText) { const match = rawText.match(/^\[(.*?)\](?:\s*\{([^\}]+)\})?\s*([\s\S]*)/); if (match) { return { category: match[1], date: match[2] || '', content: match[3], rawText }; } return { category: "Personal", date: '', content: rawText, rawText }; }
         
-        function formatCardText(text) { 
-            return text.replace(/^<div class="note-title">(.*?)<\/div>/, '<span class="note-title">$1</span>')
-                       .replace(/^#\s+(.*)$/gm, '<span class="note-title">$1</span>')
-                       .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
-                       .replace(/_(.*?)_/g, '<i>$1</i>');
+        function extractNoteInfo(rawContent) {
+            let title = ""; let body = rawContent;
+            const titleMatch = rawContent.match(/^<div class="note-title">(.*?)<\/div>([\s\S]*)/);
+            if (titleMatch) { title = titleMatch[1]; body = titleMatch[2]; } 
+            else if (rawContent.startsWith('# ')) { const lines = rawContent.split('\n'); title = lines[0].substring(2).trim(); body = lines.slice(1).join('\n').trim(); }
+            
+            // Заменяем HTML-теги для превью на карточке (оставляем только текст)
+            let preview = body.replace(/<[^>]*>?/gm, ' ');
+            // Если текст пустой, но есть тайтл - показываем тайтл
+            if(!preview.trim() && title) preview = " ";
+            
+            return { title, body, preview };
         }
 
         window.setTaskFilter = function(filter) { window.currentTaskFilter = filter; document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active')); document.getElementById(filter === 'all' ? 'fltAll' : 'fltToday').classList.add('active'); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); renderUI(); }
@@ -389,8 +400,42 @@
         function renderUI() {
             const data = window.currentUserData; if(!data) return;
             const notes = data.notes || []; let reminders = data.reminders || [];
+            
+            // DASHBOARD STATS
+            renderCalendar();
             document.getElementById('dbItemCount').innerText = `${notes.length + reminders.length}`;
+            document.getElementById('statTotalNotes').innerText = notes.length;
 
+            const pendingToday = reminders.filter(r => new Date(r.datetime.replace(' ', 'T')).toLocaleDateString() === new Date().toLocaleDateString()).length;
+            document.getElementById('statPending').innerText = pendingToday; document.getElementById('statCompleted').innerText = data.completed_tasks || 0; 
+            let pct = pendingToday === 0 ? 100 : Math.max(5, 100 - (pendingToday * 15)); document.getElementById('activityRing').style.strokeDasharray = `${pct}, 100`; document.getElementById('activityPct').innerText = `${Math.floor(pct)}%`;
+
+            // RECENT NOTES (Dashboard)
+            const recentNotesDiv = document.getElementById('dashRecentNotes');
+            if (notes.length === 0) {
+                recentNotesDiv.innerHTML = '<p class="empty-state" style="width:100%;">No recent notes.</p>';
+            } else {
+                let recentHTML = '';
+                const maxRecent = Math.min(notes.length, 5);
+                for(let i=0; i<maxRecent; i++) {
+                    const parsed = parseItem(notes[i]);
+                    const info = extractNoteInfo(parsed.content);
+                    const color = getCategoryColor(parsed.category);
+                    const displayTitle = info.title ? info.title : (info.preview.substring(0, 15) + '...');
+                    
+                    recentHTML += `
+                    <div class="recent-card" onclick="openZenEditor(${i})">
+                        <div>
+                            <div class="recent-cat" style="color:${color}">${parsed.category}</div>
+                            <div class="recent-text" style="font-size: 15px; font-weight:700;">${displayTitle}</div>
+                        </div>
+                        <div class="recent-cat" style="color:var(--text-muted); margin:0;">${parsed.date || 'Recently'}</div>
+                    </div>`;
+                }
+                recentNotesDiv.innerHTML = recentHTML;
+            }
+
+            // THE VAULT
             const searchTerm = document.getElementById('searchInput').value.toLowerCase(); const vault = document.getElementById('notesVault'); const groupedNotes = {};
             notes.forEach((n, i) => { const parsed = parseItem(n); if (parsed.content.toLowerCase().includes(searchTerm)) { if (!groupedNotes[parsed.category]) groupedNotes[parsed.category] = []; groupedNotes[parsed.category].push({ ...parsed, origIndex: i }); } });
             if (Object.keys(groupedNotes).length === 0) { vault.innerHTML = '<p class="empty-state">Vault is empty.</p>'; } else {
@@ -399,30 +444,29 @@
                 sortedKeys.forEach(category => {
                     const color = getCategoryColor(category); const isOpen = (searchTerm !== "" || openSections[category]) ? "open" : ""; const icon = sectionIcons[category] || 'fa-folder';
                     vaultHTML += `<div class="category-section ${isOpen}" id="section-${category}"><div class="category-header" data-category="${category}" onclick="toggleSection('${category}')"><div class="category-title" style="color: ${color}"><i class="fas ${icon}"></i> ${category}</div><div class="category-controls"><div class="category-settings-btn" onclick="openCategorySettings(event, '${category}')"><i class="fas fa-cog"></i></div><i class="fas fa-chevron-down chevron"></i></div></div><div class="category-content"><div class="grid-cards">`;
-                    vaultHTML += groupedNotes[category].map(nObj => `
+                    
+                    vaultHTML += groupedNotes[category].map(nObj => {
+                        const info = extractNoteInfo(nObj.content);
+                        const titleHTML = info.title ? `<span class="note-title">${info.title}</span>` : '';
+                        return `
                         <div class="card" ontouchstart="handleTouchStart(event, ${nObj.origIndex})" onclick="if(!window.justDragged) openZenEditor(${nObj.origIndex})">
-                            <div class="card-text">${formatCardText(nObj.content)}</div>
-                        </div>
-                    `).join('');
+                            <div class="card-text">${titleHTML}${info.preview}</div>
+                        </div>`;
+                    }).join('');
+                    
                     vaultHTML += `</div></div></div>`;
                 }); vault.innerHTML = vaultHTML;
             }
 
-            const tList = document.getElementById('tasksList'); const dReminders = document.getElementById('dashReminders'); const todayStr = new Date().toLocaleDateString();
-            let displayReminders = reminders; if(window.currentTaskFilter === 'today') { displayReminders = reminders.filter(r => new Date(r.datetime.replace(' ', 'T')).toLocaleDateString() === todayStr); }
+            // TASKS
+            const tList = document.getElementById('tasksList'); const dReminders = document.getElementById('dashReminders'); 
+            let displayReminders = reminders; if(window.currentTaskFilter === 'today') { displayReminders = reminders.filter(r => new Date(r.datetime.replace(' ', 'T')).toLocaleDateString() === new Date().toLocaleDateString()); }
             if(displayReminders.length === 0) { tList.innerHTML = '<p class="empty-state">No pending tasks.</p>'; dReminders.innerHTML = '<p class="empty-state">No active timers.</p>'; } else {
                 const renderHTML = displayReminders.map((r, i) => {
                     const parsed = parseItem(r.text); const d = new Date(r.datetime.replace(' ', 'T')); const dateStr = d.toLocaleDateString([], {month:'short', day:'numeric'}) + ', ' + d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}); const color = getCategoryColor(parsed.category);
                     return `<div class="list-item" onclick="openReminderModal(${i})"><div class="list-info"><span class="list-title">${parsed.content}</span><div class="list-meta"><span style="color: ${color};"><i class="fas fa-circle" style="font-size:8px;"></i> ${parsed.category}</span> • <span>${dateStr}</span></div></div><div class="checkbox" onclick="event.stopPropagation(); completeReminder(${i})"><i class="fas fa-check"></i></div></div>`;
                 }).join(''); tList.innerHTML = renderHTML; if(window.currentTaskFilter === 'all') dReminders.innerHTML = renderHTML; 
             }
-        }
-
-        function renderActivityRing() {
-            const data = window.currentUserData; if(!data) return;
-            const reminders = data.reminders || []; const todayStr = new Date().toLocaleDateString(); const pendingToday = reminders.filter(r => new Date(r.datetime.replace(' ', 'T')).toLocaleDateString() === todayStr).length;
-            document.getElementById('statPending').innerText = pendingToday; document.getElementById('statCompleted').innerText = data.completed_tasks || 0; 
-            let pct = pendingToday === 0 ? 100 : Math.max(5, 100 - (pendingToday * 15)); document.getElementById('activityRing').style.strokeDasharray = `${pct}, 100`; document.getElementById('activityPct').innerText = `${Math.floor(pct)}%`;
         }
 
         window.closeAllModals = function() { document.querySelectorAll('.modal-sheet').forEach(m => m.classList.remove('active')); document.getElementById('modalOverlay').classList.remove('active'); if (tg.BackButton && !document.getElementById('zenEditor').classList.contains('active')) { tg.BackButton.hide(); } }
@@ -435,14 +479,11 @@
 
             if (index !== -1) { const parsed = parseItem(data.notes[index]); category = parsed.category; rawContent = parsed.content; if (parsed.date) dateStr = parsed.date; }
             
-            let titleStr = ""; let bodyStr = rawContent;
-            const titleMatch = rawContent.match(/^<div class="note-title">(.*?)<\/div>([\s\S]*)/);
-            if (titleMatch) { titleStr = titleMatch[1]; bodyStr = titleMatch[2]; } 
-            else if (rawContent.startsWith('# ')) { const lines = rawContent.split('\n'); titleStr = lines[0].substring(2).trim(); bodyStr = lines.slice(1).join('\n').trim(); }
+            const info = extractNoteInfo(rawContent);
 
             window.currentZenCategory = category;
             document.getElementById('zeCategoryBadge').innerText = category; document.getElementById('zeDate').innerText = dateStr; 
-            document.getElementById('zeTitle').value = titleStr; document.getElementById('zeTextarea').innerHTML = bodyStr; 
+            document.getElementById('zeTitle').value = info.title; document.getElementById('zeTextarea').innerHTML = info.body; 
             document.getElementById('zeTextarea').style.fontSize = `${currentFontSize}px`;
             
             updateWordCount(); document.getElementById('zenEditor').classList.add('active'); if(tg.BackButton) tg.BackButton.show();
@@ -494,7 +535,7 @@
         window.exportNoteTxt = function() { const text = document.getElementById('zeTextarea').innerText; const title = document.getElementById('zeTitle').value || window.currentZenCategory; const dataStr = "data:text/plain;charset=utf-8," + encodeURIComponent(text); const dlAnchorElem = document.createElement('a'); dlAnchorElem.setAttribute("href", dataStr); dlAnchorElem.setAttribute("download", `${title}.txt`); dlAnchorElem.click(); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('success'); closeContextMenu(); }
         window.deleteZenNote = async function() { const idx = parseInt(document.getElementById('zeEditIndex').value); if (idx !== -1 && window.userDocRef) { const data = window.currentUserData; let notes = [...(data.notes || [])]; notes.splice(idx, 1); await updateDoc(window.userDocRef, { notes }); } closeContextMenu(); document.getElementById('zenEditor').classList.remove('active'); if(tg.BackButton) tg.BackButton.hide(); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy'); }
 
-        window.openCategorySelector = function() { const data = window.currentUserData; const customTags = Object.keys(data?.category_colors || {}); const allTags = [...new Set([...defaultTags, ...customTags])]; let html = allTags.map(tag => { const color = getCategoryColor(tag); return `<div class="tag-pill" style="border-color: ${color}; color: ${color};" onclick="applyCat('${tag}')">${tag}</div>`; }).join(''); html += `<div class="tag-pill" style="border-style: dashed;" onclick="document.getElementById('zeCustomTagInput').style.display='block'; document.getElementById('zeCustomTagInput').focus();">+ NEW</div>`; document.getElementById('zeTagsContainer').innerHTML = html; document.getElementById('modalOverlay').classList.add('active'); document.getElementById('catSelectorMenu').classList.add('active'); if(tg.BackButton) tg.BackButton.show(); }
+        window.openCategorySelector = function() { closeContextMenu(); const data = window.currentUserData; const customTags = Object.keys(data?.category_colors || {}); const allTags = [...new Set([...defaultTags, ...customTags])]; let html = allTags.map(tag => { const color = getCategoryColor(tag); return `<div class="tag-pill" style="border-color: ${color}; color: ${color};" onclick="applyCat('${tag}')">${tag}</div>`; }).join(''); html += `<div class="tag-pill" style="border-style: dashed;" onclick="document.getElementById('zeCustomTagInput').style.display='block'; document.getElementById('zeCustomTagInput').focus();">+ NEW</div>`; document.getElementById('zeTagsContainer').innerHTML = html; document.getElementById('modalOverlay').classList.add('active'); document.getElementById('catSelectorMenu').classList.add('active'); if(tg.BackButton) tg.BackButton.show(); }
         window.closeCategorySelector = function() { document.getElementById('catSelectorMenu').classList.remove('active'); document.getElementById('modalOverlay').classList.remove('active'); }
         window.applyCat = function(cat) { window.currentZenCategory = cat; document.getElementById('zeCategoryBadge').innerText = cat; closeCategorySelector(); }
         window.applyNewCategory = function() { const val = document.getElementById('zeCustomTagInput').value.trim(); if(val) { applyCat(val); document.getElementById('zeCustomTagInput').value = ""; document.getElementById('zeCustomTagInput').style.display = "none"; } }
