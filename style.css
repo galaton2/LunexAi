@@ -42,10 +42,10 @@ body {
     padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* --- TOP BAR (FIXED 50PX TOP PADDING FOR NATIVE BUTTONS) --- */
+/* --- TOP BAR --- */
 .top-bar { 
     display: flex; justify-content: center; align-items: center; 
-    padding-top: max(55px, env(safe-area-inset-top)); /* Отступ 50+ пикселей сверху */
+    padding-top: max(55px, env(safe-area-inset-top)); 
     padding-bottom: 15px;
     position: sticky; top: 0; background: transparent; 
     backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); z-index: 50; 
@@ -76,12 +76,14 @@ body {
 .category-content { display: none; padding: 0 15px 15px; }
 .category-section.open .category-content { display: block; animation: fadeIn 0.3s ease; }
 
-/* Grid & Cards */
+/* Grid & Cards (С поддержкой HTML внутри карточек) */
 .grid-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .card { background: var(--bg-card); border: 1px solid var(--card-border); border-radius: 16px; padding: 16px; height: 135px; display: flex; flex-direction: column; justify-content: space-between; backdrop-filter: blur(10px); transition: 0.2s; cursor: pointer; overflow: hidden; user-select: none; -webkit-user-select: none; }
 .card:active { transform: scale(0.96); border-color: var(--pink-main); }
-.card-text { font-size: 13px; font-weight: 500; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; white-space: pre-wrap; flex-grow: 1; pointer-events: none; }
-.card-text b { color: #fff; font-size: 14px; }
+.card-text { font-size: 13px; font-weight: 500; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; white-space: normal; flex-grow: 1; pointer-events: none; }
+.card-text .note-title { font-size: 15px; font-weight: 700; color: #fff; display: block; margin-bottom: 4px; }
+.card-text a { color: var(--pink-main); pointer-events: none; text-decoration: none; }
+.card-text ul { padding-left: 15px; margin: 4px 0; }
 
 /* Lists & Tasks */
 .list-item { background: var(--bg-card); border: 1px solid var(--card-border); border-radius: 16px; padding: 16px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; backdrop-filter: blur(10px); cursor: pointer; transition: 0.2s; }
@@ -128,7 +130,6 @@ body {
 /* --- MODALS & CLOSE BUTTONS --- */
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); z-index: 999; display: none; opacity: 0; transition: 0.3s; }
 .modal-overlay.active { display: block; opacity: 1; }
-/* Добавлен отступ 50px для модалок, чтобы их крестики не закрывались */
 .modal-sheet { position: fixed; bottom: -100%; left: 0; width: 100%; background: var(--bg-modal); border-top: 1px solid var(--card-border); border-radius: 24px 24px 0 0; padding: max(55px, env(safe-area-inset-top)) 24px max(30px, env(safe-area-inset-bottom)); z-index: 1000; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), bottom 0.4s; max-height: 90vh; overflow-y: auto; }
 .modal-sheet.active { bottom: 0; }
 
@@ -144,7 +145,6 @@ body {
 .zen-editor { position: fixed; inset: 0; background: var(--editor-bg); z-index: 2000; display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1); }
 .zen-editor.active { transform: translateX(0); }
 
-/* Шапка редактора (чистая 50px зона) */
 .ze-header { display: flex; justify-content: center; align-items: center; padding-top: max(55px, env(safe-area-inset-top)); padding-bottom: 10px; background: var(--editor-bg); transition: 0.3s; min-height: 20px; }
 .ze-header.hidden { transform: translateY(-100%); position: absolute; opacity: 0; pointer-events: none; }
 
@@ -169,7 +169,23 @@ body {
 #zeSaveStatus { color: var(--pink-main); font-size: 11px; opacity: 0; transition: opacity 0.3s; margin-left: 10px; }
 .ze-words { font-size: 12px; color: var(--text-muted); font-weight: 500; margin-left: 10px; }
 
-#zeTextarea { flex-grow: 1; background: transparent; border: none; color: #ffffff; outline: none; font-size: 16px; line-height: 1.6; resize: none; white-space: pre-wrap; font-weight: 400; transition: font-size 0.2s, color 0.3s, font-family 0.3s; padding-bottom: 70vh; }
+/* РЕВОЛЮЦИЯ: НОВЫЙ ДВИЖОК ТЕКСТА (WYSIWYG CONTENT-EDITABLE) */
+#zeTextarea { 
+    flex-grow: 1; background: transparent; border: none; color: #ffffff; outline: none; 
+    font-size: 16px; line-height: 1.6; white-space: pre-wrap; font-weight: 400; 
+    transition: font-size 0.2s, color 0.3s, font-family 0.3s; padding-bottom: 70vh; 
+    overflow-y: auto; word-break: break-word; -webkit-user-select: text; user-select: text;
+}
+#zeTextarea[contenteditable]:empty::before {
+    content: attr(data-placeholder); color: rgba(255,255,255,0.3); pointer-events: none; display: block;
+}
+/* Стили для визуального HTML форматирования внутри редактора */
+#zeTextarea b, #zeTextarea strong { font-weight: 800; color: #fff; }
+.ze-paper.inverted #zeTextarea b, .ze-paper.inverted #zeTextarea strong { color: #000; }
+#zeTextarea i, #zeTextarea em { font-style: italic; }
+#zeTextarea a { color: var(--pink-main); text-decoration: underline; cursor: pointer; }
+#zeTextarea ul { padding-left: 20px; margin: 10px 0; }
+#zeTextarea li { margin-bottom: 5px; }
 
 /* --- RICH TEXT FORMATTING TOOLBAR --- */
 .format-toolbar {
