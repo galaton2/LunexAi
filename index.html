@@ -13,207 +13,210 @@
     <div id="splashScreen"><i class="fas fa-star splash-logo"></i></div>
     <script>setTimeout(() => { const s = document.getElementById('splashScreen'); if(s) s.style.opacity='0'; setTimeout(()=>s.style.display='none',500); }, 3000);</script>
 
-    <div id="errorScreen" style="display: none; position: fixed; inset: 0; background: var(--bg-dark); z-index: 10000; flex-direction: column; justify-content: center; align-items: center; padding: 20px; text-align: center;">
-        <i class="fab fa-telegram-plane" style="font-size: 60px; color: var(--pink-main); margin-bottom: 20px;"></i>
-        <h1 style="font-size: 24px; font-weight: 700; margin-bottom: 10px;">Telegram Only</h1>
-        <p style="font-size: 14px; color: var(--text-muted); line-height: 1.5;">Please open this application directly inside the Lunex AI Telegram bot.</p>
-    </div>
-
     <div id="trashZone">
         <i class="fas fa-trash-alt"></i> <span style="font-size:16px; font-weight:bold;">Drop to Delete</span>
     </div>
 
-    <div id="mainApp" style="display: none;">
-        <div class="top-bar">
-            <div class="premium-btn">Lunex AI v2.4 <i class="fas fa-star" style="font-size: 10px;"></i></div>
+    <div class="top-bar">
+        <div class="premium-btn">Lunex AI v2.4 <i class="fas fa-star" style="font-size: 10px;"></i></div>
+    </div>
+
+    <main id="tab-dashboard" class="tab-content active">
+        <div class="greeting">
+            <h1 id="userName">Hi User,</h1>
+            <p>Your unified digital intelligence system.</p>
         </div>
-
-        <main id="tab-dashboard" class="tab-content active">
-            <div class="greeting">
-                <h1 id="userName">Hi User,</h1>
-                <p>Your unified digital intelligence system.</p>
-            </div>
-            <h2 class="section-title">Today's Activity</h2>
-            <div class="ring-container">
-                <svg viewBox="0 0 36 36" class="circular-chart">
-                    <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                    <path class="circle" id="activityRing" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                    <text x="18" y="20.35" class="percentage" id="activityPct">0%</text>
-                </svg>
-                <div class="ring-stats">
-                    <div class="ring-stat-item"><span class="ring-stat-value" id="statCompleted">0</span><span class="ring-stat-label">Tasks Done</span></div>
-                    <div class="ring-stat-item"><span class="ring-stat-value" id="statPending">0</span><span class="ring-stat-label">Pending Today</span></div>
-                </div>
-            </div>
-            <h2 class="section-title" style="margin-top: 30px;">Active Reminders</h2>
-            <div id="dashReminders"></div>
-        </main>
-
-        <main id="tab-notes" class="tab-content">
-            <div class="greeting" style="padding-bottom: 5px;"><h1>The Vault</h1><p>Structured knowledge base.</p></div>
-            <div class="search-bar">
-                <i class="fas fa-search" style="color: var(--text-muted);"></i>
-                <input type="text" id="searchInput" placeholder="Search records..." oninput="filterNotes()">
-            </div>
-            <div id="notesVault"></div>
-        </main>
-
-        <main id="tab-tasks" class="tab-content">
-            <div class="greeting" style="padding-bottom: 5px;"><h1>To-Do List</h1><p>Manage your schedule.</p></div>
-            <div class="filter-tabs">
-                <div class="filter-btn active" id="fltAll" onclick="setTaskFilter('all')">All Tasks</div>
-                <div class="filter-btn" id="fltToday" onclick="setTaskFilter('today')">Today Only</div>
-            </div>
-            <div id="tasksList"></div>
-        </main>
-
-        <main id="tab-settings" class="tab-content">
-            <div class="greeting"><h1>Settings</h1></div>
-            <div class="list-item" style="background: transparent; border: none; padding: 0 16px 20px;">
-                <div style="display:flex; align-items:center; gap:15px;">
-                    <div class="settings-avatar"><img id="setAvatar" src=""></div>
-                    <div><h3 id="setName" style="font-size:18px;">Name</h3><p style="color:var(--text-muted); font-size:13px;">ID: <span id="setID"></span></p></div>
-                </div>
-            </div>
-            
-            <h2 class="section-title">Notifications</h2>
-            <div class="list-item" onclick="tg.showAlert('Your reminders are safely managed and will be sent directly by Lunex Bot in this chat! 🤖')">
-                <div class="list-info"><span class="list-title"><i class="fas fa-robot"></i> Bot Push Notifications</span></div>
-                <i class="fas fa-check-circle" style="color: var(--pink-main); font-size: 18px;"></i>
-            </div>
-
-            <h2 class="section-title">System Data</h2>
-            <div class="list-item"><div class="list-info"><span class="list-title"><i class="fas fa-database"></i> Database Items</span></div><span style="font-size:14px; font-weight:bold;" id="dbItemCount">0</span></div>
-            <div class="list-item" onclick="exportData()"><div class="list-info"><span class="list-title"><i class="fas fa-file-download"></i> Export Backup</span></div><i class="fas fa-chevron-right" style="color: var(--text-muted);"></i></div>
-        </main>
-
-        <div class="bottom-panel">
-            <div class="nav-bar">
-                <div class="nav-item active" onclick="switchTab('dashboard', this)"><i class="fas fa-home"></i></div>
-                <div class="nav-item" onclick="switchTab('notes', this)"><i class="fas fa-folder-open"></i></div>
-                <button class="fab-btn" onclick="openCreationRouter()"><i class="fas fa-plus"></i></button>
-                <div class="nav-item" onclick="switchTab('tasks', this)"><i class="fas fa-check-circle"></i></div>
-                <div class="nav-item" onclick="switchTab('settings', this)"><i class="fas fa-cog"></i></div>
+        <h2 class="section-title">Today's Activity</h2>
+        <div class="ring-container">
+            <svg viewBox="0 0 36 36" class="circular-chart">
+                <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                <path class="circle" id="activityRing" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                <text x="18" y="20.35" class="percentage" id="activityPct">0%</text>
+            </svg>
+            <div class="ring-stats">
+                <div class="ring-stat-item"><span class="ring-stat-value" id="statCompleted">0</span><span class="ring-stat-label">Tasks Done</span></div>
+                <div class="ring-stat-item"><span class="ring-stat-value" id="statPending">0</span><span class="ring-stat-label">Pending Today</span></div>
             </div>
         </div>
+        <h2 class="section-title" style="margin-top: 30px;">Active Reminders</h2>
+        <div id="dashReminders"></div>
+    </main>
 
-        <div class="modal-overlay" id="modalOverlay" onclick="closeAllModals()"></div>
+    <main id="tab-notes" class="tab-content">
+        <div class="greeting" style="padding-bottom: 5px;"><h1>The Vault</h1><p>Structured knowledge base.</p></div>
+        <div class="search-bar">
+            <i class="fas fa-search" style="color: var(--text-muted);"></i>
+            <input type="text" id="searchInput" placeholder="Search records..." oninput="filterNotes()">
+        </div>
+        <div id="notesVault"></div>
+    </main>
+
+    <main id="tab-tasks" class="tab-content">
+        <div class="greeting" style="padding-bottom: 5px;"><h1>To-Do List</h1><p>Manage your schedule.</p></div>
+        <div class="filter-tabs">
+            <div class="filter-btn active" id="fltAll" onclick="setTaskFilter('all')">All Tasks</div>
+            <div class="filter-btn" id="fltToday" onclick="setTaskFilter('today')">Today Only</div>
+        </div>
+        <div id="tasksList"></div>
+    </main>
+
+    <main id="tab-settings" class="tab-content">
+        <div class="greeting"><h1>Settings</h1></div>
+        <div class="list-item" style="background: transparent; border: none; padding: 0 16px 20px;">
+            <div style="display:flex; align-items:center; gap:15px;">
+                <div class="settings-avatar"><img id="setAvatar" src=""></div>
+                <div><h3 id="setName" style="font-size:18px;">Name</h3><p style="color:var(--text-muted); font-size:13px;">ID: <span id="setID"></span></p></div>
+            </div>
+        </div>
         
-        <div class="modal-sheet" id="creationRouterModal">
-            <div class="modal-close-btn" onclick="closeAllModals()"><i class="fas fa-times"></i></div>
-            <h2 class="section-title" style="margin-top:0;">Create New</h2>
-            <div class="creation-grid">
-                <div class="creation-btn" onclick="openZenEditor(-1)"><i class="fas fa-pen-nib"></i> New Note</div>
-                <div class="creation-btn" onclick="openReminderModal(-1)"><i class="fas fa-clock"></i> New Reminder</div>
-            </div>
+        <h2 class="section-title">Notifications</h2>
+        <div class="list-item" onclick="if(tg.showAlert) tg.showAlert('Your reminders are safely managed and will be sent directly by Lunex Bot in this chat! 🤖')">
+            <div class="list-info"><span class="list-title"><i class="fas fa-robot"></i> Bot Push Notifications</span></div>
+            <i class="fas fa-check-circle" style="color: var(--pink-main); font-size: 18px;"></i>
         </div>
 
-        <div class="modal-sheet" id="reminderModal" style="z-index: 1001;">
-            <div class="modal-close-btn" onclick="closeAllModals()"><i class="fas fa-times"></i></div>
-            <h2 class="section-title" id="remModalTitle" style="margin-top:0;">Set Reminder</h2>
-            <div class="form-group"><input type="text" class="form-control" id="remText" placeholder="What to do?"></div>
-            <div class="form-group">
-                <input type="datetime-local" class="form-control" id="remDate">
-                <div class="quick-time-row">
-                    <div class="tag-pill" onclick="setQuickTime('1h')">+1 Hour</div>
-                    <div class="tag-pill" onclick="setQuickTime('3h')">+3 Hours</div>
-                    <div class="tag-pill" onclick="setQuickTime('tmw_morn')">Tmw 9 AM</div>
-                    <div class="tag-pill" onclick="setQuickTime('tmw_eve')">Tmw 7 PM</div>
-                </div>
-            </div>
-            <input type="hidden" id="remEditIndex" value="-1">
-            <div class="modal-actions">
-                <button class="btn btn-danger" id="remBtnDelete" style="display:none;" onclick="deleteReminder()">Delete</button>
-                <button class="btn btn-primary" onclick="saveReminder()" style="width: 100%;">Save Reminder</button>
+        <h2 class="section-title">System Data</h2>
+        <div class="list-item"><div class="list-info"><span class="list-title"><i class="fas fa-database"></i> Database Items</span></div><span style="font-size:14px; font-weight:bold;" id="dbItemCount">0</span></div>
+        <div class="list-item" onclick="exportData()"><div class="list-info"><span class="list-title"><i class="fas fa-file-download"></i> Export Backup</span></div><i class="fas fa-chevron-right" style="color: var(--text-muted);"></i></div>
+    </main>
+
+    <div class="bottom-panel">
+        <div class="nav-bar">
+            <div class="nav-item active" onclick="switchTab('dashboard', this)"><i class="fas fa-home"></i></div>
+            <div class="nav-item" onclick="switchTab('notes', this)"><i class="fas fa-folder-open"></i></div>
+            <button class="fab-btn" onclick="openCreationRouter()"><i class="fas fa-plus"></i></button>
+            <div class="nav-item" onclick="switchTab('tasks', this)"><i class="fas fa-check-circle"></i></div>
+            <div class="nav-item" onclick="switchTab('settings', this)"><i class="fas fa-cog"></i></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay" onclick="closeAllModals()"></div>
+    
+    <div class="modal-sheet" id="creationRouterModal">
+        <div class="modal-close-btn" onclick="closeAllModals()"><i class="fas fa-times"></i></div>
+        <h2 class="section-title" style="margin-top:0;">Create New</h2>
+        <div class="creation-grid">
+            <div class="creation-btn" onclick="openZenEditor(-1)"><i class="fas fa-pen-nib"></i> New Note</div>
+            <div class="creation-btn" onclick="openReminderModal(-1)"><i class="fas fa-clock"></i> New Reminder</div>
+        </div>
+    </div>
+
+    <div class="modal-sheet" id="reminderModal" style="z-index: 1001;">
+        <div class="modal-close-btn" onclick="closeAllModals()"><i class="fas fa-times"></i></div>
+        <h2 class="section-title" id="remModalTitle" style="margin-top:0;">Set Reminder</h2>
+        <div class="form-group"><input type="text" class="form-control" id="remText" placeholder="What to do?"></div>
+        <div class="form-group">
+            <input type="datetime-local" class="form-control" id="remDate">
+            <div class="quick-time-row">
+                <div class="tag-pill" onclick="setQuickTime('1h')">+1 Hour</div>
+                <div class="tag-pill" onclick="setQuickTime('3h')">+3 Hours</div>
+                <div class="tag-pill" onclick="setQuickTime('tmw_morn')">Tmw 9 AM</div>
+                <div class="tag-pill" onclick="setQuickTime('tmw_eve')">Tmw 7 PM</div>
             </div>
         </div>
+        <input type="hidden" id="remEditIndex" value="-1">
+        <div class="modal-actions">
+            <button class="btn btn-danger" id="remBtnDelete" style="display:none;" onclick="deleteReminder()">Delete</button>
+            <button class="btn btn-primary" onclick="saveReminder()" style="width: 100%;">Save Reminder</button>
+        </div>
+    </div>
 
-        <div id="zenEditor" class="zen-editor">
-            <div class="format-toolbar" id="formatToolbar">
-                <button class="format-btn" onclick="formatText('**', '**')"><i class="fas fa-bold"></i></button>
-                <button class="format-btn" onclick="formatText('_', '_')"><i class="fas fa-italic"></i></button>
-                <button class="format-btn" onclick="formatText('~~', '~~')"><i class="fas fa-strikethrough"></i></button>
-                <button class="format-btn" onclick="formatText('[', '](https://...)')"><i class="fas fa-link"></i></button>
-                <button class="format-btn" onclick="formatText('> ', '')"><i class="fas fa-quote-right"></i></button>
+    <div id="zenEditor" class="zen-editor">
+        <div class="ze-header" id="zeHeader">
             </div>
-
-            <div class="ze-body">
-                <div class="ze-paper" id="zePaper">
-                    <div class="ze-paper-header">
-                        <div class="ze-date">
-                            <span id="zeDate">17 Apr 2026</span> 
-                            <span id="zeSaveStatus">Saving...</span>
-                        </div>
-                        <div style="display:flex; align-items:center;">
-                            <span class="ze-words" id="zeWordCount">0 words</span>
-                            <button class="ze-menu-btn-small" onclick="openContextOptions()"><i class="fas fa-ellipsis-v"></i></button>
-                        </div>
+        <div class="ze-body">
+            <div class="ze-paper" id="zePaper">
+                <div class="ze-paper-header">
+                    <div class="ze-date">
+                        <span id="zeCategoryBadge" style="color: var(--pink-main); font-weight: bold; margin-right: 10px;">Personal</span>
+                        <span id="zeDate">17 Apr 2026</span> 
+                        <span id="zeSaveStatus">Saving...</span>
                     </div>
-                    <input type="text" id="zeNoteTitle" class="ze-title-input" placeholder="Title" oninput="handleTyping()">
-                    <textarea id="zeTextarea" placeholder="Start writing..." oninput="handleTyping()" onfocus="showFormatBar()" onblur="hideFormatBar()"></textarea>
+                    <div style="display:flex; align-items:center;">
+                        <span class="ze-words" id="zeWordCount">0 words</span>
+                        <button class="ze-menu-btn-small" onclick="openContextOptions()"><i class="fas fa-ellipsis-v"></i></button>
+                    </div>
                 </div>
+                
+                <input type="text" id="zeTitle" placeholder="Note Title" autocomplete="off">
+                <textarea id="zeTextarea" placeholder="Start writing..." oninput="handleTyping()"></textarea>
             </div>
-            
-            <input type="hidden" id="zeEditIndex" value="-1">
-            <input type="hidden" id="zeCategory" value="Personal">
+        </div>
+        <input type="hidden" id="zeEditIndex" value="-1">
+    </div>
+
+    <div id="formatToolbar" class="format-toolbar">
+        <button class="format-btn" ontouchstart="applyFormat('bold', event)" onmousedown="applyFormat('bold', event)"><i class="fas fa-bold"></i></button>
+        <button class="format-btn" ontouchstart="applyFormat('italic', event)" onmousedown="applyFormat('italic', event)"><i class="fas fa-italic"></i></button>
+        <button class="format-btn" ontouchstart="applyFormat('link', event)" onmousedown="applyFormat('link', event)"><i class="fas fa-link"></i></button>
+        <button class="format-btn" ontouchstart="applyFormat('list', event)" onmousedown="applyFormat('list', event)"><i class="fas fa-list-ul"></i></button>
+    </div>
+
+    <div class="modal-sheet" id="contextOptionsMenu" style="z-index: 2005;">
+        <div class="modal-close-btn" onclick="closeContextMenu()"><i class="fas fa-times"></i></div>
+        
+        <h2 class="section-title" style="margin-top:0;">Organization</h2>
+        <div class="menu-list" style="margin-bottom: 20px;">
+            <div class="menu-item" onclick="openCategorySelector()"><i class="fas fa-folder-open" style="color:var(--pink-main)"></i> Move to Category</div>
         </div>
 
-        <div class="modal-sheet" id="contextOptionsMenu" style="z-index: 2005;">
-            <div class="modal-close-btn" onclick="closeContextMenu()"><i class="fas fa-times"></i></div>
-            <h2 class="section-title" style="margin-top:0;">Typography</h2>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
-                <div class="creation-btn" onclick="changeFontSize(2)" style="justify-content: center; padding: 12px;"><i class="fas fa-search-plus"></i> A+</div>
-                <div class="creation-btn" onclick="changeFontSize(-2)" style="justify-content: center; padding: 12px;"><i class="fas fa-search-minus"></i> A-</div>
-            </div>
-            <h2 class="section-title" style="margin-top:0;">Document</h2>
-            <div class="menu-list" style="margin-bottom: 20px;">
-                <div class="menu-item" onclick="openCategorySelector()"><i class="fas fa-folder-open"></i> Change Category</div>
-                <div class="menu-item" onclick="toggleInvertColors()"><i class="fas fa-adjust"></i> Dark/Light Paper</div>
-                <div class="menu-item" onclick="toggleFontFamily()"><i class="fas fa-font"></i> Change Font Style</div>
-                <div class="menu-item" onclick="toggleTextWidth()"><i class="fas fa-arrows-alt-h"></i> Toggle Reading Width</div>
-            </div>
-            <h2 class="section-title" style="margin-top:0;">Actions</h2>
-            <div class="menu-list">
-                <div class="menu-item" onclick="exportNoteTxt()"><i class="fas fa-file-export"></i> Export as TXT</div>
-                <div class="menu-item danger" onclick="deleteZenNote()"><i class="fas fa-trash-alt"></i> Delete Note</div>
-            </div>
+        <h2 class="section-title" style="margin-top:0;">Typography</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+            <div class="creation-btn" onclick="changeFontSize(2)" style="justify-content: center; padding: 12px;"><i class="fas fa-search-plus"></i> A+</div>
+            <div class="creation-btn" onclick="changeFontSize(-2)" style="justify-content: center; padding: 12px;"><i class="fas fa-search-minus"></i> A-</div>
         </div>
+        
+        <h2 class="section-title" style="margin-top:0;">Appearance</h2>
+        <div class="menu-list" style="margin-bottom: 20px;">
+            <div class="menu-item" onclick="toggleFocusMode()"><i class="fas fa-eye-slash"></i> Zen Focus Mode</div>
+            <div class="menu-item" onclick="toggleInvertColors()"><i class="fas fa-adjust"></i> Dark/Light Paper</div>
+            <div class="menu-item" onclick="toggleFontFamily()"><i class="fas fa-font"></i> Change Font Style</div>
+            <div class="menu-item" onclick="toggleTextWidth()"><i class="fas fa-arrows-alt-h"></i> Toggle Reading Width</div>
+        </div>
+        
+        <h2 class="section-title" style="margin-top:0;">Actions</h2>
+        <div class="menu-list">
+            <div class="menu-item" onclick="exportNoteTxt()"><i class="fas fa-file-export"></i> Export as TXT</div>
+            <div class="menu-item danger" onclick="deleteZenNote()"><i class="fas fa-trash-alt"></i> Delete Note</div>
+        </div>
+    </div>
 
-        <div class="modal-sheet" id="catSelectorMenu" style="z-index: 2006;">
-            <div class="modal-close-btn" onclick="closeCategorySelector()"><i class="fas fa-times"></i></div>
-            <h2 class="section-title" style="margin-top:0;">Select Category</h2>
-            <div class="tags-container" id="zeTagsContainer"></div>
-            <input type="text" id="zeCustomTagInput" class="tag-custom-input" placeholder="Type new category & press Enter..." onkeypress="if(event.key === 'Enter') applyNewCategory()">
-        </div>
+    <div class="modal-sheet" id="catSelectorMenu" style="z-index: 2006;">
+        <div class="modal-close-btn" onclick="closeCategorySelector()"><i class="fas fa-times"></i></div>
+        <h2 class="section-title" style="margin-top:0;">Select Category</h2>
+        <div class="tags-container" id="zeTagsContainer"></div>
+        <input type="text" id="zeCustomTagInput" class="tag-custom-input" placeholder="Type new category & press Enter..." onkeypress="if(event.key === 'Enter') applyNewCategory()">
+    </div>
 
-        <div class="modal-sheet" id="categoryModal" style="z-index: 1001;">
-            <div class="modal-close-btn" onclick="closeCategoryModal()"><i class="fas fa-times"></i></div>
-            <h2 class="section-title" style="margin-top:0;">Rename Category</h2>
-            <div class="form-group"><input type="text" class="form-control" id="catEditName" placeholder="Category Name"></div>
-            <input type="hidden" id="oldCatName" value="">
-            <div class="modal-actions"><button class="btn btn-primary" onclick="saveCategorySettings()" style="width: 100%;">Apply & Save</button></div>
-        </div>
-    </div> <script type="module">
+    <div class="modal-sheet" id="categoryModal" style="z-index: 1001;">
+        <div class="modal-close-btn" onclick="closeCategoryModal()"><i class="fas fa-times"></i></div>
+        <h2 class="section-title" style="margin-top:0;">Rename Category</h2>
+        <div class="form-group"><input type="text" class="form-control" id="catEditName" placeholder="Category Name"></div>
+        <input type="hidden" id="oldCatName" value="">
+        <div class="modal-actions"><button class="btn btn-primary" onclick="saveCategorySettings()" style="width: 100%;">Apply & Save</button></div>
+    </div>
+
+    <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
         import { getFirestore, doc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
 
-        // --- ИНИЦИАЛИЗАЦИЯ ТЕЛЕГРАМА И БЛОКИРОВКА СВАЙПОВ ---
         const tg = window.Telegram?.WebApp || {};
+        
         try {
             if (tg.expand) tg.expand();
             if (tg.requestFullscreen) tg.requestFullscreen();
-            
-            // ВАЖНО: Запрет закрытия свайпом вниз (Только для новых версий Telegram)
-            if (tg.disableVerticalSwipes) tg.disableVerticalSwipes();
+            if (tg.disableVerticalSwipes) tg.disableVerticalSwipes(); // ЗАЩИТА ОТ СВАЙПОВ
             if (tg.isVerticalSwipesEnabled !== undefined) tg.isVerticalSwipesEnabled = false;
         } catch(e) {}
 
+        // НАТИВНАЯ КНОПКА ЗАКРЫТИЯ/НАЗАД (Единственный способ выйти из редактора)
         if (tg.BackButton) {
             tg.BackButton.onClick(function() {
-                if (document.getElementById('catSelectorMenu').classList.contains('active')) {
+                if (document.getElementById('catSelectorMenu').classList.contains('active') || 
+                    document.getElementById('contextOptionsMenu').classList.contains('active')) {
                     document.getElementById('catSelectorMenu').classList.remove('active');
-                } else if (document.getElementById('contextOptionsMenu').classList.contains('active')) {
                     document.getElementById('contextOptionsMenu').classList.remove('active');
+                    document.getElementById('modalOverlay').classList.remove('active');
                 } else if (document.getElementById('zenEditor').classList.contains('active')) {
                     saveAndCloseZenEditor();
                 } else if (document.getElementById('categoryModal').classList.contains('active')) {
@@ -224,14 +227,11 @@
             });
         }
 
-        // --- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ---
         let userId = null; let userName = "User"; window.userDocRef = null; window.currentUserData = null;
         let openSections = JSON.parse(localStorage.getItem('lunexOpenSections')) || {}; let currentFontSize = 16; let typingTimer;
+        window.currentZenCategory = "Personal";
 
-        // ПРОВЕРКА КОНТЕКСТА: Если мы в Telegram, загружаем базу. Иначе - показываем ошибку.
         if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-            document.getElementById('mainApp').style.display = 'block'; 
-            
             userId = tg.initDataUnsafe.user.id.toString();
             userName = tg.initDataUnsafe.user.first_name || "User";
             
@@ -247,8 +247,6 @@
             const app = initializeApp(firebaseConfig); const db = getFirestore(app); window.userDocRef = doc(db, "users", userId);
 
             onSnapshot(window.userDocRef, (docSnap) => {
-                const splash = document.getElementById('splashScreen');
-                if(splash) { splash.style.opacity = '0'; setTimeout(() => splash.style.display = 'none', 500); }
                 if (docSnap.exists()) {
                     window.currentUserData = docSnap.data();
                     if (!window.currentUserData.category_colors) window.currentUserData.category_colors = {};
@@ -258,13 +256,9 @@
                     renderUI();
                 }
             }, (error) => { console.error(error); if(tg.showAlert) tg.showAlert("Database connection error"); });
-        } else {
-            const splash = document.getElementById('splashScreen');
-            if(splash) splash.style.display = 'none';
-            document.getElementById('errorScreen').style.display = 'flex';
         }
 
-        // --- ДВИЖОК ПЕРЕТАСКИВАНИЯ (DRAG & DROP) ---
+        // --- ДВИЖОК DRAG & DROP ---
         window.isDragging = false; window.justDragged = false; window.dragTimer = null; window.dragClone = null; window.dragOrigIndex = -1; window.startX = 0; window.startY = 0; window.currentDroppable = null;
 
         window.handleTouchStart = function(e, index) {
@@ -290,7 +284,7 @@
                 window.dragClone.style.transition = 'none';
                 document.body.appendChild(window.dragClone);
 
-                cardEl.style.opacity = '0.3'; 
+                cardEl.style.opacity = '0.3';
                 
                 const tz = document.getElementById('trashZone');
                 tz.style.transform = 'translateY(0)';
@@ -302,9 +296,7 @@
             if (!window.isDragging) {
                 if (window.dragTimer) {
                     const touch = e.touches[0];
-                    if (Math.abs(touch.clientX - window.startX) > 10 || Math.abs(touch.clientY - window.startY) > 10) {
-                        clearTimeout(window.dragTimer); window.dragTimer = null;
-                    }
+                    if (Math.abs(touch.clientX - window.startX) > 10 || Math.abs(touch.clientY - window.startY) > 10) { clearTimeout(window.dragTimer); window.dragTimer = null; }
                 }
                 return;
             }
@@ -324,8 +316,7 @@
                 const header = elem.closest('.category-header');
                 const trash = elem.closest('#trashZone');
                 if (header) {
-                    header.style.border = '2px dashed var(--pink-main)';
-                    header.style.background = 'rgba(255, 71, 126, 0.1)';
+                    header.style.border = '2px dashed var(--pink-main)'; header.style.background = 'rgba(255, 71, 126, 0.1)';
                     window.currentDroppable = { type: 'category', el: header };
                 } else if (trash) {
                     trash.style.background = 'rgba(255, 50, 50, 0.4)';
@@ -356,9 +347,7 @@
                 } else if (window.currentDroppable.type === 'trash') {
                     window.deleteNoteByIndex(window.dragOrigIndex);
                 }
-            } else {
-                renderUI(); 
-            }
+            } else { renderUI(); }
             window.currentDroppable = null;
         });
 
@@ -368,11 +357,8 @@
             const parsed = parseItem(notes[index]);
             let newCategoryColors = { ...data.category_colors };
             if (!defaultTags.includes(newCategory) && !newCategoryColors[newCategory]) { newCategoryColors[newCategory] = getUniqueColor(newCategoryColors); }
-            
-            // Восстанавливаем оригинальный текст с новой категорией
-            const titlePart = parsed.title ? `# ${parsed.title}\n` : '';
             const dateStr = parsed.date ? `{${parsed.date}} ` : '';
-            const newText = `[${newCategory}] ${dateStr}${titlePart}${parsed.content}`;
+            const newText = `[${newCategory}] ${dateStr}${parsed.content}`;
             
             notes.splice(index, 1); notes.unshift(newText); 
             await updateDoc(window.userDocRef, { notes, category_colors: newCategoryColors });
@@ -387,35 +373,26 @@
             if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy');
         }
 
-        // --- ОСНОВНАЯ ЛОГИКА ---
+        // --- БАЗОВАЯ ЛОГИКА ---
         window.switchTab = function(tabId, btn) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-            document.getElementById(`tab-${tabId}`).classList.add('active'); btn.classList.add('active');
-            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); window.scrollTo(0,0);
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active')); document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+            document.getElementById(`tab-${tabId}`).classList.add('active'); btn.classList.add('active'); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); window.scrollTo(0,0);
         };
 
         const defaultTags = ['Personal', 'Work', 'Finance', 'Ideas']; const sectionIcons = { 'Personal': 'fa-user', 'Work': 'fa-briefcase', 'Finance': 'fa-wallet', 'Ideas': 'fa-lightbulb' }; const neonHues = [330, 180, 45, 120, 270, 15, 210, 90, 30, 300, 60, 150];
         function getUniqueColor(existingColorsObj) { const usedColors = Object.values(existingColorsObj); for (let hue of neonHues) { const color = `hsl(${hue}, 100%, 65%)`; if (!usedColors.includes(color)) return color; } return `hsl(${Math.floor(Math.random()*360)}, 100%, 65%)`; }
         function getCategoryColor(category) { const predefined = { 'Personal': '#ff477e', 'Work': '#00f0ff', 'Finance': '#ffd700', 'Ideas': '#b554ff' }; if (window.currentUserData?.category_colors?.[category]) return window.currentUserData.category_colors[category]; if (predefined[category]) return predefined[category]; return '#ffffff'; }
         
-        // УМНЫЙ ПАРСЕР (Теперь поддерживает TITLE через #)
-        function parseItem(rawText) { 
-            const match = rawText.match(/^\[(.*?)\](?:\s*\{([^\}]+)\})?\s*([\s\S]*)/); 
-            if (match) { 
-                let cat = match[1]; let dte = match[2] || ''; let fullContent = match[3];
-                let title = ""; let content = fullContent;
-                if (fullContent.startsWith("# ")) {
-                    const lines = fullContent.split('\n');
-                    title = lines[0].replace("# ", "").trim();
-                    content = lines.slice(1).join('\n').trim();
-                }
-                return { category: cat, date: dte, title: title, content: content, rawText }; 
-            } 
-            return { category: "Personal", date: '', title: '', content: rawText, rawText }; 
+        function parseItem(rawText) { const match = rawText.match(/^\[(.*?)\](?:\s*\{([^\}]+)\})?\s*([\s\S]*)/); if (match) { return { category: match[1], date: match[2] || '', content: match[3], rawText }; } return { category: "Personal", date: '', content: rawText, rawText }; }
+        
+        // Рендер Markdown в карточках
+        function formatCardText(text) { 
+            let html = text.replace(/^#\s+(.*)$/gm, '<b>$1</b><br>')
+                           .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+                           .replace(/_(.*?)_/g, '<i>$1</i>')
+                           .replace(/\[(.*?)\]\((.*?)\)/g, '<span style="color:var(--pink-main)">$1</span>');
+            return html; 
         }
-
-        function formatCardText(text) { return text.replace(/^#\s+(.*)$/gm, '<b>$1</b>'); }
 
         window.setTaskFilter = function(filter) { window.currentTaskFilter = filter; document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active')); document.getElementById(filter === 'all' ? 'fltAll' : 'fltToday').classList.add('active'); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); renderUI(); }
         window.filterNotes = function() { renderUI(); }
@@ -428,20 +405,13 @@
             document.getElementById('dbItemCount').innerText = `${notes.length + reminders.length}`;
 
             const searchTerm = document.getElementById('searchInput').value.toLowerCase(); const vault = document.getElementById('notesVault'); const groupedNotes = {};
-            notes.forEach((n, i) => { const parsed = parseItem(n); if (parsed.content.toLowerCase().includes(searchTerm) || parsed.title.toLowerCase().includes(searchTerm)) { if (!groupedNotes[parsed.category]) groupedNotes[parsed.category] = []; groupedNotes[parsed.category].push({ ...parsed, origIndex: i }); } });
+            notes.forEach((n, i) => { const parsed = parseItem(n); if (parsed.content.toLowerCase().includes(searchTerm)) { if (!groupedNotes[parsed.category]) groupedNotes[parsed.category] = []; groupedNotes[parsed.category].push({ ...parsed, origIndex: i }); } });
             if (Object.keys(groupedNotes).length === 0) { vault.innerHTML = '<p class="empty-state">Vault is empty.</p>'; } else {
                 const sortedKeys = Object.keys(groupedNotes).sort((a, b) => { if (a === 'Personal') return -1; if (b === 'Personal') return 1; if (a === 'Work') return -1; if (b === 'Work') return 1; return a.localeCompare(b); });
                 let vaultHTML = '';
                 sortedKeys.forEach(category => {
                     const color = getCategoryColor(category); const isOpen = (searchTerm !== "" || openSections[category]) ? "open" : ""; const icon = sectionIcons[category] || 'fa-folder';
-                    vaultHTML += `<div class="category-section ${isOpen}" id="section-${category}"><div class="category-header" data-category="${category}" onclick="toggleSection('${category}')"><div class="category-title" style="color: ${color}"><i class="fas ${icon}"></i> ${category}</div><div class="category-controls"><div class="category-settings-btn" onclick="openCategorySettings(event, '${category}')"><i class="fas fa-cog"></i></div><i class="fas fa-chevron-down chevron"></i></div></div><div class="category-content"><div class="grid-cards">`;
-                    vaultHTML += groupedNotes[category].map(nObj => `
-                        <div class="card" ontouchstart="handleTouchStart(event, ${nObj.origIndex})" onclick="if(!window.justDragged) openZenEditor(${nObj.origIndex})">
-                            ${nObj.title ? `<div class="card-title-preview">${nObj.title}</div>` : ''}
-                            <div class="card-text">${formatCardText(nObj.content)}</div>
-                        </div>
-                    `).join('');
-                    vaultHTML += `</div></div></div>`;
+                    vaultHTML += `<div class="category-section ${isOpen}" id="section-${category}"><div class="category-header" data-category="${category}" onclick="toggleSection('${category}')"><div class="category-title" style="color: ${color}"><i class="fas ${icon}"></i> ${category}</div><div class="category-controls"><div class="category-settings-btn" onclick="openCategorySettings(event, '${category}')"><i class="fas fa-cog"></i></div><i class="fas fa-chevron-down chevron"></i></div></div><div class="category-content"><div class="grid-cards">${groupedNotes[category].map(nObj => `<div class="card" ontouchstart="handleTouchStart(event, ${nObj.origIndex})" onclick="if(!window.justDragged) openZenEditor(${nObj.origIndex})"><div class="card-text">${formatCardText(nObj.content)}</div></div>`).join('')}</div></div></div>`;
                 }); vault.innerHTML = vaultHTML;
             }
 
@@ -465,68 +435,71 @@
         window.closeAllModals = function() { document.querySelectorAll('.modal-sheet').forEach(m => m.classList.remove('active')); document.getElementById('modalOverlay').classList.remove('active'); if (tg.BackButton && !document.getElementById('zenEditor').classList.contains('active')) { tg.BackButton.hide(); } }
         window.openCreationRouter = function() { if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium'); document.getElementById('modalOverlay').classList.add('active'); document.getElementById('creationRouterModal').classList.add('active'); if(tg.BackButton) tg.BackButton.show(); }
 
-        // --- ZEN EDITOR С ЗАГОЛОВКОМ ---
+        // --- ZEN EDITOR С TITLE ---
         window.openZenEditor = function(index) {
-            closeAllModals(); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); 
-            const data = window.currentUserData; document.getElementById('zeEditIndex').value = index;
-            let category = "Personal"; let content = ""; let title = ""; let dateStr = new Date().toLocaleDateString('en-US', {day:'numeric', month:'short', year:'numeric'});
+            closeAllModals(); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); const data = window.currentUserData; document.getElementById('zeEditIndex').value = index;
+            let category = "Personal"; let rawContent = ""; let dateStr = new Date().toLocaleDateString('en-US', {day:'numeric', month:'short', year:'numeric'});
 
-            if (index !== -1) { 
-                const parsed = parseItem(data.notes[index]); 
-                category = parsed.category; 
-                content = parsed.content; 
-                title = parsed.title;
-                if (parsed.date) dateStr = parsed.date; 
+            if (index !== -1) { const parsed = parseItem(data.notes[index]); category = parsed.category; rawContent = parsed.content; if (parsed.date) dateStr = parsed.date; }
+            
+            // Парсинг заголовка
+            let titleStr = ""; let bodyStr = rawContent;
+            if (rawContent.startsWith('# ')) {
+                const lines = rawContent.split('\n');
+                titleStr = lines[0].substring(2);
+                bodyStr = lines.slice(1).join('\n');
             }
 
-            document.getElementById('zeCategory').value = category; 
-            document.getElementById('zeDate').innerText = dateStr; 
-            document.getElementById('zeNoteTitle').value = title;
-            document.getElementById('zeTextarea').value = content; 
+            window.currentZenCategory = category;
+            document.getElementById('zeCategoryBadge').innerText = category; document.getElementById('zeDate').innerText = dateStr; 
+            document.getElementById('zeTitle').value = titleStr; document.getElementById('zeTextarea').value = bodyStr; 
             document.getElementById('zeTextarea').style.fontSize = `${currentFontSize}px`;
             
             updateWordCount(); document.getElementById('zenEditor').classList.add('active'); if(tg.BackButton) tg.BackButton.show();
-            if (index === -1) { setTimeout(() => document.getElementById('zeTextarea').focus(), 350); }
         }
-        
         window.handleTyping = function() { updateWordCount(); const status = document.getElementById('zeSaveStatus'); status.style.opacity = '1'; clearTimeout(typingTimer); typingTimer = setTimeout(() => { status.style.opacity = '0'; }, 800); }
         window.updateWordCount = function() { const text = document.getElementById('zeTextarea').value.trim(); const words = text ? text.split(/\s+/).length : 0; const readTime = Math.ceil(words / 200) || 1; document.getElementById('zeWordCount').innerText = `${words} words • ${readTime} min read`; }
 
         window.saveAndCloseZenEditor = async function() {
-            document.getElementById('zenEditor').classList.remove('active'); if(tg.BackButton) tg.BackButton.hide(); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+            document.getElementById('zenEditor').classList.remove('active'); document.getElementById('formatToolbar').classList.remove('active');
+            if(tg.BackButton) tg.BackButton.hide(); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+
             if(!window.userDocRef) return; const data = window.currentUserData; 
-            
-            const titleInput = document.getElementById('zeNoteTitle').value.trim();
-            const textBody = document.getElementById('zeTextarea').value; 
-            const idx = parseInt(document.getElementById('zeEditIndex').value); 
-            let notes = [...(data.notes || [])];
+            const title = document.getElementById('zeTitle').value.trim(); const text = document.getElementById('zeTextarea').value; 
+            const idx = parseInt(document.getElementById('zeEditIndex').value); let notes = [...(data.notes || [])];
 
-            if (!textBody.trim() && !titleInput) { if (idx !== -1) { notes.splice(idx, 1); await updateDoc(window.userDocRef, { notes }); } return; }
+            if (!title && !text.trim()) { if (idx !== -1) { notes.splice(idx, 1); await updateDoc(window.userDocRef, { notes }); } return; }
 
-            const category = document.getElementById('zeCategory').value; 
-            const dateStr = document.getElementById('zeDate').innerText; 
-            
-            const titlePart = titleInput ? `# ${titleInput}\n` : '';
-            const formattedText = `[${category}] {${dateStr}} ${titlePart}${textBody}`;
+            const category = window.currentZenCategory; const dateStr = document.getElementById('zeDate').innerText; 
+            const finalContent = title ? `# ${title}\n${text}` : text;
+            const formattedData = `[${category}] {${dateStr}} ${finalContent}`;
 
             let newCategoryColors = { ...data.category_colors }; if (!defaultTags.includes(category) && !newCategoryColors[category]) { newCategoryColors[category] = getUniqueColor(newCategoryColors); }
-            if (idx !== -1) notes.splice(idx, 1); notes.unshift(formattedText); await updateDoc(window.userDocRef, { notes, category_colors: newCategoryColors });
+            if (idx !== -1) notes.splice(idx, 1); notes.unshift(formattedData); await updateDoc(window.userDocRef, { notes, category_colors: newCategoryColors });
         }
 
-        // --- ПАНЕЛЬ ФОРМАТИРОВАНИЯ ---
-        window.showFormatBar = function() { document.getElementById('formatToolbar').classList.add('active'); }
-        window.hideFormatBar = function() { setTimeout(() => { document.getElementById('formatToolbar').classList.remove('active'); }, 100); }
-        
-        window.formatText = function(prefix, suffix) {
+        // --- FORMAT TOOLBAR ---
+        const textarea = document.getElementById('zeTextarea');
+        textarea.addEventListener('focus', () => { document.getElementById('formatToolbar').classList.add('active'); });
+        textarea.addEventListener('blur', () => { setTimeout(() => document.getElementById('formatToolbar').classList.remove('active'), 150); });
+
+        window.applyFormat = function(type, e) {
+            e.preventDefault(); // Не теряем фокус
             if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-            const ta = document.getElementById('zeTextarea');
-            const start = ta.selectionStart; const end = ta.selectionEnd;
-            const text = ta.value; const selected = text.substring(start, end);
-            ta.value = text.substring(0, start) + prefix + selected + suffix + text.substring(end);
-            ta.focus(); ta.setSelectionRange(start + prefix.length, start + prefix.length + selected.length);
-            handleTyping();
-        }
+            const start = textarea.selectionStart; const end = textarea.selectionEnd;
+            const sel = textarea.value.substring(start, end); let replacement = sel;
 
+            if (type === 'bold') replacement = `**${sel || 'text'}**`;
+            else if (type === 'italic') replacement = `_${sel || 'text'}_`;
+            else if (type === 'link') { const url = prompt("Enter URL:", "https://"); if (url) replacement = `[${sel || 'Link text'}](${url})`; }
+            else if (type === 'list') replacement = `\n- ${sel || 'Item'}`;
+
+            textarea.value = textarea.value.substring(0, start) + replacement + textarea.value.substring(end);
+            textarea.selectionStart = start; textarea.selectionEnd = start + replacement.length;
+            updateWordCount();
+        };
+
+        // --- OPTIONS ---
         window.openContextOptions = function() { if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); document.getElementById('modalOverlay').classList.add('active'); document.getElementById('contextOptionsMenu').classList.add('active'); if(tg.BackButton) tg.BackButton.show(); }
         window.closeContextMenu = function() { document.getElementById('contextOptionsMenu').classList.remove('active'); document.getElementById('modalOverlay').classList.remove('active'); }
         window.changeFontSize = function(delta) { currentFontSize += delta; if(currentFontSize < 12) currentFontSize = 12; if(currentFontSize > 30) currentFontSize = 30; document.getElementById('zeTextarea').style.fontSize = `${currentFontSize}px`; if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); }
@@ -534,13 +507,12 @@
         window.toggleFocusMode = function() { document.getElementById('zeHeader').classList.toggle('hidden'); closeContextMenu(); }
         window.toggleFontFamily = function() { const paper = document.getElementById('zeTextarea'); if (paper.style.fontFamily === 'serif') paper.style.fontFamily = 'sans-serif'; else if (paper.style.fontFamily === 'sans-serif') paper.style.fontFamily = 'monospace'; else paper.style.fontFamily = 'serif'; if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); closeContextMenu(); }
         window.toggleTextWidth = function() { const paper = document.getElementById('zePaper'); if (paper.style.maxWidth === '750px' || !paper.style.maxWidth) paper.style.maxWidth = '100%'; else paper.style.maxWidth = '750px'; if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); closeContextMenu(); }
-        window.exportNoteTxt = function() { const text = document.getElementById('zeTextarea').value; const title = document.getElementById('zeCategory').value + "_Note"; const dataStr = "data:text/plain;charset=utf-8," + encodeURIComponent(text); const dlAnchorElem = document.createElement('a'); dlAnchorElem.setAttribute("href", dataStr); dlAnchorElem.setAttribute("download", `${title}.txt`); dlAnchorElem.click(); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('success'); closeContextMenu(); }
+        window.exportNoteTxt = function() { const text = document.getElementById('zeTextarea').value; const title = document.getElementById('zeTitle').value || window.currentZenCategory; const dataStr = "data:text/plain;charset=utf-8," + encodeURIComponent(text); const dlAnchorElem = document.createElement('a'); dlAnchorElem.setAttribute("href", dataStr); dlAnchorElem.setAttribute("download", `${title}.txt`); dlAnchorElem.click(); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('success'); closeContextMenu(); }
         window.deleteZenNote = async function() { const idx = parseInt(document.getElementById('zeEditIndex').value); if (idx !== -1 && window.userDocRef) { const data = window.currentUserData; let notes = [...(data.notes || [])]; notes.splice(idx, 1); await updateDoc(window.userDocRef, { notes }); } closeContextMenu(); document.getElementById('zenEditor').classList.remove('active'); if(tg.BackButton) tg.BackButton.hide(); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy'); }
 
-        // --- КАТЕГОРИИ И РЕМАЙНДЕРЫ ---
-        window.openCategorySelector = function() { const data = window.currentUserData; const customTags = Object.keys(data?.category_colors || {}); const allTags = [...new Set([...defaultTags, ...customTags])]; let html = allTags.map(tag => { const color = getCategoryColor(tag); return `<div class="tag-pill" style="border-color: ${color}; color: ${color};" onclick="applyCat('${tag}')">${tag}</div>`; }).join(''); html += `<div class="tag-pill" style="border-style: dashed;" onclick="document.getElementById('zeCustomTagInput').style.display='block'; document.getElementById('zeCustomTagInput').focus();">+ NEW</div>`; document.getElementById('zeTagsContainer').innerHTML = html; document.getElementById('contextOptionsMenu').classList.remove('active'); document.getElementById('modalOverlay').classList.add('active'); document.getElementById('catSelectorMenu').classList.add('active'); if(tg.BackButton) tg.BackButton.show(); }
+        window.openCategorySelector = function() { closeContextMenu(); const data = window.currentUserData; const customTags = Object.keys(data?.category_colors || {}); const allTags = [...new Set([...defaultTags, ...customTags])]; let html = allTags.map(tag => { const color = getCategoryColor(tag); return `<div class="tag-pill" style="border-color: ${color}; color: ${color};" onclick="applyCat('${tag}')">${tag}</div>`; }).join(''); html += `<div class="tag-pill" style="border-style: dashed;" onclick="document.getElementById('zeCustomTagInput').style.display='block'; document.getElementById('zeCustomTagInput').focus();">+ NEW</div>`; document.getElementById('zeTagsContainer').innerHTML = html; document.getElementById('modalOverlay').classList.add('active'); document.getElementById('catSelectorMenu').classList.add('active'); if(tg.BackButton) tg.BackButton.show(); }
         window.closeCategorySelector = function() { document.getElementById('catSelectorMenu').classList.remove('active'); document.getElementById('modalOverlay').classList.remove('active'); }
-        window.applyCat = function(cat) { document.getElementById('zeCategory').value = cat; closeCategorySelector(); window.handleTyping(); /* trigger save */ }
+        window.applyCat = function(cat) { window.currentZenCategory = cat; document.getElementById('zeCategoryBadge').innerText = cat; closeCategorySelector(); }
         window.applyNewCategory = function() { const val = document.getElementById('zeCustomTagInput').value.trim(); if(val) { applyCat(val); document.getElementById('zeCustomTagInput').value = ""; document.getElementById('zeCustomTagInput').style.display = "none"; } }
 
         window.openReminderModal = function(index) {
