@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Lunex Premium</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -12,8 +14,6 @@
 
     <div id="splashScreen"><i class="fas fa-star splash-logo"></i></div>
     <script>setTimeout(() => { const s = document.getElementById('splashScreen'); if(s) s.style.opacity='0'; setTimeout(()=>s.style.display='none',500); }, 3000);</script>
-
-    <input type="file" id="icsInput" accept=".ics,text/calendar" style="display:none" onchange="handleICSImport(event)">
 
     <div id="trashZone">
         <i class="fas fa-trash-alt"></i> <span style="font-size:16px; font-weight:bold;">Drop to Delete</span>
@@ -38,7 +38,7 @@
                 </div>
                 <div class="dash-main-text">
                     <h3 id="statPending">0 Tasks</h3>
-                    <p>Pending Today</p>
+                    <p id="dashDateLabel">Pending Today</p>
                 </div>
             </div>
             
@@ -57,8 +57,8 @@
         </div>
 
         <h2 class="section-title">
-            <span id="scheduleTitle">Schedule</span> 
-            <span style="font-size:11px; font-weight:normal; color:var(--pink-main); cursor:pointer;" onclick="selectDashboardDate(new Date())">Reset</span>
+            <span>Schedule</span>
+            <span class="view-all-btn" onclick="selectCalendarDate(null)">View All</span>
         </h2>
         <div id="dashReminders"></div>
     </main>
@@ -86,17 +86,20 @@
                 <div><h3 id="setName" style="font-size:20px; font-weight: 800;">Name</h3><p style="color:var(--text-muted); font-size:13px; font-weight: 600;">ID: <span id="setID"></span></p></div>
             </div>
         </div>
-
+        
         <h2 class="section-title">Integrations</h2>
-        <div class="list-item" onclick="document.getElementById('icsInput').click()">
-            <div class="list-info"><span class="list-title"><i class="fas fa-file-import" style="color:var(--pink-main)"></i> Import .ics File</span><span class="list-meta" style="color:var(--text-muted)">Apple / Google / Outlook</span></div>
+        
+        <div class="list-item" onclick="document.getElementById('icsFileInput').click()">
+            <div class="list-info"><span class="list-title"><i class="fas fa-file-import" style="color: #2AABEE;"></i> Import .ics Calendar</span></div>
             <i class="fas fa-chevron-right" style="color: var(--text-muted);"></i>
         </div>
-        <div class="list-item" onclick="if(tg.showAlert) tg.showAlert('Google Sync requires a persistent backend connection. For an instant offline sync, please export your Google Calendar as a .ics file and import it above!')">
-            <div class="list-info"><span class="list-title"><i class="fab fa-google"></i> Connect Google Calendar</span></div>
-            <i class="fas fa-external-link-alt" style="color: var(--text-muted);"></i>
+        <input type="file" id="icsFileInput" accept=".ics" style="display:none;" onchange="handleICSImport(event)">
+
+        <div class="list-item" onclick="initGoogleSync()">
+            <div class="list-info"><span class="list-title"><i class="fab fa-google" style="color: #EA4335;"></i> Sync Google Calendar</span></div>
+            <i class="fas fa-sync" style="color: var(--text-muted);"></i>
         </div>
-        
+
         <h2 class="section-title">Notifications</h2>
         <div class="list-item" onclick="if(tg.showAlert) tg.showAlert('Your reminders are safely managed and will be sent directly by Lunex Bot in this chat! 🤖')">
             <div class="list-info"><span class="list-title"><i class="fas fa-robot"></i> Bot Push Notifications</span></div>
@@ -125,7 +128,7 @@
         <h2 class="section-title" style="margin-top:0;">Create New</h2>
         <div class="creation-grid">
             <div class="creation-btn" onclick="openZenEditor(-1)"><i class="fas fa-pen-nib"></i> New Note</div>
-            <div class="creation-btn" onclick="openReminderModal(-1)"><i class="fas fa-clock"></i> New Reminder</div>
+            <div class="creation-btn" onclick="openReminderModal(-1)"><i class="fas fa-clock"></i> New Reminder / Event</div>
         </div>
     </div>
 
@@ -145,7 +148,7 @@
         <input type="hidden" id="remEditIndex" value="-1">
         <div class="modal-actions">
             <button class="btn btn-danger" id="remBtnDelete" style="display:none;" onclick="deleteReminder()">Delete</button>
-            <button class="btn btn-primary" onclick="saveReminder()" style="width: 100%;">Save Reminder</button>
+            <button class="btn btn-primary" onclick="saveReminder()" style="width: 100%;">Save Event</button>
         </div>
     </div>
 
@@ -181,18 +184,15 @@
 
     <div class="modal-sheet" id="contextOptionsMenu" style="z-index: 2005;">
         <div class="modal-close-btn" onclick="closeContextMenu()"><i class="fas fa-times"></i></div>
-        
         <h2 class="section-title" style="margin-top:0;">Organization</h2>
         <div class="menu-list" style="margin-bottom: 20px;">
             <div class="menu-item" onclick="openCategorySelector()"><i class="fas fa-folder-open" style="color:var(--pink-main)"></i> Move to Category</div>
         </div>
-
         <h2 class="section-title" style="margin-top:0;">Typography</h2>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
             <div class="creation-btn" onclick="changeFontSize(2)" style="justify-content: center; padding: 12px;"><i class="fas fa-search-plus"></i> A+</div>
             <div class="creation-btn" onclick="changeFontSize(-2)" style="justify-content: center; padding: 12px;"><i class="fas fa-search-minus"></i> A-</div>
         </div>
-        
         <h2 class="section-title" style="margin-top:0;">Appearance</h2>
         <div class="menu-list" style="margin-bottom: 20px;">
             <div class="menu-item" onclick="toggleFocusMode()"><i class="fas fa-eye-slash"></i> Zen Focus Mode</div>
@@ -200,7 +200,6 @@
             <div class="menu-item" onclick="toggleFontFamily()"><i class="fas fa-font"></i> Change Font Style</div>
             <div class="menu-item" onclick="toggleTextWidth()"><i class="fas fa-arrows-alt-h"></i> Toggle Reading Width</div>
         </div>
-        
         <h2 class="section-title" style="margin-top:0;">Actions</h2>
         <div class="menu-list">
             <div class="menu-item" onclick="exportNoteTxt()"><i class="fas fa-file-export"></i> Export as TXT</div>
@@ -228,7 +227,6 @@
         import { getFirestore, doc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
 
         const tg = window.Telegram?.WebApp || {};
-        
         try {
             if (tg.expand) tg.expand();
             if (tg.requestFullscreen) tg.requestFullscreen();
@@ -256,112 +254,9 @@
         let userId = null; let userName = "User"; window.userDocRef = null; window.currentUserData = null;
         let openSections = JSON.parse(localStorage.getItem('lunexOpenSections')) || {}; let currentFontSize = 16; let typingTimer;
         window.currentZenCategory = "Personal";
-        window.selectedDashboardDate = new Date(); // Для фильтрации календаря
+        window.selectedDate = null; // Выбранная дата в календаре
 
-        // --- УМНЫЙ КАЛЕНДАРЬ ---
-        window.selectDashboardDate = function(dateObj) {
-            window.selectedDashboardDate = dateObj;
-            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-            renderUI();
-            
-            // Прокручиваем к выбранной дате
-            setTimeout(() => {
-                const strip = document.getElementById('calendarStrip');
-                const activeEl = strip.querySelector('.active');
-                if(activeEl) activeEl.scrollIntoView({behavior: "smooth", inline: "center", block: "nearest"});
-            }, 50);
-        }
-
-        function generateCalendar(reminders = []) {
-            const strip = document.getElementById('calendarStrip');
-            let html = ''; const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-            
-            // Генерируем массив дат, где есть события
-            const eventDateStrings = reminders.map(r => {
-                if(r.datetime) {
-                    const d = new Date(r.datetime.replace(' ', 'T'));
-                    return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-                }
-                return "";
-            });
-
-            const selDateStr = `${window.selectedDashboardDate.getFullYear()}-${window.selectedDashboardDate.getMonth()}-${window.selectedDashboardDate.getDate()}`;
-            
-            const today = new Date();
-            for(let i = -7; i <= 14; i++) { 
-                const d = new Date(today); d.setDate(today.getDate() + i);
-                const dStr = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-                const isSelected = dStr === selDateStr ? 'active' : '';
-                const hasEvent = eventDateStrings.includes(dStr) ? 'has-event' : '';
-                
-                html += `<div class="calendar-day ${isSelected} ${hasEvent}" onclick="selectDashboardDate(new Date(${d.getTime()}))">
-                    <span class="cal-name">${days[d.getDay()]}</span>
-                    <span class="cal-date">${d.getDate()}</span>
-                    <div class="event-dot"></div>
-                </div>`;
-            }
-            strip.innerHTML = html;
-        }
-
-        // --- ИМПОРТ .ICS (КАЛЕНДАРЬ) ---
-        window.handleICSImport = function(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            
-            const reader = new FileReader();
-            reader.onload = async function(e) {
-                const text = e.target.result;
-                const lines = text.split(/\r\n|\n|\r/);
-                let events = [];
-                let currentEvent = null;
-                
-                for (let line of lines) {
-                    if (line.startsWith('BEGIN:VEVENT')) { currentEvent = {}; }
-                    else if (line.startsWith('END:VEVENT')) {
-                        if (currentEvent && currentEvent.summary && currentEvent.start) { events.push(currentEvent); }
-                        currentEvent = null;
-                    }
-                    else if (currentEvent) {
-                        if (line.startsWith('SUMMARY:')) currentEvent.summary = line.substring(8);
-                        if (line.startsWith('DTSTART')) {
-                            // Формат YYYYMMDDTHHMMSSZ или YYYYMMDD
-                            let match = line.match(/:(\d{4})(\d{2})(\d{2})(T(\d{2})(\d{2})(\d{2}))?/);
-                            if (match) {
-                                let dt = new Date(Date.UTC(match[1], match[2]-1, match[3], match[5]||12, match[6]||0, match[7]||0));
-                                currentEvent.start = dt;
-                            }
-                        }
-                    }
-                }
-                
-                if (events.length > 0 && window.userDocRef) {
-                    const data = window.currentUserData;
-                    let reminders = [...(data.reminders || [])];
-                    let addedCount = 0; const now = new Date();
-                    
-                    // Только будущие 100 событий (для экономии БД)
-                    events = events.filter(ev => ev.start > now).sort((a,b) => a.start - b.start).slice(0, 100);
-                    
-                    events.forEach(ev => {
-                        const offset = ev.start.getTimezoneOffset() * 60000;
-                        const localDate = new Date(ev.start.getTime() - offset);
-                        const dateStr = localDate.toISOString().slice(0, 16).replace('T', ' ') + ":00";
-                        reminders.push({ text: `[Calendar] ${ev.summary}`, datetime: dateStr });
-                        addedCount++;
-                    });
-                    
-                    await updateDoc(window.userDocRef, { reminders });
-                    if(tg.showAlert) tg.showAlert(`Successfully imported ${addedCount} upcoming events!`);
-                    window.switchTab('dashboard', document.querySelectorAll('.nav-item')[0]);
-                } else {
-                    if(tg.showAlert) tg.showAlert("No upcoming events found in this file.");
-                }
-            };
-            reader.readAsText(file);
-            event.target.value = ''; // Сброс
-        }
-
-        // --- ИНИЦИАЛИЗАЦИЯ FIREBASE ---
+        // --- СТАРТ И БАЗА ДАННЫХ ---
         if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
             userId = tg.initDataUnsafe.user.id.toString();
             userName = tg.initDataUnsafe.user.first_name || "User";
@@ -381,12 +276,139 @@
                 if (docSnap.exists()) {
                     window.currentUserData = docSnap.data();
                     if (!window.currentUserData.category_colors) window.currentUserData.category_colors = {};
-                    renderUI(); 
+                    renderUI();
                 } else {
                     window.currentUserData = { notes: [], reminders: [], category_colors: {} };
                     renderUI();
                 }
-            }, (error) => { console.error(error); if(tg.showAlert) tg.showAlert("Database connection error"); });
+            }, (error) => { console.error(error); if(tg.showAlert) tg.showAlert("Database error"); });
+        }
+
+        // --- УМНЫЙ КАЛЕНДАРЬ И ПАРСИНГ ---
+        window.selectCalendarDate = function(el, dateStr) {
+            document.querySelectorAll('.calendar-day').forEach(d => d.classList.remove('active'));
+            if(el) { el.classList.add('active'); window.selectedDate = dateStr; document.getElementById('dashDateLabel').innerText = "Scheduled for " + dateStr; }
+            else { window.selectedDate = null; document.getElementById('dashDateLabel').innerText = "All Upcoming Plans"; }
+            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+            renderUI();
+        }
+
+        function renderCalendar() {
+            const strip = document.getElementById('calendarStrip');
+            let html = ''; const today = new Date(); const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const reminders = window.currentUserData?.reminders || [];
+            
+            // Собираем даты, в которые есть события
+            const activeDates = new Set(reminders.map(r => r.datetime ? r.datetime.split(' ')[0] : ''));
+
+            for(let i = -3; i <= 14; i++) { 
+                const d = new Date(today); d.setDate(today.getDate() + i);
+                const dateStr = d.toISOString().split('T')[0]; // YYYY-MM-DD
+                
+                let isSelected = '';
+                if(window.selectedDate === dateStr) isSelected = 'active';
+                else if(!window.selectedDate && i === 0) isSelected = 'active'; // Сегодня по умолчанию
+
+                const hasEvents = activeDates.has(dateStr) ? 'has-events' : '';
+
+                html += `<div class="calendar-day ${isSelected} ${hasEvents}" onclick="selectCalendarDate(this, '${dateStr}')">
+                    <span class="cal-name">${days[d.getDay()]}</span>
+                    <span class="cal-date">${d.getDate()}</span>
+                    <div class="cal-dot"></div>
+                </div>`;
+                
+                // Если ничего не выбрано, ставим сегодняшний день по умолчанию для фильтра
+                if(!window.selectedDate && i === 0) window.selectedDate = dateStr; 
+            }
+            strip.innerHTML = html;
+        }
+
+        // РУЧНОЙ ИМПОРТ .ICS ФАЙЛОВ
+        window.handleICSImport = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const icsData = e.target.result;
+                const events = parseICS(icsData);
+                if (events.length > 0) {
+                    let reminders = [...(window.currentUserData.reminders || [])];
+                    events.forEach(ev => {
+                        reminders.push({ text: `[Event] ${ev.summary}`, datetime: ev.dtstart });
+                    });
+                    await updateDoc(window.userDocRef, { reminders });
+                    if(tg.showAlert) tg.showAlert(`Successfully imported ${events.length} events from Calendar! 🎉`);
+                } else {
+                    if(tg.showAlert) tg.showAlert("No valid events found in this file.");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function parseICS(icsString) {
+            const events = []; const lines = icsString.split(/\r?\n/);
+            let currentEvent = null;
+            lines.forEach(line => {
+                if (line.startsWith('BEGIN:VEVENT')) currentEvent = {};
+                else if (line.startsWith('END:VEVENT')) {
+                    if (currentEvent && currentEvent.summary && currentEvent.dtstart) events.push(currentEvent);
+                    currentEvent = null;
+                }
+                else if (currentEvent) {
+                    if (line.startsWith('SUMMARY:')) currentEvent.summary = line.substring(8);
+                    else if (line.startsWith('DTSTART')) {
+                        const match = line.match(/:(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})/);
+                        if(match) currentEvent.dtstart = `${match[1]}-${match[2]}-${match[3]} ${match[4]}:${match[5]}:00`;
+                        else {
+                            const match2 = line.match(/:(\d{4})(\d{2})(\d{2})/);
+                            if(match2) currentEvent.dtstart = `${match2[1]}-${match2[2]}-${match2[3]} 09:00:00`;
+                        }
+                    }
+                }
+            });
+            return events;
+        }
+
+        // GOOGLE CALENDAR OAUTH (Для работы нужен Google Client ID)
+        window.initGoogleSync = function() {
+            // ВНИМАНИЕ: Сюда нужно вписать Client ID от Google Cloud Console
+            const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID_HERE.apps.googleusercontent.com';
+            
+            if (GOOGLE_CLIENT_ID.includes('YOUR_GOOGLE')) {
+                if(tg.showAlert) tg.showAlert("Developer Note: To sync with Google Calendar, please insert your Google Client ID into the code (line ~610). Until then, you can use the Manual .ics Import! 📁");
+                return;
+            }
+
+            try {
+                const tokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: GOOGLE_CLIENT_ID,
+                    scope: 'https://www.googleapis.com/auth/calendar.readonly',
+                    callback: async (response) => {
+                        if (response.access_token) {
+                            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+                            const timeMin = new Date().toISOString();
+                            const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&maxResults=50&singleEvents=true&orderBy=startTime`, {
+                                headers: { Authorization: `Bearer ${response.access_token}` }
+                            });
+                            const data = await res.json();
+                            if(data.items && data.items.length > 0) {
+                                let reminders = [...(window.currentUserData.reminders || [])];
+                                data.items.forEach(ev => {
+                                    if(ev.start && (ev.start.dateTime || ev.start.date)) {
+                                        let dt = ev.start.dateTime ? ev.start.dateTime.replace('T', ' ').substring(0, 19) : ev.start.date + " 09:00:00";
+                                        reminders.push({ text: `[Google] ${ev.summary}`, datetime: dt });
+                                    }
+                                });
+                                await updateDoc(window.userDocRef, { reminders });
+                                if(tg.showAlert) tg.showAlert(`Synced ${data.items.length} upcoming events from Google! 🌐`);
+                            }
+                        }
+                    },
+                });
+                tokenClient.requestAccessToken();
+            } catch(e) {
+                if(tg.showAlert) tg.showAlert("Google Sync initialization failed. Check internet connection.");
+            }
         }
 
         // --- ДВИЖОК DRAG & DROP ---
@@ -397,7 +419,6 @@
             window.dragTimer = setTimeout(() => {
                 window.isDragging = true; window.dragOrigIndex = index;
                 if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy');
-                
                 const cardEl = e.target.closest('.card'); window.dragClone = cardEl.cloneNode(true);
                 window.dragClone.style.position = 'fixed'; window.dragClone.style.zIndex = '9999';
                 window.dragClone.style.width = cardEl.offsetWidth + 'px'; window.dragClone.style.height = cardEl.offsetHeight + 'px';
@@ -405,24 +426,17 @@
                 window.dragClone.style.left = (touch.clientX - cardEl.offsetWidth / 2) + 'px'; window.dragClone.style.top = (touch.clientY - cardEl.offsetHeight / 2) + 'px';
                 window.dragClone.style.pointerEvents = 'none'; window.dragClone.style.transition = 'none'; document.body.appendChild(window.dragClone);
                 cardEl.style.opacity = '0.3';
-                
                 const tz = document.getElementById('trashZone'); tz.style.transform = 'translateY(0)'; tz.style.background = 'rgba(255, 50, 50, 0.15)';
             }, 400);
         }
 
         document.addEventListener('touchmove', function(e) {
-            if (!window.isDragging) {
-                if (window.dragTimer) { const touch = e.touches[0]; if (Math.abs(touch.clientX - window.startX) > 10 || Math.abs(touch.clientY - window.startY) > 10) { clearTimeout(window.dragTimer); window.dragTimer = null; } }
-                return;
-            }
-            e.preventDefault(); 
-            const touch = e.touches[0];
+            if (!window.isDragging) { if (window.dragTimer) { const touch = e.touches[0]; if (Math.abs(touch.clientX - window.startX) > 10 || Math.abs(touch.clientY - window.startY) > 10) { clearTimeout(window.dragTimer); window.dragTimer = null; } } return; }
+            e.preventDefault(); const touch = e.touches[0];
             window.dragClone.style.left = (touch.clientX - window.dragClone.offsetWidth / 2) + 'px'; window.dragClone.style.top = (touch.clientY - window.dragClone.offsetHeight / 2) + 'px';
             window.dragClone.style.visibility = 'hidden'; const elem = document.elementFromPoint(touch.clientX, touch.clientY); window.dragClone.style.visibility = 'visible';
-
             document.querySelectorAll('.category-header').forEach(el => { el.style.border = '2px solid transparent'; el.style.background = 'transparent'; });
             document.getElementById('trashZone').style.transform = 'translateY(0)';
-
             if (elem) {
                 const header = elem.closest('.category-header'); const trash = elem.closest('#trashZone');
                 if (header) { header.style.border = '2px dashed var(--pink-main)'; header.style.background = 'rgba(255, 71, 126, 0.1)'; window.currentDroppable = { type: 'category', el: header };
@@ -432,37 +446,24 @@
         }, { passive: false });
 
         document.addEventListener('touchend', function(e) {
-            clearTimeout(window.dragTimer); window.dragTimer = null;
-            if (!window.isDragging) return;
+            clearTimeout(window.dragTimer); window.dragTimer = null; if (!window.isDragging) return;
             window.isDragging = false; window.justDragged = true; setTimeout(() => window.justDragged = false, 100);
-
-            if (window.dragClone) window.dragClone.remove();
-            document.getElementById('trashZone').style.transform = 'translateY(100%)';
+            if (window.dragClone) window.dragClone.remove(); document.getElementById('trashZone').style.transform = 'translateY(100%)';
             document.querySelectorAll('.category-header').forEach(el => { el.style.border = '2px solid transparent'; el.style.background = 'transparent'; });
-
-            if (window.currentDroppable) {
-                if (window.currentDroppable.type === 'category') { window.moveNoteToCategory(window.dragOrigIndex, window.currentDroppable.el.dataset.category); } 
-                else if (window.currentDroppable.type === 'trash') { window.deleteNoteByIndex(window.dragOrigIndex); }
-            } else { renderUI(); }
+            if (window.currentDroppable) { if (window.currentDroppable.type === 'category') { window.moveNoteToCategory(window.dragOrigIndex, window.currentDroppable.el.dataset.category); } else if (window.currentDroppable.type === 'trash') { window.deleteNoteByIndex(window.dragOrigIndex); } } else { renderUI(); }
             window.currentDroppable = null;
         });
 
         window.moveNoteToCategory = async function(index, newCategory) {
-            if (!window.userDocRef) return;
-            const data = window.currentUserData; let notes = [...(data.notes || [])];
-            const parsed = parseItem(notes[index]);
-            let newCategoryColors = { ...data.category_colors };
-            if (!defaultTags.includes(newCategory) && !newCategoryColors[newCategory]) { newCategoryColors[newCategory] = getUniqueColor(newCategoryColors); }
-            const dateStr = parsed.date ? `{${parsed.date}} ` : '';
-            const newText = `[${newCategory}] ${dateStr}${parsed.content}`;
-            notes.splice(index, 1); notes.unshift(newText); 
-            await updateDoc(window.userDocRef, { notes, category_colors: newCategoryColors });
+            if (!window.userDocRef) return; const data = window.currentUserData; let notes = [...(data.notes || [])]; const parsed = parseItem(notes[index]);
+            let newCategoryColors = { ...data.category_colors }; if (!defaultTags.includes(newCategory) && !newCategoryColors[newCategory]) { newCategoryColors[newCategory] = getUniqueColor(newCategoryColors); }
+            const dateStr = parsed.date ? `{${parsed.date}} ` : ''; const newText = `[${newCategory}] ${dateStr}${parsed.content}`;
+            notes.splice(index, 1); notes.unshift(newText); await updateDoc(window.userDocRef, { notes, category_colors: newCategoryColors });
             if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('success');
         }
 
         window.deleteNoteByIndex = async function(index) {
-            if (!window.userDocRef) return;
-            const data = window.currentUserData; let notes = [...(data.notes || [])];
+            if (!window.userDocRef) return; const data = window.currentUserData; let notes = [...(data.notes || [])];
             notes.splice(index, 1); await updateDoc(window.userDocRef, { notes });
             if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy');
         }
@@ -471,30 +472,14 @@
         window.switchTab = function(tabId, btn) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active')); document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
             document.getElementById(`tab-${tabId}`).classList.add('active'); btn.classList.add('active'); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); window.scrollTo(0,0);
-            
-            // Если перешли на дашборд, возвращаем скролл календаря
-            if (tabId === 'dashboard') {
-                setTimeout(() => {
-                    const strip = document.getElementById('calendarStrip');
-                    const activeEl = strip.querySelector('.active');
-                    if(activeEl) activeEl.scrollIntoView({behavior: "smooth", inline: "center", block: "nearest"});
-                }, 50);
-            }
         };
 
-        const defaultTags = ['Personal', 'Work', 'Finance', 'Ideas', 'Calendar']; const sectionIcons = { 'Personal': 'fa-user', 'Work': 'fa-briefcase', 'Finance': 'fa-wallet', 'Ideas': 'fa-lightbulb', 'Calendar': 'fa-calendar-alt' }; const neonHues = [330, 180, 45, 120, 270, 15, 210, 90, 30, 300, 60, 150];
+        const defaultTags = ['Personal', 'Work', 'Finance', 'Ideas']; const sectionIcons = { 'Personal': 'fa-user', 'Work': 'fa-briefcase', 'Finance': 'fa-wallet', 'Ideas': 'fa-lightbulb', 'Event': 'fa-calendar-alt', 'Google': 'fa-google' }; const neonHues = [330, 180, 45, 120, 270, 15, 210, 90, 30, 300, 60, 150];
         function getUniqueColor(existingColorsObj) { const usedColors = Object.values(existingColorsObj); for (let hue of neonHues) { const color = `hsl(${hue}, 100%, 65%)`; if (!usedColors.includes(color)) return color; } return `hsl(${Math.floor(Math.random()*360)}, 100%, 65%)`; }
-        function getCategoryColor(category) { const predefined = { 'Personal': '#ff477e', 'Work': '#00f0ff', 'Finance': '#ffd700', 'Ideas': '#b554ff', 'Calendar': '#ff8a00' }; if (window.currentUserData?.category_colors?.[category]) return window.currentUserData.category_colors[category]; if (predefined[category]) return predefined[category]; return '#ffffff'; }
+        function getCategoryColor(category) { const predefined = { 'Personal': '#ff477e', 'Work': '#00f0ff', 'Finance': '#ffd700', 'Ideas': '#b554ff', 'Event': '#2AABEE', 'Google': '#EA4335' }; if (window.currentUserData?.category_colors?.[category]) return window.currentUserData.category_colors[category]; if (predefined[category]) return predefined[category]; return '#ffffff'; }
         
         function parseItem(rawText) { const match = rawText.match(/^\[(.*?)\](?:\s*\{([^\}]+)\})?\s*([\s\S]*)/); if (match) { return { category: match[1], date: match[2] || '', content: match[3], rawText }; } return { category: "Personal", date: '', content: rawText, rawText }; }
-        
-        function formatCardText(text) { 
-            let html = text.replace(/^<div class="note-title">(.*?)<\/div>/gm, '<b class="note-title">$1</b>')
-                           .replace(/^#\s+(.*)$/gm, '<b class="note-title">$1</b>')
-                           .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
-                           .replace(/_(.*?)_/g, '<i>$1</i>');
-            return html; 
-        }
+        function formatCardText(text) { return text.replace(/^<div class="note-title">(.*?)<\/div>/gm, '<b class="note-title">$1</b>').replace(/^#\s+(.*)$/gm, '<b class="note-title">$1</b>').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/_(.*?)_/g, '<i>$1</i>'); }
 
         window.setTaskFilter = function(filter) { window.currentTaskFilter = filter; document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active')); document.getElementById(filter === 'all' ? 'fltAll' : 'fltToday').classList.add('active'); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); renderUI(); }
         window.filterNotes = function() { renderUI(); }
@@ -506,8 +491,7 @@
             const notes = data.notes || []; let reminders = data.reminders || [];
             document.getElementById('dbItemCount').innerText = `${notes.length + reminders.length}`; document.getElementById('dashNotesCount').innerText = `${notes.length}`;
 
-            // ГЕНЕРАЦИЯ КАЛЕНДАРЯ С ИНДИКАТОРАМИ ИВЕНТОВ
-            generateCalendar(reminders);
+            renderCalendar();
 
             const searchTerm = document.getElementById('searchInput').value.toLowerCase(); const vault = document.getElementById('notesVault'); const groupedNotes = {};
             notes.forEach((n, i) => { const parsed = parseItem(n); if (parsed.content.toLowerCase().includes(searchTerm)) { if (!groupedNotes[parsed.category]) groupedNotes[parsed.category] = []; groupedNotes[parsed.category].push({ ...parsed, origIndex: i }); } });
@@ -526,40 +510,42 @@
                 }); vault.innerHTML = vaultHTML;
             }
 
-            // ФИЛЬТРАЦИЯ РАСПИСАНИЯ ДЛЯ DASHBOARD (ПО КАЛЕНДАРЮ)
-            const dReminders = document.getElementById('dashReminders');
-            const selDateStr = `${window.selectedDashboardDate.getFullYear()}-${window.selectedDashboardDate.getMonth()}-${window.selectedDashboardDate.getDate()}`;
+            const tList = document.getElementById('tasksList'); const dReminders = document.getElementById('dashReminders'); const todayStr = new Date().toLocaleDateString();
             
-            let dashboardReminders = reminders.filter(r => {
-                if(r.datetime) {
-                    const d = new Date(r.datetime.replace(' ', 'T'));
-                    return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}` === selDateStr;
-                } return false;
-            });
+            // Фильтрация Reminders / Events для главной страницы (по выбранной дате)
+            let displayRemindersDash = reminders;
+            if(window.selectedDate) {
+                displayRemindersDash = reminders.filter(r => r.datetime && r.datetime.startsWith(window.selectedDate));
+            }
+            
+            // Фильтрация для вкладки Tasks
+            let displayTasksTab = reminders; 
+            if(window.currentTaskFilter === 'today') { displayTasksTab = reminders.filter(r => new Date(r.datetime.replace(' ', 'T')).toLocaleDateString() === todayStr); }
 
-            if(dashboardReminders.length === 0) { dReminders.innerHTML = '<p class="empty-state">No events for this day.</p>'; } else {
-                dReminders.innerHTML = dashboardReminders.map((r, i) => {
-                    const parsed = parseItem(r.text); const d = new Date(r.datetime.replace(' ', 'T')); const timeStr = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}); const color = getCategoryColor(parsed.category);
-                    return `<div class="list-item"><div class="list-info"><span class="list-title">${parsed.content}</span><div class="list-meta"><span style="color: ${color};"><i class="fas fa-circle" style="font-size:8px;"></i> ${parsed.category}</span> • <span>${timeStr}</span></div></div></div>`;
+            // Отрисовка Дашборда
+            if(displayRemindersDash.length === 0) { dReminders.innerHTML = '<p class="empty-state">Free day! No events scheduled.</p>'; } else {
+                dReminders.innerHTML = displayRemindersDash.map((r) => {
+                    const parsed = parseItem(r.text); const d = new Date(r.datetime.replace(' ', 'T')); const dateStr = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}); const color = getCategoryColor(parsed.category);
+                    const origIndex = reminders.indexOf(r);
+                    return `<div class="list-item" onclick="openReminderModal(${origIndex})"><div class="list-info"><span class="list-title">${parsed.content}</span><div class="list-meta"><span style="color: ${color};"><i class="fas fa-circle" style="font-size:8px;"></i> ${parsed.category}</span> • <span>${dateStr}</span></div></div><div class="checkbox" onclick="event.stopPropagation(); completeReminder(${origIndex})"><i class="fas fa-check"></i></div></div>`;
                 }).join('');
             }
+            document.getElementById('statPending').innerText = displayRemindersDash.length + " Events"; 
             
-            // ОБНОВЛЕНИЕ TAB 3 (To-Do List)
-            const tList = document.getElementById('tasksList'); const todayStr = new Date().toLocaleDateString();
-            let displayReminders = reminders; if(window.currentTaskFilter === 'today') { displayReminders = reminders.filter(r => new Date(r.datetime.replace(' ', 'T')).toLocaleDateString() === todayStr); }
-            if(displayReminders.length === 0) { tList.innerHTML = '<p class="empty-state">No pending tasks.</p>'; } else {
-                tList.innerHTML = displayReminders.map((r, i) => {
+            // Отрисовка Tasks Tab
+            if(displayTasksTab.length === 0) { tList.innerHTML = '<p class="empty-state">No pending tasks.</p>'; } else {
+                tList.innerHTML = displayTasksTab.map((r) => {
                     const parsed = parseItem(r.text); const d = new Date(r.datetime.replace(' ', 'T')); const dateStr = d.toLocaleDateString([], {month:'short', day:'numeric'}) + ', ' + d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}); const color = getCategoryColor(parsed.category);
-                    return `<div class="list-item" onclick="openReminderModal(${i})"><div class="list-info"><span class="list-title">${parsed.content}</span><div class="list-meta"><span style="color: ${color};"><i class="fas fa-circle" style="font-size:8px;"></i> ${parsed.category}</span> • <span>${dateStr}</span></div></div><div class="checkbox" onclick="event.stopPropagation(); completeReminder(${i})"><i class="fas fa-check"></i></div></div>`;
-                }).join(''); 
+                    const origIndex = reminders.indexOf(r);
+                    return `<div class="list-item" onclick="openReminderModal(${origIndex})"><div class="list-info"><span class="list-title">${parsed.content}</span><div class="list-meta"><span style="color: ${color};"><i class="fas fa-circle" style="font-size:8px;"></i> ${parsed.category}</span> • <span>${dateStr}</span></div></div><div class="checkbox" onclick="event.stopPropagation(); completeReminder(${origIndex})"><i class="fas fa-check"></i></div></div>`;
+                }).join('');
             }
 
-            // Кольцо активности (считаем только на Сегодня)
-            const pendingToday = reminders.filter(r => new Date(r.datetime.replace(' ', 'T')).toLocaleDateString() === todayStr).length;
-            document.getElementById('statPending').innerText = pendingToday + " Tasks"; 
             document.getElementById('statCompleted').innerText = data.completed_tasks || 0; 
-            let pct = pendingToday === 0 ? 100 : Math.max(5, 100 - (pendingToday * 15)); document.getElementById('activityRing').style.strokeDasharray = `${pct}, 100`; document.getElementById('activityPct').innerText = `${Math.floor(pct)}%`;
+            let pct = displayRemindersDash.length === 0 ? 100 : Math.max(5, 100 - (displayRemindersDash.length * 15)); document.getElementById('activityRing').style.strokeDasharray = `${pct}, 100`; document.getElementById('activityPct').innerText = `${Math.floor(pct)}%`;
         }
+
+        function renderActivityRing() {} // Заглушка, логика перенесена в renderUI()
 
         window.closeAllModals = function() { document.querySelectorAll('.modal-sheet').forEach(m => m.classList.remove('active')); document.getElementById('modalOverlay').classList.remove('active'); if (tg.BackButton && !document.getElementById('zenEditor').classList.contains('active')) { tg.BackButton.hide(); } }
         window.openCreationRouter = function() { if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium'); document.getElementById('modalOverlay').classList.add('active'); document.getElementById('creationRouterModal').classList.add('active'); if(tg.BackButton) tg.BackButton.show(); }
@@ -572,15 +558,12 @@
             if (index !== -1) { const parsed = parseItem(data.notes[index]); category = parsed.category; rawContent = parsed.content; if (parsed.date) dateStr = parsed.date; }
             
             let titleStr = ""; let bodyStr = rawContent;
-            
             const titleMatch = rawContent.match(/^<div class="note-title">(.*?)<\/div>([\s\S]*)/);
             if (titleMatch) { titleStr = titleMatch[1]; bodyStr = titleMatch[2]; } 
             else if (rawContent.startsWith('# ')) { const lines = rawContent.split('\n'); titleStr = lines[0].substring(2).trim(); bodyStr = lines.slice(1).join('\n').trim(); }
 
-            window.currentZenCategory = category;
-            document.getElementById('zeCategoryBadge').innerText = category; document.getElementById('zeDate').innerText = dateStr; 
-            document.getElementById('zeTitle').value = titleStr; document.getElementById('zeTextarea').innerHTML = bodyStr; 
-            document.getElementById('zeTextarea').style.fontSize = `${currentFontSize}px`;
+            window.currentZenCategory = category; document.getElementById('zeCategoryBadge').innerText = category; document.getElementById('zeDate').innerText = dateStr; 
+            document.getElementById('zeTitle').value = titleStr; document.getElementById('zeTextarea').innerHTML = bodyStr; document.getElementById('zeTextarea').style.fontSize = `${currentFontSize}px`;
             
             updateWordCount(); document.getElementById('zenEditor').classList.add('active'); if(tg.BackButton) tg.BackButton.show();
         }
@@ -613,14 +596,11 @@
 
         window.applyFormat = function(type, e) {
             e.preventDefault(); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-            if (type === 'bold') { document.execCommand('bold', false, null); }
-            else if (type === 'italic') { document.execCommand('italic', false, null); }
-            else if (type === 'link') { const url = prompt("Enter URL:", "https://"); if (url) document.execCommand('createLink', false, url); }
-            else if (type === 'list') { document.execCommand('insertUnorderedList', false, null); }
+            if (type === 'bold') { document.execCommand('bold', false, null); } else if (type === 'italic') { document.execCommand('italic', false, null); }
+            else if (type === 'link') { const url = prompt("Enter URL:", "https://"); if (url) document.execCommand('createLink', false, url); } else if (type === 'list') { document.execCommand('insertUnorderedList', false, null); }
             updateWordCount();
         };
 
-        // --- OPTIONS ---
         window.openContextOptions = function() { if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); document.getElementById('modalOverlay').classList.add('active'); document.getElementById('contextOptionsMenu').classList.add('active'); if(tg.BackButton) tg.BackButton.show(); }
         window.closeContextMenu = function() { document.getElementById('contextOptionsMenu').classList.remove('active'); document.getElementById('modalOverlay').classList.remove('active'); }
         window.changeFontSize = function(delta) { currentFontSize += delta; if(currentFontSize < 12) currentFontSize = 12; if(currentFontSize > 30) currentFontSize = 30; document.getElementById('zeTextarea').style.fontSize = `${currentFontSize}px`; if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); }
@@ -643,6 +623,8 @@
             document.getElementById('remText').value = content; document.getElementById('remDate').value = timeStr; document.getElementById('modalOverlay').classList.add('active'); document.getElementById('reminderModal').classList.add('active'); if(tg.BackButton) tg.BackButton.show();
         }
         window.setQuickTime = function(type) { let d = new Date(); if (type === '1h') d.setHours(d.getHours() + 1); else if (type === '3h') d.setHours(d.getHours() + 3); else if (type === 'tmw_morn') { d.setDate(d.getDate() + 1); d.setHours(9, 0, 0); } else if (type === 'tmw_eve') { d.setDate(d.getDate() + 1); d.setHours(19, 0, 0); } const offset = d.getTimezoneOffset() * 60000; document.getElementById('remDate').value = (new Date(d - offset)).toISOString().slice(0, 16); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); }
+        
+        // При сохранении задачи, если выбрана дата, она попадает в нужный день на календаре!
         window.saveReminder = async function() { if(!window.userDocRef) return; const data = window.currentUserData; const text = document.getElementById('remText').value.trim(); const dateVal = document.getElementById('remDate').value; if(!text || !dateVal) return; const idx = parseInt(document.getElementById('remEditIndex').value); let reminders = [...(data.reminders || [])]; const formattedText = `[Agenda] ${text}`; if (idx !== -1) reminders.splice(idx, 1); reminders.push({ text: formattedText, datetime: dateVal.replace('T', ' ') + ":00" }); await updateDoc(window.userDocRef, { reminders }); closeAllModals(); if(tg.BackButton) tg.BackButton.hide(); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy'); }
         window.deleteReminder = async function() { if(!window.userDocRef) return; const idx = parseInt(document.getElementById('remEditIndex').value); const data = window.currentUserData; let reminders = [...(data.reminders || [])]; reminders.splice(idx, 1); await updateDoc(window.userDocRef, { reminders }); closeAllModals(); if(tg.BackButton) tg.BackButton.hide(); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium'); }
         window.completeReminder = async function(index) { if(!window.userDocRef) return; const data = window.currentUserData; if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium'); document.querySelectorAll('#tasksList .list-item')[index].classList.add('done'); let reminders = [...(data.reminders || [])]; reminders.splice(index, 1); const completed = (data.completed_tasks || 0) + 1; setTimeout(async () => { await updateDoc(window.userDocRef, { reminders, completed_tasks: completed }); }, 300); }
