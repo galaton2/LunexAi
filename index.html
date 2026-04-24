@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Lunex Premium</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -14,6 +12,8 @@
 
     <div id="splashScreen"><i class="fas fa-star splash-logo"></i></div>
     <script>setTimeout(() => { const s = document.getElementById('splashScreen'); if(s) s.style.opacity='0'; setTimeout(()=>s.style.display='none',500); }, 3000);</script>
+
+    <input type="file" id="icsFileInput" accept=".ics,text/calendar" style="display:none" onchange="handleICSUpload(event)">
 
     <div id="trashZone">
         <i class="fas fa-trash-alt"></i> <span style="font-size:16px; font-weight:bold;">Drop to Delete</span>
@@ -38,7 +38,7 @@
                 </div>
                 <div class="dash-main-text">
                     <h3 id="statPending">0 Tasks</h3>
-                    <p id="dashDateLabel">Pending Today</p>
+                    <p>On Selected Day</p>
                 </div>
             </div>
             
@@ -56,10 +56,7 @@
             </div>
         </div>
 
-        <h2 class="section-title">
-            <span>Schedule</span>
-            <span class="view-all-btn" onclick="selectCalendarDate(null)">View All</span>
-        </h2>
+        <h2 class="section-title">Schedule</h2>
         <div id="dashReminders"></div>
     </main>
 
@@ -87,17 +84,13 @@
             </div>
         </div>
         
-        <h2 class="section-title">Integrations</h2>
-        
-        <div class="list-item" onclick="document.getElementById('icsFileInput').click()">
-            <div class="list-info"><span class="list-title"><i class="fas fa-file-import" style="color: #2AABEE;"></i> Import .ics Calendar</span></div>
+        <h2 class="section-title">Calendar & Sync</h2>
+        <div class="list-item" onclick="openGoogleSyncModal()">
+            <div class="list-info">
+                <span class="list-title"><i class="fab fa-google" style="color: #4285F4;"></i> Sync with Google / iOS</span>
+                <span style="font-size:11px; color:var(--text-muted);">Import your external schedule</span>
+            </div>
             <i class="fas fa-chevron-right" style="color: var(--text-muted);"></i>
-        </div>
-        <input type="file" id="icsFileInput" accept=".ics" style="display:none;" onchange="handleICSImport(event)">
-
-        <div class="list-item" onclick="initGoogleSync()">
-            <div class="list-info"><span class="list-title"><i class="fab fa-google" style="color: #EA4335;"></i> Sync Google Calendar</span></div>
-            <i class="fas fa-sync" style="color: var(--text-muted);"></i>
         </div>
 
         <h2 class="section-title">Notifications</h2>
@@ -123,19 +116,40 @@
 
     <div class="modal-overlay" id="modalOverlay" onclick="closeAllModals()"></div>
     
+    <div class="modal-sheet" id="googleSyncModal" style="z-index: 1001;">
+        <div class="modal-close-btn" onclick="closeAllModals()"><i class="fas fa-times"></i></div>
+        <h2 class="section-title" style="margin-top:0; text-align:center;">Calendar Import</h2>
+        <div style="text-align: center; padding: 10px 0 20px;">
+            <i class="far fa-calendar-alt" style="font-size: 50px; color: var(--pink-main); margin-bottom: 15px;"></i>
+            <p style="font-size: 14px; color: var(--text-main); margin-bottom: 15px; font-weight: 500;">
+                Direct sync requires complex authorization. It's much faster to import your calendar file!
+            </p>
+            <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 16px; text-align: left; font-size: 13px; color: var(--text-muted); margin-bottom: 20px; border: 1px solid var(--card-border);">
+                <b style="color:#fff;">How to do it:</b><br><br>
+                1. Open Google or Apple Calendar on your PC.<br>
+                2. Go to Settings -> Import & Export.<br>
+                3. Click "Export" and get the <b>.ics</b> file.<br>
+                4. Upload that file right here.
+            </div>
+            <button class="btn btn-primary" style="width:100%" onclick="document.getElementById('icsFileInput').click(); closeAllModals();">
+                <i class="fas fa-file-upload"></i> Upload .ics File
+            </button>
+        </div>
+    </div>
+
     <div class="modal-sheet" id="creationRouterModal">
         <div class="modal-close-btn" onclick="closeAllModals()"><i class="fas fa-times"></i></div>
         <h2 class="section-title" style="margin-top:0;">Create New</h2>
         <div class="creation-grid">
             <div class="creation-btn" onclick="openZenEditor(-1)"><i class="fas fa-pen-nib"></i> New Note</div>
-            <div class="creation-btn" onclick="openReminderModal(-1)"><i class="fas fa-clock"></i> New Reminder / Event</div>
+            <div class="creation-btn" onclick="openReminderModal(-1)"><i class="fas fa-clock"></i> New Event / Reminder</div>
         </div>
     </div>
 
     <div class="modal-sheet" id="reminderModal" style="z-index: 1001;">
         <div class="modal-close-btn" onclick="closeAllModals()"><i class="fas fa-times"></i></div>
-        <h2 class="section-title" id="remModalTitle" style="margin-top:0;">Set Reminder</h2>
-        <div class="form-group"><input type="text" class="form-control" id="remText" placeholder="What to do?"></div>
+        <h2 class="section-title" id="remModalTitle" style="margin-top:0;">Set Event</h2>
+        <div class="form-group"><input type="text" class="form-control" id="remText" placeholder="Event title..."></div>
         <div class="form-group">
             <input type="datetime-local" class="form-control" id="remDate">
             <div class="quick-time-row">
@@ -184,15 +198,18 @@
 
     <div class="modal-sheet" id="contextOptionsMenu" style="z-index: 2005;">
         <div class="modal-close-btn" onclick="closeContextMenu()"><i class="fas fa-times"></i></div>
+        
         <h2 class="section-title" style="margin-top:0;">Organization</h2>
         <div class="menu-list" style="margin-bottom: 20px;">
             <div class="menu-item" onclick="openCategorySelector()"><i class="fas fa-folder-open" style="color:var(--pink-main)"></i> Move to Category</div>
         </div>
+
         <h2 class="section-title" style="margin-top:0;">Typography</h2>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
             <div class="creation-btn" onclick="changeFontSize(2)" style="justify-content: center; padding: 12px;"><i class="fas fa-search-plus"></i> A+</div>
             <div class="creation-btn" onclick="changeFontSize(-2)" style="justify-content: center; padding: 12px;"><i class="fas fa-search-minus"></i> A-</div>
         </div>
+        
         <h2 class="section-title" style="margin-top:0;">Appearance</h2>
         <div class="menu-list" style="margin-bottom: 20px;">
             <div class="menu-item" onclick="toggleFocusMode()"><i class="fas fa-eye-slash"></i> Zen Focus Mode</div>
@@ -200,6 +217,7 @@
             <div class="menu-item" onclick="toggleFontFamily()"><i class="fas fa-font"></i> Change Font Style</div>
             <div class="menu-item" onclick="toggleTextWidth()"><i class="fas fa-arrows-alt-h"></i> Toggle Reading Width</div>
         </div>
+        
         <h2 class="section-title" style="margin-top:0;">Actions</h2>
         <div class="menu-list">
             <div class="menu-item" onclick="exportNoteTxt()"><i class="fas fa-file-export"></i> Export as TXT</div>
@@ -227,10 +245,11 @@
         import { getFirestore, doc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
 
         const tg = window.Telegram?.WebApp || {};
+        
         try {
             if (tg.expand) tg.expand();
             if (tg.requestFullscreen) tg.requestFullscreen();
-            if (tg.disableVerticalSwipes) tg.disableVerticalSwipes();
+            if (tg.disableVerticalSwipes) tg.disableVerticalSwipes(); 
             if (tg.isVerticalSwipesEnabled !== undefined) tg.isVerticalSwipesEnabled = false;
         } catch(e) {}
 
@@ -243,6 +262,8 @@
                     document.getElementById('modalOverlay').classList.remove('active');
                 } else if (document.getElementById('zenEditor').classList.contains('active')) {
                     saveAndCloseZenEditor();
+                } else if (document.getElementById('googleSyncModal').classList.contains('active')) {
+                    closeAllModals();
                 } else if (document.getElementById('categoryModal').classList.contains('active')) {
                     closeCategoryModal();
                 } else {
@@ -254,14 +275,14 @@
         let userId = null; let userName = "User"; window.userDocRef = null; window.currentUserData = null;
         let openSections = JSON.parse(localStorage.getItem('lunexOpenSections')) || {}; let currentFontSize = 16; let typingTimer;
         window.currentZenCategory = "Personal";
-        window.selectedDate = null; // Выбранная дата в календаре
+        
+        // ГЛОБАЛЬНАЯ ДАТА КАЛЕНДАРЯ
+        window.selectedDashDate = new Date().toLocaleDateString();
 
-        // --- СТАРТ И БАЗА ДАННЫХ ---
         if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
             userId = tg.initDataUnsafe.user.id.toString();
             userName = tg.initDataUnsafe.user.first_name || "User";
             
-            document.getElementById('userName').innerText = "Hi " + userName + ",";
             document.getElementById('setName').innerText = userName;
             document.getElementById('setID').innerText = userId;
             
@@ -276,139 +297,74 @@
                 if (docSnap.exists()) {
                     window.currentUserData = docSnap.data();
                     if (!window.currentUserData.category_colors) window.currentUserData.category_colors = {};
-                    renderUI();
+                    renderUI(); renderActivityRing();
                 } else {
                     window.currentUserData = { notes: [], reminders: [], category_colors: {} };
                     renderUI();
                 }
-            }, (error) => { console.error(error); if(tg.showAlert) tg.showAlert("Database error"); });
+            }, (error) => { console.error(error); if(tg.showAlert) tg.showAlert("Database connection error"); });
         }
 
-        // --- УМНЫЙ КАЛЕНДАРЬ И ПАРСИНГ ---
-        window.selectCalendarDate = function(el, dateStr) {
-            document.querySelectorAll('.calendar-day').forEach(d => d.classList.remove('active'));
-            if(el) { el.classList.add('active'); window.selectedDate = dateStr; document.getElementById('dashDateLabel').innerText = "Scheduled for " + dateStr; }
-            else { window.selectedDate = null; document.getElementById('dashDateLabel').innerText = "All Upcoming Plans"; }
+        // --- ICS CALENDAR PARSER ---
+        window.openGoogleSyncModal = function() {
             if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-            renderUI();
+            document.getElementById('modalOverlay').classList.add('active');
+            document.getElementById('googleSyncModal').classList.add('active');
+            if(tg.BackButton) tg.BackButton.show();
         }
 
-        function renderCalendar() {
-            const strip = document.getElementById('calendarStrip');
-            let html = ''; const today = new Date(); const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-            const reminders = window.currentUserData?.reminders || [];
-            
-            // Собираем даты, в которые есть события
-            const activeDates = new Set(reminders.map(r => r.datetime ? r.datetime.split(' ')[0] : ''));
-
-            for(let i = -3; i <= 14; i++) { 
-                const d = new Date(today); d.setDate(today.getDate() + i);
-                const dateStr = d.toISOString().split('T')[0]; // YYYY-MM-DD
-                
-                let isSelected = '';
-                if(window.selectedDate === dateStr) isSelected = 'active';
-                else if(!window.selectedDate && i === 0) isSelected = 'active'; // Сегодня по умолчанию
-
-                const hasEvents = activeDates.has(dateStr) ? 'has-events' : '';
-
-                html += `<div class="calendar-day ${isSelected} ${hasEvents}" onclick="selectCalendarDate(this, '${dateStr}')">
-                    <span class="cal-name">${days[d.getDay()]}</span>
-                    <span class="cal-date">${d.getDate()}</span>
-                    <div class="cal-dot"></div>
-                </div>`;
-                
-                // Если ничего не выбрано, ставим сегодняшний день по умолчанию для фильтра
-                if(!window.selectedDate && i === 0) window.selectedDate = dateStr; 
-            }
-            strip.innerHTML = html;
-        }
-
-        // РУЧНОЙ ИМПОРТ .ICS ФАЙЛОВ
-        window.handleICSImport = function(event) {
+        window.handleICSUpload = async function(event) {
             const file = event.target.files[0];
             if (!file) return;
+            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+
             const reader = new FileReader();
             reader.onload = async function(e) {
-                const icsData = e.target.result;
-                const events = parseICS(icsData);
-                if (events.length > 0) {
-                    let reminders = [...(window.currentUserData.reminders || [])];
-                    events.forEach(ev => {
-                        reminders.push({ text: `[Event] ${ev.summary}`, datetime: ev.dtstart });
-                    });
+                const text = e.target.result;
+                const lines = text.split(/\r?\n/);
+                const newEvents = [];
+                let currentEvent = null;
+                const now = new Date();
+
+                lines.forEach(line => {
+                    if (line.startsWith('BEGIN:VEVENT')) { currentEvent = {}; } 
+                    else if (line.startsWith('END:VEVENT')) {
+                        if (currentEvent && currentEvent.start && currentEvent.title) {
+                            // Фильтруем прошедшие события (старше 1 дня)
+                            const evtDate = new Date(currentEvent.start.replace(' ', 'T'));
+                            if (evtDate >= new Date(now.getTime() - 86400000)) {
+                                newEvents.push({ text: `[Imported] ${currentEvent.title}`, datetime: currentEvent.start });
+                            }
+                        }
+                        currentEvent = null;
+                    } else if (currentEvent) {
+                        if (line.startsWith('SUMMARY:')) currentEvent.title = line.substring(8);
+                        else if (line.startsWith('DTSTART:')) currentEvent.start = formatICSDate(line.substring(8));
+                        else if (line.startsWith('DTSTART;VALUE=DATE:')) currentEvent.start = formatICSDate(line.substring(19) + 'T000000');
+                    }
+                });
+
+                if (newEvents.length > 0 && window.userDocRef) {
+                    const data = window.currentUserData;
+                    let reminders = [...(data.reminders || [])];
+                    reminders = reminders.concat(newEvents);
                     await updateDoc(window.userDocRef, { reminders });
-                    if(tg.showAlert) tg.showAlert(`Successfully imported ${events.length} events from Calendar! 🎉`);
+                    if(tg.showAlert) tg.showAlert(`Successfully imported ${newEvents.length} future events! 🎉`);
                 } else {
-                    if(tg.showAlert) tg.showAlert("No valid events found in this file.");
+                    if(tg.showAlert) tg.showAlert("No new future events found in this file.");
                 }
             };
             reader.readAsText(file);
         }
 
-        function parseICS(icsString) {
-            const events = []; const lines = icsString.split(/\r?\n/);
-            let currentEvent = null;
-            lines.forEach(line => {
-                if (line.startsWith('BEGIN:VEVENT')) currentEvent = {};
-                else if (line.startsWith('END:VEVENT')) {
-                    if (currentEvent && currentEvent.summary && currentEvent.dtstart) events.push(currentEvent);
-                    currentEvent = null;
-                }
-                else if (currentEvent) {
-                    if (line.startsWith('SUMMARY:')) currentEvent.summary = line.substring(8);
-                    else if (line.startsWith('DTSTART')) {
-                        const match = line.match(/:(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})/);
-                        if(match) currentEvent.dtstart = `${match[1]}-${match[2]}-${match[3]} ${match[4]}:${match[5]}:00`;
-                        else {
-                            const match2 = line.match(/:(\d{4})(\d{2})(\d{2})/);
-                            if(match2) currentEvent.dtstart = `${match2[1]}-${match2[2]}-${match2[3]} 09:00:00`;
-                        }
-                    }
-                }
-            });
-            return events;
-        }
-
-        // GOOGLE CALENDAR OAUTH (Для работы нужен Google Client ID)
-        window.initGoogleSync = function() {
-            // ВНИМАНИЕ: Сюда нужно вписать Client ID от Google Cloud Console
-            const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID_HERE.apps.googleusercontent.com';
-            
-            if (GOOGLE_CLIENT_ID.includes('YOUR_GOOGLE')) {
-                if(tg.showAlert) tg.showAlert("Developer Note: To sync with Google Calendar, please insert your Google Client ID into the code (line ~610). Until then, you can use the Manual .ics Import! 📁");
-                return;
-            }
-
-            try {
-                const tokenClient = google.accounts.oauth2.initTokenClient({
-                    client_id: GOOGLE_CLIENT_ID,
-                    scope: 'https://www.googleapis.com/auth/calendar.readonly',
-                    callback: async (response) => {
-                        if (response.access_token) {
-                            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
-                            const timeMin = new Date().toISOString();
-                            const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&maxResults=50&singleEvents=true&orderBy=startTime`, {
-                                headers: { Authorization: `Bearer ${response.access_token}` }
-                            });
-                            const data = await res.json();
-                            if(data.items && data.items.length > 0) {
-                                let reminders = [...(window.currentUserData.reminders || [])];
-                                data.items.forEach(ev => {
-                                    if(ev.start && (ev.start.dateTime || ev.start.date)) {
-                                        let dt = ev.start.dateTime ? ev.start.dateTime.replace('T', ' ').substring(0, 19) : ev.start.date + " 09:00:00";
-                                        reminders.push({ text: `[Google] ${ev.summary}`, datetime: dt });
-                                    }
-                                });
-                                await updateDoc(window.userDocRef, { reminders });
-                                if(tg.showAlert) tg.showAlert(`Synced ${data.items.length} upcoming events from Google! 🌐`);
-                            }
-                        }
-                    },
-                });
-                tokenClient.requestAccessToken();
-            } catch(e) {
-                if(tg.showAlert) tg.showAlert("Google Sync initialization failed. Check internet connection.");
-            }
+        function formatICSDate(icsDate) {
+            if (!icsDate) return null;
+            const y = icsDate.substring(0,4); const m = icsDate.substring(4,6); const d = icsDate.substring(6,8);
+            let h = '00', min = '00', s = '00';
+            if (icsDate.length > 8) { h = icsDate.substring(9,11); min = icsDate.substring(11,13); s = icsDate.substring(13,15); }
+            let dateObj = icsDate.endsWith('Z') ? new Date(Date.UTC(y, m-1, d, h, min, s)) : new Date(y, m-1, d, h, min, s);
+            const offset = dateObj.getTimezoneOffset() * 60000;
+            return (new Date(dateObj - offset)).toISOString().slice(0, 16).replace('T', ' ') + ':00';
         }
 
         // --- ДВИЖОК DRAG & DROP ---
@@ -431,12 +387,18 @@
         }
 
         document.addEventListener('touchmove', function(e) {
-            if (!window.isDragging) { if (window.dragTimer) { const touch = e.touches[0]; if (Math.abs(touch.clientX - window.startX) > 10 || Math.abs(touch.clientY - window.startY) > 10) { clearTimeout(window.dragTimer); window.dragTimer = null; } } return; }
-            e.preventDefault(); const touch = e.touches[0];
+            if (!window.isDragging) {
+                if (window.dragTimer) { const touch = e.touches[0]; if (Math.abs(touch.clientX - window.startX) > 10 || Math.abs(touch.clientY - window.startY) > 10) { clearTimeout(window.dragTimer); window.dragTimer = null; } }
+                return;
+            }
+            e.preventDefault(); 
+            const touch = e.touches[0];
             window.dragClone.style.left = (touch.clientX - window.dragClone.offsetWidth / 2) + 'px'; window.dragClone.style.top = (touch.clientY - window.dragClone.offsetHeight / 2) + 'px';
             window.dragClone.style.visibility = 'hidden'; const elem = document.elementFromPoint(touch.clientX, touch.clientY); window.dragClone.style.visibility = 'visible';
+
             document.querySelectorAll('.category-header').forEach(el => { el.style.border = '2px solid transparent'; el.style.background = 'transparent'; });
             document.getElementById('trashZone').style.transform = 'translateY(0)';
+
             if (elem) {
                 const header = elem.closest('.category-header'); const trash = elem.closest('#trashZone');
                 if (header) { header.style.border = '2px dashed var(--pink-main)'; header.style.background = 'rgba(255, 71, 126, 0.1)'; window.currentDroppable = { type: 'category', el: header };
@@ -446,24 +408,37 @@
         }, { passive: false });
 
         document.addEventListener('touchend', function(e) {
-            clearTimeout(window.dragTimer); window.dragTimer = null; if (!window.isDragging) return;
+            clearTimeout(window.dragTimer); window.dragTimer = null;
+            if (!window.isDragging) return;
             window.isDragging = false; window.justDragged = true; setTimeout(() => window.justDragged = false, 100);
-            if (window.dragClone) window.dragClone.remove(); document.getElementById('trashZone').style.transform = 'translateY(100%)';
+
+            if (window.dragClone) window.dragClone.remove();
+            document.getElementById('trashZone').style.transform = 'translateY(100%)';
             document.querySelectorAll('.category-header').forEach(el => { el.style.border = '2px solid transparent'; el.style.background = 'transparent'; });
-            if (window.currentDroppable) { if (window.currentDroppable.type === 'category') { window.moveNoteToCategory(window.dragOrigIndex, window.currentDroppable.el.dataset.category); } else if (window.currentDroppable.type === 'trash') { window.deleteNoteByIndex(window.dragOrigIndex); } } else { renderUI(); }
+
+            if (window.currentDroppable) {
+                if (window.currentDroppable.type === 'category') { window.moveNoteToCategory(window.dragOrigIndex, window.currentDroppable.el.dataset.category); } 
+                else if (window.currentDroppable.type === 'trash') { window.deleteNoteByIndex(window.dragOrigIndex); }
+            } else { renderUI(); }
             window.currentDroppable = null;
         });
 
         window.moveNoteToCategory = async function(index, newCategory) {
-            if (!window.userDocRef) return; const data = window.currentUserData; let notes = [...(data.notes || [])]; const parsed = parseItem(notes[index]);
-            let newCategoryColors = { ...data.category_colors }; if (!defaultTags.includes(newCategory) && !newCategoryColors[newCategory]) { newCategoryColors[newCategory] = getUniqueColor(newCategoryColors); }
-            const dateStr = parsed.date ? `{${parsed.date}} ` : ''; const newText = `[${newCategory}] ${dateStr}${parsed.content}`;
-            notes.splice(index, 1); notes.unshift(newText); await updateDoc(window.userDocRef, { notes, category_colors: newCategoryColors });
+            if (!window.userDocRef) return;
+            const data = window.currentUserData; let notes = [...(data.notes || [])];
+            const parsed = parseItem(notes[index]);
+            let newCategoryColors = { ...data.category_colors };
+            if (!defaultTags.includes(newCategory) && !newCategoryColors[newCategory]) { newCategoryColors[newCategory] = getUniqueColor(newCategoryColors); }
+            const dateStr = parsed.date ? `{${parsed.date}} ` : '';
+            const newText = `[${newCategory}] ${dateStr}${parsed.content}`;
+            notes.splice(index, 1); notes.unshift(newText); 
+            await updateDoc(window.userDocRef, { notes, category_colors: newCategoryColors });
             if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('success');
         }
 
         window.deleteNoteByIndex = async function(index) {
-            if (!window.userDocRef) return; const data = window.currentUserData; let notes = [...(data.notes || [])];
+            if (!window.userDocRef) return;
+            const data = window.currentUserData; let notes = [...(data.notes || [])];
             notes.splice(index, 1); await updateDoc(window.userDocRef, { notes });
             if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy');
         }
@@ -472,27 +447,45 @@
         window.switchTab = function(tabId, btn) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active')); document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
             document.getElementById(`tab-${tabId}`).classList.add('active'); btn.classList.add('active'); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); window.scrollTo(0,0);
+            if(tabId === 'dashboard') {
+                setTimeout(() => {
+                    const strip = document.getElementById('calendarStrip');
+                    const activeEl = strip.querySelector('.active');
+                    if(activeEl) activeEl.scrollIntoView({behavior: "smooth", inline: "center", block: "nearest"});
+                }, 50);
+            }
         };
 
-        const defaultTags = ['Personal', 'Work', 'Finance', 'Ideas']; const sectionIcons = { 'Personal': 'fa-user', 'Work': 'fa-briefcase', 'Finance': 'fa-wallet', 'Ideas': 'fa-lightbulb', 'Event': 'fa-calendar-alt', 'Google': 'fa-google' }; const neonHues = [330, 180, 45, 120, 270, 15, 210, 90, 30, 300, 60, 150];
+        const defaultTags = ['Personal', 'Work', 'Finance', 'Ideas']; const sectionIcons = { 'Personal': 'fa-user', 'Work': 'fa-briefcase', 'Finance': 'fa-wallet', 'Ideas': 'fa-lightbulb' }; const neonHues = [330, 180, 45, 120, 270, 15, 210, 90, 30, 300, 60, 150];
         function getUniqueColor(existingColorsObj) { const usedColors = Object.values(existingColorsObj); for (let hue of neonHues) { const color = `hsl(${hue}, 100%, 65%)`; if (!usedColors.includes(color)) return color; } return `hsl(${Math.floor(Math.random()*360)}, 100%, 65%)`; }
-        function getCategoryColor(category) { const predefined = { 'Personal': '#ff477e', 'Work': '#00f0ff', 'Finance': '#ffd700', 'Ideas': '#b554ff', 'Event': '#2AABEE', 'Google': '#EA4335' }; if (window.currentUserData?.category_colors?.[category]) return window.currentUserData.category_colors[category]; if (predefined[category]) return predefined[category]; return '#ffffff'; }
+        function getCategoryColor(category) { const predefined = { 'Personal': '#ff477e', 'Work': '#00f0ff', 'Finance': '#ffd700', 'Ideas': '#b554ff' }; if (window.currentUserData?.category_colors?.[category]) return window.currentUserData.category_colors[category]; if (predefined[category]) return predefined[category]; return '#ffffff'; }
         
         function parseItem(rawText) { const match = rawText.match(/^\[(.*?)\](?:\s*\{([^\}]+)\})?\s*([\s\S]*)/); if (match) { return { category: match[1], date: match[2] || '', content: match[3], rawText }; } return { category: "Personal", date: '', content: rawText, rawText }; }
-        function formatCardText(text) { return text.replace(/^<div class="note-title">(.*?)<\/div>/gm, '<b class="note-title">$1</b>').replace(/^#\s+(.*)$/gm, '<b class="note-title">$1</b>').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/_(.*?)_/g, '<i>$1</i>'); }
+        
+        function formatCardText(text) { 
+            return text.replace(/^<div class="note-title">(.*?)<\/div>/gm, '<b class="note-title">$1</b>')
+                       .replace(/^#\s+(.*)$/gm, '<b class="note-title">$1</b>')
+                       .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+                       .replace(/_(.*?)_/g, '<i>$1</i>');
+        }
 
         window.setTaskFilter = function(filter) { window.currentTaskFilter = filter; document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active')); document.getElementById(filter === 'all' ? 'fltAll' : 'fltToday').classList.add('active'); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); renderUI(); }
         window.filterNotes = function() { renderUI(); }
         window.exportData = function() { if(!window.currentUserData) return; const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(window.currentUserData, null, 2)); const dlAnchorElem = document.createElement('a'); dlAnchorElem.setAttribute("href", dataStr); dlAnchorElem.setAttribute("download", "lunex_backup.json"); dlAnchorElem.click(); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('success'); }
         window.toggleSection = function(category) { const sec = document.getElementById(`section-${category}`); sec.classList.toggle('open'); openSections[category] = sec.classList.contains('open'); localStorage.setItem('lunexOpenSections', JSON.stringify(openSections)); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); }
 
+        window.selectCalDay = function(dateStr) {
+            window.selectedDashDate = dateStr;
+            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+            renderUI();
+        }
+
         function renderUI() {
             const data = window.currentUserData; if(!data) return;
             const notes = data.notes || []; let reminders = data.reminders || [];
             document.getElementById('dbItemCount').innerText = `${notes.length + reminders.length}`; document.getElementById('dashNotesCount').innerText = `${notes.length}`;
 
-            renderCalendar();
-
+            // THE VAULT
             const searchTerm = document.getElementById('searchInput').value.toLowerCase(); const vault = document.getElementById('notesVault'); const groupedNotes = {};
             notes.forEach((n, i) => { const parsed = parseItem(n); if (parsed.content.toLowerCase().includes(searchTerm)) { if (!groupedNotes[parsed.category]) groupedNotes[parsed.category] = []; groupedNotes[parsed.category].push({ ...parsed, origIndex: i }); } });
             if (Object.keys(groupedNotes).length === 0) { vault.innerHTML = '<p class="empty-state">Vault is empty.</p>'; } else {
@@ -510,42 +503,56 @@
                 }); vault.innerHTML = vaultHTML;
             }
 
-            const tList = document.getElementById('tasksList'); const dReminders = document.getElementById('dashReminders'); const todayStr = new Date().toLocaleDateString();
+            // CALENDAR STRIP RENDER
+            const strip = document.getElementById('calendarStrip');
+            let calHtml = ''; const today = new Date(); const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const eventDates = new Set(reminders.map(r => new Date(r.datetime.replace(' ', 'T')).toLocaleDateString()));
             
-            // Фильтрация Reminders / Events для главной страницы (по выбранной дате)
-            let displayRemindersDash = reminders;
-            if(window.selectedDate) {
-                displayRemindersDash = reminders.filter(r => r.datetime && r.datetime.startsWith(window.selectedDate));
+            for(let i = -7; i <= 30; i++) { 
+                const d = new Date(today); d.setDate(today.getDate() + i);
+                const dateStr = d.toLocaleDateString();
+                const isSelected = dateStr === window.selectedDashDate ? 'active' : '';
+                const hasEvent = eventDates.has(dateStr) ? 'style="display:block;"' : 'style="display:none;"';
+                
+                calHtml += `<div class="calendar-day ${isSelected}" onclick="selectCalDay('${dateStr}')">
+                    <span class="cal-name">${days[d.getDay()]}</span>
+                    <span class="cal-date">${d.getDate()}</span>
+                    <div class="event-dot" ${hasEvent}></div>
+                </div>`;
             }
-            
-            // Фильтрация для вкладки Tasks
-            let displayTasksTab = reminders; 
-            if(window.currentTaskFilter === 'today') { displayTasksTab = reminders.filter(r => new Date(r.datetime.replace(' ', 'T')).toLocaleDateString() === todayStr); }
+            strip.innerHTML = calHtml;
 
-            // Отрисовка Дашборда
-            if(displayRemindersDash.length === 0) { dReminders.innerHTML = '<p class="empty-state">Free day! No events scheduled.</p>'; } else {
-                dReminders.innerHTML = displayRemindersDash.map((r) => {
-                    const parsed = parseItem(r.text); const d = new Date(r.datetime.replace(' ', 'T')); const dateStr = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}); const color = getCategoryColor(parsed.category);
-                    const origIndex = reminders.indexOf(r);
-                    return `<div class="list-item" onclick="openReminderModal(${origIndex})"><div class="list-info"><span class="list-title">${parsed.content}</span><div class="list-meta"><span style="color: ${color};"><i class="fas fa-circle" style="font-size:8px;"></i> ${parsed.category}</span> • <span>${dateStr}</span></div></div><div class="checkbox" onclick="event.stopPropagation(); completeReminder(${origIndex})"><i class="fas fa-check"></i></div></div>`;
+            // DASHBOARD REMINDERS (FILTERED BY CALENDAR)
+            const dReminders = document.getElementById('dashReminders');
+            const dashFiltered = reminders.filter(r => new Date(r.datetime.replace(' ', 'T')).toLocaleDateString() === window.selectedDashDate);
+            
+            if(dashFiltered.length === 0) {
+                dReminders.innerHTML = '<p class="empty-state">No scheduled events for this day.</p>';
+            } else {
+                dReminders.innerHTML = dashFiltered.map((r) => {
+                    const parsed = parseItem(r.text); const d = new Date(r.datetime.replace(' ', 'T')); const timeStr = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}); const color = getCategoryColor(parsed.category);
+                    return `<div class="list-item"><div class="list-info"><span class="list-title">${parsed.content}</span><div class="list-meta"><span style="color: ${color};"><i class="fas fa-circle" style="font-size:8px;"></i> ${parsed.category}</span> • <span>${timeStr}</span></div></div></div>`;
                 }).join('');
             }
-            document.getElementById('statPending').innerText = displayRemindersDash.length + " Events"; 
-            
-            // Отрисовка Tasks Tab
-            if(displayTasksTab.length === 0) { tList.innerHTML = '<p class="empty-state">No pending tasks.</p>'; } else {
-                tList.innerHTML = displayTasksTab.map((r) => {
+            document.getElementById('statPending').innerText = dashFiltered.length + " Events"; 
+
+            // ALL TASKS TAB
+            const tList = document.getElementById('tasksList'); const todayStr = new Date().toLocaleDateString();
+            let displayReminders = reminders; if(window.currentTaskFilter === 'today') { displayReminders = reminders.filter(r => new Date(r.datetime.replace(' ', 'T')).toLocaleDateString() === todayStr); }
+            if(displayReminders.length === 0) { tList.innerHTML = '<p class="empty-state">No pending tasks.</p>'; } else {
+                const renderHTML = displayReminders.map((r, i) => {
                     const parsed = parseItem(r.text); const d = new Date(r.datetime.replace(' ', 'T')); const dateStr = d.toLocaleDateString([], {month:'short', day:'numeric'}) + ', ' + d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}); const color = getCategoryColor(parsed.category);
-                    const origIndex = reminders.indexOf(r);
-                    return `<div class="list-item" onclick="openReminderModal(${origIndex})"><div class="list-info"><span class="list-title">${parsed.content}</span><div class="list-meta"><span style="color: ${color};"><i class="fas fa-circle" style="font-size:8px;"></i> ${parsed.category}</span> • <span>${dateStr}</span></div></div><div class="checkbox" onclick="event.stopPropagation(); completeReminder(${origIndex})"><i class="fas fa-check"></i></div></div>`;
-                }).join('');
+                    return `<div class="list-item" onclick="openReminderModal(${i})"><div class="list-info"><span class="list-title">${parsed.content}</span><div class="list-meta"><span style="color: ${color};"><i class="fas fa-circle" style="font-size:8px;"></i> ${parsed.category}</span> • <span>${dateStr}</span></div></div><div class="checkbox" onclick="event.stopPropagation(); completeReminder(${i})"><i class="fas fa-check"></i></div></div>`;
+                }).join(''); tList.innerHTML = renderHTML;
             }
-
-            document.getElementById('statCompleted').innerText = data.completed_tasks || 0; 
-            let pct = displayRemindersDash.length === 0 ? 100 : Math.max(5, 100 - (displayRemindersDash.length * 15)); document.getElementById('activityRing').style.strokeDasharray = `${pct}, 100`; document.getElementById('activityPct').innerText = `${Math.floor(pct)}%`;
         }
 
-        function renderActivityRing() {} // Заглушка, логика перенесена в renderUI()
+        function renderActivityRing() {
+            const data = window.currentUserData; if(!data) return;
+            const reminders = data.reminders || []; const todayStr = new Date().toLocaleDateString(); const pendingToday = reminders.filter(r => new Date(r.datetime.replace(' ', 'T')).toLocaleDateString() === todayStr).length;
+            document.getElementById('statCompleted').innerText = data.completed_tasks || 0; 
+            let pct = pendingToday === 0 ? 100 : Math.max(5, 100 - (pendingToday * 15)); document.getElementById('activityRing').style.strokeDasharray = `${pct}, 100`; document.getElementById('activityPct').innerText = `${Math.floor(pct)}%`;
+        }
 
         window.closeAllModals = function() { document.querySelectorAll('.modal-sheet').forEach(m => m.classList.remove('active')); document.getElementById('modalOverlay').classList.remove('active'); if (tg.BackButton && !document.getElementById('zenEditor').classList.contains('active')) { tg.BackButton.hide(); } }
         window.openCreationRouter = function() { if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium'); document.getElementById('modalOverlay').classList.add('active'); document.getElementById('creationRouterModal').classList.add('active'); if(tg.BackButton) tg.BackButton.show(); }
@@ -558,12 +565,15 @@
             if (index !== -1) { const parsed = parseItem(data.notes[index]); category = parsed.category; rawContent = parsed.content; if (parsed.date) dateStr = parsed.date; }
             
             let titleStr = ""; let bodyStr = rawContent;
+            
             const titleMatch = rawContent.match(/^<div class="note-title">(.*?)<\/div>([\s\S]*)/);
             if (titleMatch) { titleStr = titleMatch[1]; bodyStr = titleMatch[2]; } 
             else if (rawContent.startsWith('# ')) { const lines = rawContent.split('\n'); titleStr = lines[0].substring(2).trim(); bodyStr = lines.slice(1).join('\n').trim(); }
 
-            window.currentZenCategory = category; document.getElementById('zeCategoryBadge').innerText = category; document.getElementById('zeDate').innerText = dateStr; 
-            document.getElementById('zeTitle').value = titleStr; document.getElementById('zeTextarea').innerHTML = bodyStr; document.getElementById('zeTextarea').style.fontSize = `${currentFontSize}px`;
+            window.currentZenCategory = category;
+            document.getElementById('zeCategoryBadge').innerText = category; document.getElementById('zeDate').innerText = dateStr; 
+            document.getElementById('zeTitle').value = titleStr; document.getElementById('zeTextarea').innerHTML = bodyStr; 
+            document.getElementById('zeTextarea').style.fontSize = `${currentFontSize}px`;
             
             updateWordCount(); document.getElementById('zenEditor').classList.add('active'); if(tg.BackButton) tg.BackButton.show();
         }
@@ -596,8 +606,10 @@
 
         window.applyFormat = function(type, e) {
             e.preventDefault(); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-            if (type === 'bold') { document.execCommand('bold', false, null); } else if (type === 'italic') { document.execCommand('italic', false, null); }
-            else if (type === 'link') { const url = prompt("Enter URL:", "https://"); if (url) document.execCommand('createLink', false, url); } else if (type === 'list') { document.execCommand('insertUnorderedList', false, null); }
+            if (type === 'bold') { document.execCommand('bold', false, null); }
+            else if (type === 'italic') { document.execCommand('italic', false, null); }
+            else if (type === 'link') { const url = prompt("Enter URL:", "https://"); if (url) document.execCommand('createLink', false, url); }
+            else if (type === 'list') { document.execCommand('insertUnorderedList', false, null); }
             updateWordCount();
         };
 
@@ -611,7 +623,7 @@
         window.exportNoteTxt = function() { const text = document.getElementById('zeTextarea').innerText; const title = document.getElementById('zeTitle').value || window.currentZenCategory; const dataStr = "data:text/plain;charset=utf-8," + encodeURIComponent(text); const dlAnchorElem = document.createElement('a'); dlAnchorElem.setAttribute("href", dataStr); dlAnchorElem.setAttribute("download", `${title}.txt`); dlAnchorElem.click(); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('success'); closeContextMenu(); }
         window.deleteZenNote = async function() { const idx = parseInt(document.getElementById('zeEditIndex').value); if (idx !== -1 && window.userDocRef) { const data = window.currentUserData; let notes = [...(data.notes || [])]; notes.splice(idx, 1); await updateDoc(window.userDocRef, { notes }); } closeContextMenu(); document.getElementById('zenEditor').classList.remove('active'); if(tg.BackButton) tg.BackButton.hide(); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy'); }
 
-        window.openCategorySelector = function() { closeContextMenu(); const data = window.currentUserData; const customTags = Object.keys(data?.category_colors || {}); const allTags = [...new Set([...defaultTags, ...customTags])]; let html = allTags.map(tag => { const color = getCategoryColor(tag); return `<div class="tag-pill" style="border-color: ${color}; color: ${color};" onclick="applyCat('${tag}')">${tag}</div>`; }).join(''); html += `<div class="tag-pill" style="border-style: dashed;" onclick="document.getElementById('zeCustomTagInput').style.display='block'; document.getElementById('zeCustomTagInput').focus();">+ NEW</div>`; document.getElementById('zeTagsContainer').innerHTML = html; document.getElementById('modalOverlay').classList.add('active'); document.getElementById('catSelectorMenu').classList.add('active'); if(tg.BackButton) tg.BackButton.show(); }
+        window.openCategorySelector = function() { const data = window.currentUserData; const customTags = Object.keys(data?.category_colors || {}); const allTags = [...new Set([...defaultTags, ...customTags])]; let html = allTags.map(tag => { const color = getCategoryColor(tag); return `<div class="tag-pill" style="border-color: ${color}; color: ${color};" onclick="applyCat('${tag}')">${tag}</div>`; }).join(''); html += `<div class="tag-pill" style="border-style: dashed;" onclick="document.getElementById('zeCustomTagInput').style.display='block'; document.getElementById('zeCustomTagInput').focus();">+ NEW</div>`; document.getElementById('zeTagsContainer').innerHTML = html; document.getElementById('modalOverlay').classList.add('active'); document.getElementById('catSelectorMenu').classList.add('active'); if(tg.BackButton) tg.BackButton.show(); }
         window.closeCategorySelector = function() { document.getElementById('catSelectorMenu').classList.remove('active'); document.getElementById('modalOverlay').classList.remove('active'); }
         window.applyCat = function(cat) { window.currentZenCategory = cat; document.getElementById('zeCategoryBadge').innerText = cat; closeCategorySelector(); }
         window.applyNewCategory = function() { const val = document.getElementById('zeCustomTagInput').value.trim(); if(val) { applyCat(val); document.getElementById('zeCustomTagInput').value = ""; document.getElementById('zeCustomTagInput').style.display = "none"; } }
@@ -623,8 +635,6 @@
             document.getElementById('remText').value = content; document.getElementById('remDate').value = timeStr; document.getElementById('modalOverlay').classList.add('active'); document.getElementById('reminderModal').classList.add('active'); if(tg.BackButton) tg.BackButton.show();
         }
         window.setQuickTime = function(type) { let d = new Date(); if (type === '1h') d.setHours(d.getHours() + 1); else if (type === '3h') d.setHours(d.getHours() + 3); else if (type === 'tmw_morn') { d.setDate(d.getDate() + 1); d.setHours(9, 0, 0); } else if (type === 'tmw_eve') { d.setDate(d.getDate() + 1); d.setHours(19, 0, 0); } const offset = d.getTimezoneOffset() * 60000; document.getElementById('remDate').value = (new Date(d - offset)).toISOString().slice(0, 16); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); }
-        
-        // При сохранении задачи, если выбрана дата, она попадает в нужный день на календаре!
         window.saveReminder = async function() { if(!window.userDocRef) return; const data = window.currentUserData; const text = document.getElementById('remText').value.trim(); const dateVal = document.getElementById('remDate').value; if(!text || !dateVal) return; const idx = parseInt(document.getElementById('remEditIndex').value); let reminders = [...(data.reminders || [])]; const formattedText = `[Agenda] ${text}`; if (idx !== -1) reminders.splice(idx, 1); reminders.push({ text: formattedText, datetime: dateVal.replace('T', ' ') + ":00" }); await updateDoc(window.userDocRef, { reminders }); closeAllModals(); if(tg.BackButton) tg.BackButton.hide(); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy'); }
         window.deleteReminder = async function() { if(!window.userDocRef) return; const idx = parseInt(document.getElementById('remEditIndex').value); const data = window.currentUserData; let reminders = [...(data.reminders || [])]; reminders.splice(idx, 1); await updateDoc(window.userDocRef, { reminders }); closeAllModals(); if(tg.BackButton) tg.BackButton.hide(); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium'); }
         window.completeReminder = async function(index) { if(!window.userDocRef) return; const data = window.currentUserData; if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium'); document.querySelectorAll('#tasksList .list-item')[index].classList.add('done'); let reminders = [...(data.reminders || [])]; reminders.splice(index, 1); const completed = (data.completed_tasks || 0) + 1; setTimeout(async () => { await updateDoc(window.userDocRef, { reminders, completed_tasks: completed }); }, 300); }
