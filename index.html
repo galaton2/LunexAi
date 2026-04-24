@@ -13,6 +13,8 @@
     <div id="splashScreen"><i class="fas fa-star splash-logo"></i></div>
     <script>setTimeout(() => { const s = document.getElementById('splashScreen'); if(s) s.style.opacity='0'; setTimeout(()=>s.style.display='none',500); }, 3000);</script>
 
+    <input type="file" id="icsInput" accept=".ics,text/calendar" style="display:none" onchange="handleICSImport(event)">
+
     <div id="trashZone">
         <i class="fas fa-trash-alt"></i> <span style="font-size:16px; font-weight:bold;">Drop to Delete</span>
     </div>
@@ -54,7 +56,10 @@
             </div>
         </div>
 
-        <h2 class="section-title">Schedule</h2>
+        <h2 class="section-title">
+            <span id="scheduleTitle">Schedule</span> 
+            <span style="font-size:11px; font-weight:normal; color:var(--pink-main); cursor:pointer;" onclick="selectDashboardDate(new Date())">Reset</span>
+        </h2>
         <div id="dashReminders"></div>
     </main>
 
@@ -80,6 +85,16 @@
                 <div class="settings-avatar"><img id="setAvatar" src=""></div>
                 <div><h3 id="setName" style="font-size:20px; font-weight: 800;">Name</h3><p style="color:var(--text-muted); font-size:13px; font-weight: 600;">ID: <span id="setID"></span></p></div>
             </div>
+        </div>
+
+        <h2 class="section-title">Integrations</h2>
+        <div class="list-item" onclick="document.getElementById('icsInput').click()">
+            <div class="list-info"><span class="list-title"><i class="fas fa-file-import" style="color:var(--pink-main)"></i> Import .ics File</span><span class="list-meta" style="color:var(--text-muted)">Apple / Google / Outlook</span></div>
+            <i class="fas fa-chevron-right" style="color: var(--text-muted);"></i>
+        </div>
+        <div class="list-item" onclick="if(tg.showAlert) tg.showAlert('Google Sync requires a persistent backend connection. For an instant offline sync, please export your Google Calendar as a .ics file and import it above!')">
+            <div class="list-info"><span class="list-title"><i class="fab fa-google"></i> Connect Google Calendar</span></div>
+            <i class="fas fa-external-link-alt" style="color: var(--text-muted);"></i>
         </div>
         
         <h2 class="section-title">Notifications</h2>
@@ -217,11 +232,10 @@
         try {
             if (tg.expand) tg.expand();
             if (tg.requestFullscreen) tg.requestFullscreen();
-            if (tg.disableVerticalSwipes) tg.disableVerticalSwipes(); // ЗАЩИТА ОТ СВАЙПОВ
+            if (tg.disableVerticalSwipes) tg.disableVerticalSwipes();
             if (tg.isVerticalSwipesEnabled !== undefined) tg.isVerticalSwipesEnabled = false;
         } catch(e) {}
 
-        // НАТИВНАЯ КНОПКА ЗАКРЫТИЯ/НАЗАД (Единственный способ выйти из редактора)
         if (tg.BackButton) {
             tg.BackButton.onClick(function() {
                 if (document.getElementById('catSelectorMenu').classList.contains('active') || 
@@ -242,33 +256,117 @@
         let userId = null; let userName = "User"; window.userDocRef = null; window.currentUserData = null;
         let openSections = JSON.parse(localStorage.getItem('lunexOpenSections')) || {}; let currentFontSize = 16; let typingTimer;
         window.currentZenCategory = "Personal";
+        window.selectedDashboardDate = new Date(); // Для фильтрации календаря
 
-        // ГЕНЕРАТОР КАЛЕНДАРЯ
-        function generateCalendar() {
-            const strip = document.getElementById('calendarStrip');
-            let html = ''; const today = new Date(); const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        // --- УМНЫЙ КАЛЕНДАРЬ ---
+        window.selectDashboardDate = function(dateObj) {
+            window.selectedDashboardDate = dateObj;
+            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+            renderUI();
             
-            for(let i = -3; i <= 14; i++) { 
+            // Прокручиваем к выбранной дате
+            setTimeout(() => {
+                const strip = document.getElementById('calendarStrip');
+                const activeEl = strip.querySelector('.active');
+                if(activeEl) activeEl.scrollIntoView({behavior: "smooth", inline: "center", block: "nearest"});
+            }, 50);
+        }
+
+        function generateCalendar(reminders = []) {
+            const strip = document.getElementById('calendarStrip');
+            let html = ''; const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            
+            // Генерируем массив дат, где есть события
+            const eventDateStrings = reminders.map(r => {
+                if(r.datetime) {
+                    const d = new Date(r.datetime.replace(' ', 'T'));
+                    return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+                }
+                return "";
+            });
+
+            const selDateStr = `${window.selectedDashboardDate.getFullYear()}-${window.selectedDashboardDate.getMonth()}-${window.selectedDashboardDate.getDate()}`;
+            
+            const today = new Date();
+            for(let i = -7; i <= 14; i++) { 
                 const d = new Date(today); d.setDate(today.getDate() + i);
-                const isToday = i === 0 ? 'active' : '';
-                html += `<div class="calendar-day ${isToday}">
+                const dStr = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+                const isSelected = dStr === selDateStr ? 'active' : '';
+                const hasEvent = eventDateStrings.includes(dStr) ? 'has-event' : '';
+                
+                html += `<div class="calendar-day ${isSelected} ${hasEvent}" onclick="selectDashboardDate(new Date(${d.getTime()}))">
                     <span class="cal-name">${days[d.getDay()]}</span>
                     <span class="cal-date">${d.getDate()}</span>
+                    <div class="event-dot"></div>
                 </div>`;
             }
             strip.innerHTML = html;
-            setTimeout(() => {
-                const activeEl = strip.querySelector('.active');
-                if(activeEl) activeEl.scrollIntoView({behavior: "smooth", inline: "center", block: "nearest"});
-            }, 100);
         }
-        document.addEventListener("DOMContentLoaded", generateCalendar);
 
-        // ИНИЦИАЛИЗАЦИЯ
+        // --- ИМПОРТ .ICS (КАЛЕНДАРЬ) ---
+        window.handleICSImport = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const text = e.target.result;
+                const lines = text.split(/\r\n|\n|\r/);
+                let events = [];
+                let currentEvent = null;
+                
+                for (let line of lines) {
+                    if (line.startsWith('BEGIN:VEVENT')) { currentEvent = {}; }
+                    else if (line.startsWith('END:VEVENT')) {
+                        if (currentEvent && currentEvent.summary && currentEvent.start) { events.push(currentEvent); }
+                        currentEvent = null;
+                    }
+                    else if (currentEvent) {
+                        if (line.startsWith('SUMMARY:')) currentEvent.summary = line.substring(8);
+                        if (line.startsWith('DTSTART')) {
+                            // Формат YYYYMMDDTHHMMSSZ или YYYYMMDD
+                            let match = line.match(/:(\d{4})(\d{2})(\d{2})(T(\d{2})(\d{2})(\d{2}))?/);
+                            if (match) {
+                                let dt = new Date(Date.UTC(match[1], match[2]-1, match[3], match[5]||12, match[6]||0, match[7]||0));
+                                currentEvent.start = dt;
+                            }
+                        }
+                    }
+                }
+                
+                if (events.length > 0 && window.userDocRef) {
+                    const data = window.currentUserData;
+                    let reminders = [...(data.reminders || [])];
+                    let addedCount = 0; const now = new Date();
+                    
+                    // Только будущие 100 событий (для экономии БД)
+                    events = events.filter(ev => ev.start > now).sort((a,b) => a.start - b.start).slice(0, 100);
+                    
+                    events.forEach(ev => {
+                        const offset = ev.start.getTimezoneOffset() * 60000;
+                        const localDate = new Date(ev.start.getTime() - offset);
+                        const dateStr = localDate.toISOString().slice(0, 16).replace('T', ' ') + ":00";
+                        reminders.push({ text: `[Calendar] ${ev.summary}`, datetime: dateStr });
+                        addedCount++;
+                    });
+                    
+                    await updateDoc(window.userDocRef, { reminders });
+                    if(tg.showAlert) tg.showAlert(`Successfully imported ${addedCount} upcoming events!`);
+                    window.switchTab('dashboard', document.querySelectorAll('.nav-item')[0]);
+                } else {
+                    if(tg.showAlert) tg.showAlert("No upcoming events found in this file.");
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = ''; // Сброс
+        }
+
+        // --- ИНИЦИАЛИЗАЦИЯ FIREBASE ---
         if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
             userId = tg.initDataUnsafe.user.id.toString();
             userName = tg.initDataUnsafe.user.first_name || "User";
             
+            document.getElementById('userName').innerText = "Hi " + userName + ",";
             document.getElementById('setName').innerText = userName;
             document.getElementById('setID').innerText = userId;
             
@@ -283,7 +381,7 @@
                 if (docSnap.exists()) {
                     window.currentUserData = docSnap.data();
                     if (!window.currentUserData.category_colors) window.currentUserData.category_colors = {};
-                    renderUI(); renderActivityRing();
+                    renderUI(); 
                 } else {
                     window.currentUserData = { notes: [], reminders: [], category_colors: {} };
                     renderUI();
@@ -373,11 +471,20 @@
         window.switchTab = function(tabId, btn) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active')); document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
             document.getElementById(`tab-${tabId}`).classList.add('active'); btn.classList.add('active'); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); window.scrollTo(0,0);
+            
+            // Если перешли на дашборд, возвращаем скролл календаря
+            if (tabId === 'dashboard') {
+                setTimeout(() => {
+                    const strip = document.getElementById('calendarStrip');
+                    const activeEl = strip.querySelector('.active');
+                    if(activeEl) activeEl.scrollIntoView({behavior: "smooth", inline: "center", block: "nearest"});
+                }, 50);
+            }
         };
 
-        const defaultTags = ['Personal', 'Work', 'Finance', 'Ideas']; const sectionIcons = { 'Personal': 'fa-user', 'Work': 'fa-briefcase', 'Finance': 'fa-wallet', 'Ideas': 'fa-lightbulb' }; const neonHues = [330, 180, 45, 120, 270, 15, 210, 90, 30, 300, 60, 150];
+        const defaultTags = ['Personal', 'Work', 'Finance', 'Ideas', 'Calendar']; const sectionIcons = { 'Personal': 'fa-user', 'Work': 'fa-briefcase', 'Finance': 'fa-wallet', 'Ideas': 'fa-lightbulb', 'Calendar': 'fa-calendar-alt' }; const neonHues = [330, 180, 45, 120, 270, 15, 210, 90, 30, 300, 60, 150];
         function getUniqueColor(existingColorsObj) { const usedColors = Object.values(existingColorsObj); for (let hue of neonHues) { const color = `hsl(${hue}, 100%, 65%)`; if (!usedColors.includes(color)) return color; } return `hsl(${Math.floor(Math.random()*360)}, 100%, 65%)`; }
-        function getCategoryColor(category) { const predefined = { 'Personal': '#ff477e', 'Work': '#00f0ff', 'Finance': '#ffd700', 'Ideas': '#b554ff' }; if (window.currentUserData?.category_colors?.[category]) return window.currentUserData.category_colors[category]; if (predefined[category]) return predefined[category]; return '#ffffff'; }
+        function getCategoryColor(category) { const predefined = { 'Personal': '#ff477e', 'Work': '#00f0ff', 'Finance': '#ffd700', 'Ideas': '#b554ff', 'Calendar': '#ff8a00' }; if (window.currentUserData?.category_colors?.[category]) return window.currentUserData.category_colors[category]; if (predefined[category]) return predefined[category]; return '#ffffff'; }
         
         function parseItem(rawText) { const match = rawText.match(/^\[(.*?)\](?:\s*\{([^\}]+)\})?\s*([\s\S]*)/); if (match) { return { category: match[1], date: match[2] || '', content: match[3], rawText }; } return { category: "Personal", date: '', content: rawText, rawText }; }
         
@@ -399,6 +506,9 @@
             const notes = data.notes || []; let reminders = data.reminders || [];
             document.getElementById('dbItemCount').innerText = `${notes.length + reminders.length}`; document.getElementById('dashNotesCount').innerText = `${notes.length}`;
 
+            // ГЕНЕРАЦИЯ КАЛЕНДАРЯ С ИНДИКАТОРАМИ ИВЕНТОВ
+            generateCalendar(reminders);
+
             const searchTerm = document.getElementById('searchInput').value.toLowerCase(); const vault = document.getElementById('notesVault'); const groupedNotes = {};
             notes.forEach((n, i) => { const parsed = parseItem(n); if (parsed.content.toLowerCase().includes(searchTerm)) { if (!groupedNotes[parsed.category]) groupedNotes[parsed.category] = []; groupedNotes[parsed.category].push({ ...parsed, origIndex: i }); } });
             if (Object.keys(groupedNotes).length === 0) { vault.innerHTML = '<p class="empty-state">Vault is empty.</p>'; } else {
@@ -416,19 +526,36 @@
                 }); vault.innerHTML = vaultHTML;
             }
 
-            const tList = document.getElementById('tasksList'); const dReminders = document.getElementById('dashReminders'); const todayStr = new Date().toLocaleDateString();
+            // ФИЛЬТРАЦИЯ РАСПИСАНИЯ ДЛЯ DASHBOARD (ПО КАЛЕНДАРЮ)
+            const dReminders = document.getElementById('dashReminders');
+            const selDateStr = `${window.selectedDashboardDate.getFullYear()}-${window.selectedDashboardDate.getMonth()}-${window.selectedDashboardDate.getDate()}`;
+            
+            let dashboardReminders = reminders.filter(r => {
+                if(r.datetime) {
+                    const d = new Date(r.datetime.replace(' ', 'T'));
+                    return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}` === selDateStr;
+                } return false;
+            });
+
+            if(dashboardReminders.length === 0) { dReminders.innerHTML = '<p class="empty-state">No events for this day.</p>'; } else {
+                dReminders.innerHTML = dashboardReminders.map((r, i) => {
+                    const parsed = parseItem(r.text); const d = new Date(r.datetime.replace(' ', 'T')); const timeStr = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}); const color = getCategoryColor(parsed.category);
+                    return `<div class="list-item"><div class="list-info"><span class="list-title">${parsed.content}</span><div class="list-meta"><span style="color: ${color};"><i class="fas fa-circle" style="font-size:8px;"></i> ${parsed.category}</span> • <span>${timeStr}</span></div></div></div>`;
+                }).join('');
+            }
+            
+            // ОБНОВЛЕНИЕ TAB 3 (To-Do List)
+            const tList = document.getElementById('tasksList'); const todayStr = new Date().toLocaleDateString();
             let displayReminders = reminders; if(window.currentTaskFilter === 'today') { displayReminders = reminders.filter(r => new Date(r.datetime.replace(' ', 'T')).toLocaleDateString() === todayStr); }
-            if(displayReminders.length === 0) { tList.innerHTML = '<p class="empty-state">No pending tasks.</p>'; dReminders.innerHTML = '<p class="empty-state">No active timers.</p>'; } else {
-                const renderHTML = displayReminders.map((r, i) => {
+            if(displayReminders.length === 0) { tList.innerHTML = '<p class="empty-state">No pending tasks.</p>'; } else {
+                tList.innerHTML = displayReminders.map((r, i) => {
                     const parsed = parseItem(r.text); const d = new Date(r.datetime.replace(' ', 'T')); const dateStr = d.toLocaleDateString([], {month:'short', day:'numeric'}) + ', ' + d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}); const color = getCategoryColor(parsed.category);
                     return `<div class="list-item" onclick="openReminderModal(${i})"><div class="list-info"><span class="list-title">${parsed.content}</span><div class="list-meta"><span style="color: ${color};"><i class="fas fa-circle" style="font-size:8px;"></i> ${parsed.category}</span> • <span>${dateStr}</span></div></div><div class="checkbox" onclick="event.stopPropagation(); completeReminder(${i})"><i class="fas fa-check"></i></div></div>`;
-                }).join(''); tList.innerHTML = renderHTML; if(window.currentTaskFilter === 'all') dReminders.innerHTML = renderHTML; 
+                }).join(''); 
             }
-        }
 
-        function renderActivityRing() {
-            const data = window.currentUserData; if(!data) return;
-            const reminders = data.reminders || []; const todayStr = new Date().toLocaleDateString(); const pendingToday = reminders.filter(r => new Date(r.datetime.replace(' ', 'T')).toLocaleDateString() === todayStr).length;
+            // Кольцо активности (считаем только на Сегодня)
+            const pendingToday = reminders.filter(r => new Date(r.datetime.replace(' ', 'T')).toLocaleDateString() === todayStr).length;
             document.getElementById('statPending').innerText = pendingToday + " Tasks"; 
             document.getElementById('statCompleted').innerText = data.completed_tasks || 0; 
             let pct = pendingToday === 0 ? 100 : Math.max(5, 100 - (pendingToday * 15)); document.getElementById('activityRing').style.strokeDasharray = `${pct}, 100`; document.getElementById('activityPct').innerText = `${Math.floor(pct)}%`;
