@@ -24,7 +24,6 @@
     </div>
 
     <main id="tab-dashboard" class="tab-content active">
-        
         <div class="calendar-strip" id="calendarStrip"></div>
 
         <div class="dashboard-overview">
@@ -87,8 +86,8 @@
         <h2 class="section-title">Calendar & Sync</h2>
         <div class="list-item" onclick="openGoogleSyncModal()">
             <div class="list-info">
-                <span class="list-title"><i class="fab fa-google" style="color: #4285F4;"></i> Sync with Google / iOS</span>
-                <span style="font-size:11px; color:var(--text-muted);">Import your external schedule</span>
+                <span class="list-title"><i class="fab fa-google" style="color: #4285F4;"></i> Import Calendar (.ics)</span>
+                <span style="font-size:11px; color:var(--text-muted);">Load your external schedule</span>
             </div>
             <i class="fas fa-chevron-right" style="color: var(--text-muted);"></i>
         </div>
@@ -122,14 +121,14 @@
         <div style="text-align: center; padding: 10px 0 20px;">
             <i class="far fa-calendar-alt" style="font-size: 50px; color: var(--pink-main); margin-bottom: 15px;"></i>
             <p style="font-size: 14px; color: var(--text-main); margin-bottom: 15px; font-weight: 500;">
-                Direct sync requires complex authorization. It's much faster to import your calendar file!
+                Upload your external calendar to sync all events.
             </p>
             <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 16px; text-align: left; font-size: 13px; color: var(--text-muted); margin-bottom: 20px; border: 1px solid var(--card-border);">
                 <b style="color:#fff;">How to do it:</b><br><br>
-                1. Open Google or Apple Calendar on your PC.<br>
-                2. Go to Settings -> Import & Export.<br>
-                3. Click "Export" and get the <b>.ics</b> file.<br>
-                4. Upload that file right here.
+                1. Open Google or Apple Calendar on your PC/Phone.<br>
+                2. Go to Settings -> Export.<br>
+                3. Download the <b>.ics</b> file.<br>
+                4. Tap the button below to upload it here.
             </div>
             <button class="btn btn-primary" style="width:100%" onclick="document.getElementById('icsFileInput').click(); closeAllModals();">
                 <i class="fas fa-file-upload"></i> Upload .ics File
@@ -183,7 +182,7 @@
                 </div>
                 
                 <input type="text" id="zeTitle" placeholder="Note Title" autocomplete="off">
-                <div id="zeTextarea" contenteditable="true" data-placeholder="Start writing..." oninput="handleTyping()"></div>
+                <div id="zeTextarea" contenteditable="true" data-placeholder="Start writing or use buttons below to format..." oninput="handleTyping()"></div>
             </div>
         </div>
         <input type="hidden" id="zeEditIndex" value="-1">
@@ -305,7 +304,7 @@
             }, (error) => { console.error(error); if(tg.showAlert) tg.showAlert("Database connection error"); });
         }
 
-        // --- ICS CALENDAR PARSER ---
+        // --- УЛУЧШЕННЫЙ ПАРСЕР .ICS КАЛЕНДАРЯ ---
         window.openGoogleSyncModal = function() {
             if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
             document.getElementById('modalOverlay').classList.add('active');
@@ -324,35 +323,54 @@
                 const lines = text.split(/\r?\n/);
                 const newEvents = [];
                 let currentEvent = null;
-                const now = new Date();
 
-                lines.forEach(line => {
+                for (let i = 0; i < lines.length; i++) {
+                    let line = lines[i];
+                    // Обработка длинных строк (ICS стандарт переносит их пробелом)
+                    while (i + 1 < lines.length && (lines[i+1].startsWith(' ') || lines[i+1].startsWith('\t'))) {
+                        i++; line += lines[i].substring(1);
+                    }
+
                     if (line.startsWith('BEGIN:VEVENT')) { currentEvent = {}; } 
                     else if (line.startsWith('END:VEVENT')) {
+                        // ИМПОРТИРУЕМ ВСЕ СОБЫТИЯ БЕЗ ФИЛЬТРАЦИИ ПО ДАТЕ
                         if (currentEvent && currentEvent.start && currentEvent.title) {
-                            // Фильтруем прошедшие события (старше 1 дня)
-                            const evtDate = new Date(currentEvent.start.replace(' ', 'T'));
-                            if (evtDate >= new Date(now.getTime() - 86400000)) {
-                                newEvents.push({ text: `[Imported] ${currentEvent.title}`, datetime: currentEvent.start });
-                            }
+                            newEvents.push({ text: `[Agenda] ${currentEvent.title}`, datetime: currentEvent.start });
                         }
                         currentEvent = null;
                     } else if (currentEvent) {
                         if (line.startsWith('SUMMARY:')) currentEvent.title = line.substring(8);
                         else if (line.startsWith('DTSTART:')) currentEvent.start = formatICSDate(line.substring(8));
                         else if (line.startsWith('DTSTART;VALUE=DATE:')) currentEvent.start = formatICSDate(line.substring(19) + 'T000000');
+                        else if (line.startsWith('DTSTART;TZID=')) {
+                            const parts = line.split(':');
+                            if (parts.length > 1) currentEvent.start = formatICSDate(parts[1]);
+                        }
                     }
-                });
+                }
 
                 if (newEvents.length > 0 && window.userDocRef) {
                     const data = window.currentUserData;
                     let reminders = [...(data.reminders || [])];
-                    reminders = reminders.concat(newEvents);
-                    await updateDoc(window.userDocRef, { reminders });
-                    if(tg.showAlert) tg.showAlert(`Successfully imported ${newEvents.length} future events! 🎉`);
+                    
+                    // Умная защита от дубликатов
+                    const existingSignatures = new Set(reminders.map(r => r.text + r.datetime));
+                    const uniqueNewEvents = newEvents.filter(r => !existingSignatures.has(r.text + r.datetime));
+
+                    if (uniqueNewEvents.length > 0) {
+                        reminders = reminders.concat(uniqueNewEvents);
+                        reminders.sort((a, b) => new Date(a.datetime.replace(' ', 'T')) - new Date(b.datetime.replace(' ', 'T')));
+                        await updateDoc(window.userDocRef, { reminders });
+                        if(tg.showAlert) tg.showAlert(`Successfully imported ${uniqueNewEvents.length} events! 🎉`);
+                        else alert(`Imported ${uniqueNewEvents.length} events!`);
+                        renderUI();
+                    } else {
+                        if(tg.showAlert) tg.showAlert("Events are already synced! No new data found.");
+                    }
                 } else {
-                    if(tg.showAlert) tg.showAlert("No new future events found in this file.");
+                    if(tg.showAlert) tg.showAlert("No valid events found in this file.");
                 }
+                document.getElementById('icsFileInput').value = '';
             };
             reader.readAsText(file);
         }
@@ -462,11 +480,16 @@
         
         function parseItem(rawText) { const match = rawText.match(/^\[(.*?)\](?:\s*\{([^\}]+)\})?\s*([\s\S]*)/); if (match) { return { category: match[1], date: match[2] || '', content: match[3], rawText }; } return { category: "Personal", date: '', content: rawText, rawText }; }
         
+        // УМНЫЙ РЕНДЕР ДЛЯ ССЫЛОК И МАРКДАУНА В КАРТОЧКАХ
         function formatCardText(text) { 
             return text.replace(/^<div class="note-title">(.*?)<\/div>/gm, '<b class="note-title">$1</b>')
                        .replace(/^#\s+(.*)$/gm, '<b class="note-title">$1</b>')
                        .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
-                       .replace(/_(.*?)_/g, '<i>$1</i>');
+                       .replace(/_(.*?)_/g, '<i>$1</i>')
+                       // Превращаем старые маркдаун-ссылки в кликабельные html-ссылки
+                       .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" style="pointer-events:auto;">$1</a>')
+                       // Превращаем старые тире в списки
+                       .replace(/^- (.*)$/gm, '• $1');
         }
 
         window.setTaskFilter = function(filter) { window.currentTaskFilter = filter; document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active')); document.getElementById(filter === 'all' ? 'fltAll' : 'fltToday').classList.add('active'); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); renderUI(); }
@@ -623,7 +646,7 @@
         window.exportNoteTxt = function() { const text = document.getElementById('zeTextarea').innerText; const title = document.getElementById('zeTitle').value || window.currentZenCategory; const dataStr = "data:text/plain;charset=utf-8," + encodeURIComponent(text); const dlAnchorElem = document.createElement('a'); dlAnchorElem.setAttribute("href", dataStr); dlAnchorElem.setAttribute("download", `${title}.txt`); dlAnchorElem.click(); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('success'); closeContextMenu(); }
         window.deleteZenNote = async function() { const idx = parseInt(document.getElementById('zeEditIndex').value); if (idx !== -1 && window.userDocRef) { const data = window.currentUserData; let notes = [...(data.notes || [])]; notes.splice(idx, 1); await updateDoc(window.userDocRef, { notes }); } closeContextMenu(); document.getElementById('zenEditor').classList.remove('active'); if(tg.BackButton) tg.BackButton.hide(); if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy'); }
 
-        window.openCategorySelector = function() { const data = window.currentUserData; const customTags = Object.keys(data?.category_colors || {}); const allTags = [...new Set([...defaultTags, ...customTags])]; let html = allTags.map(tag => { const color = getCategoryColor(tag); return `<div class="tag-pill" style="border-color: ${color}; color: ${color};" onclick="applyCat('${tag}')">${tag}</div>`; }).join(''); html += `<div class="tag-pill" style="border-style: dashed;" onclick="document.getElementById('zeCustomTagInput').style.display='block'; document.getElementById('zeCustomTagInput').focus();">+ NEW</div>`; document.getElementById('zeTagsContainer').innerHTML = html; document.getElementById('modalOverlay').classList.add('active'); document.getElementById('catSelectorMenu').classList.add('active'); if(tg.BackButton) tg.BackButton.show(); }
+        window.openCategorySelector = function() { closeContextMenu(); const data = window.currentUserData; const customTags = Object.keys(data?.category_colors || {}); const allTags = [...new Set([...defaultTags, ...customTags])]; let html = allTags.map(tag => { const color = getCategoryColor(tag); return `<div class="tag-pill" style="border-color: ${color}; color: ${color};" onclick="applyCat('${tag}')">${tag}</div>`; }).join(''); html += `<div class="tag-pill" style="border-style: dashed;" onclick="document.getElementById('zeCustomTagInput').style.display='block'; document.getElementById('zeCustomTagInput').focus();">+ NEW</div>`; document.getElementById('zeTagsContainer').innerHTML = html; document.getElementById('modalOverlay').classList.add('active'); document.getElementById('catSelectorMenu').classList.add('active'); if(tg.BackButton) tg.BackButton.show(); }
         window.closeCategorySelector = function() { document.getElementById('catSelectorMenu').classList.remove('active'); document.getElementById('modalOverlay').classList.remove('active'); }
         window.applyCat = function(cat) { window.currentZenCategory = cat; document.getElementById('zeCategoryBadge').innerText = cat; closeCategorySelector(); }
         window.applyNewCategory = function() { const val = document.getElementById('zeCustomTagInput').value.trim(); if(val) { applyCat(val); document.getElementById('zeCustomTagInput').value = ""; document.getElementById('zeCustomTagInput').style.display = "none"; } }
