@@ -17,6 +17,21 @@
         <i class="fas fa-star splash-logo"></i>
     </div>
 
+    <div id="dayCompleteToast" class="toast">
+        <i class="fas fa-check-circle"></i> All tasks done for today! 🎉
+    </div>
+
+    <div id="onboardingOverlay" class="onboarding-overlay">
+        <div class="onboarding-skip" onclick="skipOnboarding()">Skip</div>
+        <div class="onboarding-card">
+            <div class="onboarding-icon"><i class="fas fa-star" id="obIcon"></i></div>
+            <h2 id="obTitle">Welcome to Lunex</h2>
+            <p id="obText">Your notes, tasks and calendar in one place.</p>
+            <div class="onboarding-dots" id="obDots"></div>
+            <button class="btn btn-primary" style="width:100%" id="obNextBtn" onclick="nextOnboardingStep()">Next</button>
+        </div>
+    </div>
+
     <input type="file" id="icsFileInput" accept=".ics,text/calendar" style="display:none" onchange="handleICSUpload(event)">
 
     <div id="trashZone">
@@ -33,13 +48,16 @@
 
         <div class="dashboard-overview">
             <div class="dash-main-card">
+                <div class="streak-badge" id="streakBadge" style="display:none;"><i class="fas fa-fire"></i> 0</div>
                 <div class="ring-wrapper">
                     <svg viewBox="0 0 36 36" class="circular-chart">
                         <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                         <path class="circle" id="activityRing" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                        <text x="18" y="20.35" class="percentage" id="activityPct">0%</text>
+                        <text x="18" y="17.5" class="percentage" id="activityPct">0%</text>
+                        <text x="18" y="23.5" class="ring-caption">Today</text>
                     </svg>
                 </div>
+                <p class="ring-fraction" id="ringProgressLabel">Free day</p>
                 <div class="dash-main-text">
                     <h3 id="statPending">0 Tasks</h3>
                     <p>On Selected Day</p>
@@ -73,6 +91,10 @@
     </main>
 
     <main id="tab-tasks" class="tab-content">
+        <div class="search-bar">
+            <i class="fas fa-search" style="color: var(--text-muted);"></i>
+            <input type="text" id="taskSearchInput" placeholder="Search tasks..." oninput="filterNotes()">
+        </div>
         <div class="filter-tabs">
             <div class="filter-btn active" id="fltAll" onclick="setTaskFilter('all')">All Tasks</div>
             <div class="filter-btn" id="fltToday" onclick="setTaskFilter('today')">Today Only</div>
@@ -91,6 +113,15 @@
             </div>
         </div>
         
+        <h2 class="section-title">Help</h2>
+        <div class="list-item" onclick="openOnboarding()">
+            <div class="list-info">
+                <span class="list-title"><i class="fas fa-graduation-cap" style="color: var(--pink-main);"></i> Show Quick Tutorial</span>
+                <span style="font-size:11px; color:var(--text-muted);">Replay the app walkthrough</span>
+            </div>
+            <i class="fas fa-chevron-right" style="color: var(--text-muted);"></i>
+        </div>
+
         <h2 class="section-title">Calendar & Sync</h2>
         <div class="list-item" onclick="openGoogleSyncModal()">
             <div class="list-info">
@@ -264,8 +295,12 @@
         const tg = window.Telegram?.WebApp || {};
         try {
             if (tg.expand) tg.expand();
-            if (tg.requestFullscreen) tg.requestFullscreen();
-            if (tg.disableVerticalSwipes) tg.disableVerticalSwipes(); 
+            if (tg.disableVerticalSwipes) tg.disableVerticalSwipes();
+            // Fullscreen режим намеренно НЕ используется — он съедает верхнюю часть
+            // экрана под системную шторку/чёлку и создаёт лишний отступ сверху.
+            // Обычного expand() достаточно, а нативная шапка Telegram остаётся видна.
+            if (tg.setHeaderColor) tg.setHeaderColor('secondary_bg_color');
+            if (tg.setBackgroundColor) tg.setBackgroundColor('#050508');
             tg.ready();
         } catch(e) {
             console.log("Telegram API не полностью поддерживается в этой среде.");
@@ -274,7 +309,9 @@
         // Настройка кнопки "Назад" в шапке Telegram
         if (tg.BackButton) {
             tg.BackButton.onClick(function() {
-                if (document.getElementById('catSelectorMenu').classList.contains('active') || 
+                if (document.getElementById('onboardingOverlay').classList.contains('active')) {
+                    skipOnboarding();
+                } else if (document.getElementById('catSelectorMenu').classList.contains('active') || 
                     document.getElementById('contextOptionsMenu').classList.contains('active')) {
                     document.getElementById('catSelectorMenu').classList.remove('active');
                     document.getElementById('contextOptionsMenu').classList.remove('active');
@@ -293,14 +330,61 @@
         setTimeout(() => { 
             const s = document.getElementById('splashScreen'); 
             if(s) { s.style.opacity='0'; setTimeout(()=>s.style.display='none',500); } 
+            if (!localStorage.getItem('lunexOnboardingSeen')) {
+                setTimeout(() => openOnboarding(), 350);
+            }
         }, 2000);
+
+        // === МИНИ-ОБУЧАЛКА ===
+        const onboardingSteps = [
+            { icon: 'fa-star', title: 'Welcome to Lunex', text: 'Your notes, tasks and calendar, all in one clean space.' },
+            { icon: 'fa-plus', title: 'Create anything', text: 'Tap the pink + button to write a note or schedule a task.' },
+            { icon: 'fa-layer-group', title: 'Organize the Vault', text: 'Notes are grouped by category. Hold and drag a card to move or delete it.' },
+            { icon: 'fa-calendar-day', title: 'Your calendar', text: 'Tap any day to see what\'s planned. Today is always highlighted in green.' },
+            { icon: 'fa-file-download', title: 'Stay backed up', text: 'Import an .ics calendar or export a full backup anytime from Settings.' }
+        ];
+        let onboardingIndex = 0;
+
+        window.openOnboarding = function() {
+            onboardingIndex = 0;
+            renderOnboardingStep();
+            document.getElementById('onboardingOverlay').classList.add('active');
+            if(tg.BackButton) tg.BackButton.show();
+        }
+
+        function renderOnboardingStep() {
+            const step = onboardingSteps[onboardingIndex];
+            document.getElementById('obIcon').className = `fas ${step.icon}`;
+            document.getElementById('obTitle').innerText = step.title;
+            document.getElementById('obText').innerText = step.text;
+            document.getElementById('obNextBtn').innerText = (onboardingIndex === onboardingSteps.length - 1) ? "Get Started" : "Next";
+            document.getElementById('obDots').innerHTML = onboardingSteps.map((_, i) =>
+                `<div class="ob-dot ${i === onboardingIndex ? 'active' : ''}"></div>`
+            ).join('');
+        }
+
+        window.nextOnboardingStep = function() {
+            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+            if (onboardingIndex < onboardingSteps.length - 1) {
+                onboardingIndex++;
+                renderOnboardingStep();
+            } else {
+                skipOnboarding();
+            }
+        }
+
+        window.skipOnboarding = function() {
+            document.getElementById('onboardingOverlay').classList.remove('active');
+            localStorage.setItem('lunexOnboardingSeen', '1');
+            if(tg.BackButton && !document.querySelector('.modal-sheet.active')) tg.BackButton.hide();
+        }
 
         // === ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ===
         let userId = "test_developer_id"; // Дефолт для тестирования вне Telegram
         let userName = "Developer"; 
         
         window.userDocRef = null; 
-        window.currentUserData = { notes: [], reminders: [], category_colors: {}, completed_tasks: 0 };
+        window.currentUserData = { notes: [], reminders: [], category_colors: {}, completed_tasks: 0, completed_log: [] };
         
         let openSections = JSON.parse(localStorage.getItem('lunexOpenSections')) || {}; 
         let currentFontSize = 16; 
@@ -350,11 +434,12 @@
                     if (!window.currentUserData.category_colors) window.currentUserData.category_colors = {};
                     if (!window.currentUserData.reminders) window.currentUserData.reminders = [];
                     if (!window.currentUserData.notes) window.currentUserData.notes = [];
-                    renderUI(); 
-                    renderActivityRing();
+                    if (!window.currentUserData.completed_log) window.currentUserData.completed_log = [];
+                    if (!window.currentUserData.completed_tasks) window.currentUserData.completed_tasks = 0;
+                    renderUI();
                 } else {
                     // Если пользователя еще нет, создаем пустышку. В БД она попадет при первом сохранении.
-                    window.currentUserData = { notes: [], reminders: [], category_colors: {}, completed_tasks: 0 };
+                    window.currentUserData = { notes: [], reminders: [], category_colors: {}, completed_tasks: 0, completed_log: [] };
                     renderUI();
                 }
             }, (error) => {
@@ -526,15 +611,17 @@
             // Собираем даты, в которых есть события (для точек)
             const eventDates = new Set(reminders.map(r => getSafeDateStr(new Date(r.datetime.replace(' ', 'T')))));
             
+            const todayDashStr = getSafeDateStr(today);
             for(let i = -7; i <= 30; i++) { 
                 const d = new Date(today); 
                 d.setDate(today.getDate() + i);
                 const dateStr = getSafeDateStr(d);
                 const isSelected = dateStr === window.selectedDashDate ? 'active' : '';
+                const isToday = dateStr === todayDashStr ? 'today' : '';
                 const hasEvent = eventDates.has(dateStr) ? 'style="display:block;"' : 'style="display:none;"';
                 
                 calHtml += `
-                <div class="calendar-day ${isSelected}" onclick="selectCalDay('${dateStr}')">
+                <div class="calendar-day ${isSelected} ${isToday}" onclick="selectCalDay('${dateStr}')">
                     <span class="cal-name">${days[d.getDay()]}</span>
                     <span class="cal-date">${d.getDate()}</span>
                     <div class="event-dot" ${hasEvent}></div>
@@ -572,10 +659,15 @@
             // 4. Отрисовка ВКЛАДКИ TASKS
             const tList = document.getElementById('tasksList'); 
             const todayStr = getSafeDateStr();
+            const taskSearchEl = document.getElementById('taskSearchInput');
+            const taskSearchTerm = taskSearchEl ? taskSearchEl.value.toLowerCase() : '';
             let displayReminders = reminders; 
             
             if(window.currentTaskFilter === 'today') { 
-                displayReminders = reminders.filter(r => getSafeDateStr(new Date(r.datetime.replace(' ', 'T'))) === todayStr); 
+                displayReminders = displayReminders.filter(r => getSafeDateStr(new Date(r.datetime.replace(' ', 'T'))) === todayStr); 
+            }
+            if(taskSearchTerm) {
+                displayReminders = displayReminders.filter(r => parseItem(r.text).content.toLowerCase().includes(taskSearchTerm));
             }
             
             // Сортировка по времени
@@ -606,21 +698,57 @@
                 }).join(''); 
                 tList.innerHTML = renderHTML;
             }
+
+            // 5. Кольцо активности + стрик — теперь часть общего рендера,
+            // чтобы никогда не "зависать" на 0% после действий пользователя.
+            renderActivityRing();
         }
 
-        // Обновление кружка активности
+        // Обновление кружка активности (честный расчёт: выполнено / всего на сегодня)
         function renderActivityRing() {
             const data = window.currentUserData; 
             if(!data) return;
             const reminders = data.reminders || []; 
+            const completedLog = data.completed_log || [];
             const todayStr = getSafeDateStr(); 
             const pendingToday = reminders.filter(r => getSafeDateStr(new Date(r.datetime.replace(' ', 'T'))) === todayStr).length;
+            const doneToday = completedLog.filter(dateStr => dateStr === todayStr).length;
+            const totalToday = pendingToday + doneToday;
             
             document.getElementById('statCompleted').innerText = data.completed_tasks || 0; 
-            let pct = pendingToday === 0 ? 100 : Math.max(5, 100 - (pendingToday * 15)); 
+            let pct = totalToday === 0 ? 100 : Math.round((doneToday / totalToday) * 100); 
             
             document.getElementById('activityRing').style.strokeDasharray = `${pct}, 100`; 
-            document.getElementById('activityPct').innerText = `${Math.floor(pct)}%`;
+            document.getElementById('activityPct').innerText = `${pct}%`;
+
+            const progressLabel = document.getElementById('ringProgressLabel');
+            if (progressLabel) {
+                progressLabel.innerText = totalToday === 0 ? "Free day" : `${doneToday}/${totalToday} today`;
+            }
+
+            renderStreak(completedLog);
+        }
+
+        // Стрик: сколько дней подряд (включая сегодня, если уже что-то выполнено, 
+        // либо заканчивая вчера) пользователь закрывал хотя бы одну задачу
+        function renderStreak(completedLog) {
+            const badge = document.getElementById('streakBadge');
+            if (!badge) return;
+            const doneDates = new Set(completedLog);
+            let streak = 0;
+            let cursor = new Date();
+            // Если сегодня ещё ничего не выполнено, начинаем отсчёт со вчерашнего дня
+            if (!doneDates.has(getSafeDateStr(cursor))) cursor.setDate(cursor.getDate() - 1);
+            while (doneDates.has(getSafeDateStr(cursor))) {
+                streak++;
+                cursor.setDate(cursor.getDate() - 1);
+            }
+            if (streak > 0) {
+                badge.style.display = 'flex';
+                badge.innerHTML = `<i class="fas fa-fire"></i> ${streak}`;
+            } else {
+                badge.style.display = 'none';
+            }
         }
 
 
@@ -1085,16 +1213,32 @@
             let reminders = [...(data.reminders || [])]; 
             reminders.splice(index, 1); 
             const completed = (data.completed_tasks || 0) + 1; 
+            const completedLog = [...(data.completed_log || []), getSafeDateStr()];
             
             // OPTIMISTIC UPDATE
             window.currentUserData.reminders = reminders;
             window.currentUserData.completed_tasks = completed;
+            window.currentUserData.completed_log = completedLog;
             renderUI(); 
-            renderActivityRing();
+
+            const wasFullDay = document.getElementById('activityPct').innerText === '100%';
+            if (wasFullDay) showDayCompleteToast();
             
             if(window.userDocRef) { 
-                try { await setDoc(window.userDocRef, { reminders, completed_tasks: completed }, { merge: true }); } catch(e){} 
+                try { await setDoc(window.userDocRef, { reminders, completed_tasks: completed, completed_log: completedLog }, { merge: true }); } catch(e){} 
             }
+        }
+
+        // Небольшой тост-поздравление, когда все задачи на сегодня закрыты (не чаще раза в день)
+        window.showDayCompleteToast = function() {
+            const todayStr = getSafeDateStr();
+            if (localStorage.getItem('lunexDayToastShown') === todayStr) return;
+            localStorage.setItem('lunexDayToastShown', todayStr);
+            const toast = document.getElementById('dayCompleteToast');
+            if (!toast) return;
+            toast.classList.add('active');
+            if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+            setTimeout(() => toast.classList.remove('active'), 3500);
         }
 
         // === НАСТРОЙКИ КАТЕГОРИЙ (ПЕРЕИМЕНОВАНИЕ) ===
