@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#050508">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Lunex Bonsai">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Lunex · Bonsai</title>
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+<style>
+:root {
+    --accent-rgb: 255, 71, 126;
+    --accent-bg: #4a0d26;
+    --pink-main: rgb(var(--accent-rgb));
+    --pink-glow: rgba(var(--accent-rgb), 0.5);
+    --bg-dark: #050508;
+    --bg-card: rgba(25, 25, 30, 0.6);
+    --bg-modal: rgba(18, 18, 22, 0.98);
+    --card-border: rgba(255, 255, 255, 0.08);
+    --text-main: #ffffff;
+    --text-muted: #a0a0b0;
+    --green-main: #2ecc71;
+    --red-main: #ff5d5d;
+    --app-max-width: 560px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+button { color: inherit; font: inherit; }
+body {
+    background: radial-gradient(circle at 50% 0%, var(--accent-bg) 0%, var(--bg-dark) 45%);
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    min-height: 100vh;
+    overflow-y: auto; overflow-x: hidden;
+    padding-bottom: max(40px, env(safe-area-inset-bottom));
+    -webkit-overflow-scrolling: touch;
+    background-attachment: fixed;
+    overscroll-behavior: none;
+}
+.top-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: max(14px, env(safe-area-inset-top)) 18px 12px;
+    position: sticky; top: 0; background: transparent;
+    backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); z-index: 50;
+}
+.top-side { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
+.back-btn { width: 40px; height: 40px; border: none; border-radius: 12px; background: rgba(255,255,255,.06); color: #fff; font-size: 16px; cursor: pointer; transition: .2s; }
+.back-btn:active { transform: scale(.9); background: rgba(255,255,255,.12); }
+.top-title { font-size: 17px; font-weight: 800; letter-spacing: .3px; display: flex; align-items: center; gap: 7px; }
+.top-title i { color: var(--pink-main); font-size: 13px; }
+#syncDot { font-size: 15px; color: var(--text-muted); transition: .3s; }
+#syncDot.ok { color: var(--green-main); } #syncDot.err { color: var(--red-main); }
+.tab-content { display: block; animation: fadeIn 0.3s ease; padding: 0 0 20px; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.section-title { font-size: 14px; font-weight: 600; color: var(--text-muted); margin: 15px 20px 15px; text-transform: uppercase; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center; }
+@media (min-width: 640px) {
+    .top-bar, main { max-width: var(--app-max-width); margin-left: auto; margin-right: auto; }
+}
+/* ===== bonsai ===== */
+.bz-wrap{position:relative;margin:10px 20px 0;border-radius:26px;overflow:hidden;border:1px solid rgba(174,210,166,.22);background:radial-gradient(ellipse at 50% 72%,#243323 0%,#101a17 43%,#080d11 78%);box-shadow:inset 0 0 70px rgba(120,170,120,.08),0 18px 55px rgba(0,0,0,.28)}
+#bonsaiCv{display:block;width:100%;height:min(68vh,520px);touch-action:none;cursor:grab}#bonsaiCv:active{cursor:grabbing}.bz-head{display:flex;align-items:center;justify-content:space-between;margin:14px 20px 0}.bz-info{border:1px solid rgba(190,220,180,.25);background:rgba(255,255,255,.06);color:#e4efdf;border-radius:14px;padding:8px 12px;font-weight:700;font-size:12px}.bz-about{display:none;margin:10px 20px 0;padding:16px;border-radius:18px;background:rgba(255,255,255,.055);border:1px solid var(--card-border);color:#cbd6ca;font-size:13px;line-height:1.6}.bz-about.open{display:block}.bz-about b{color:#fff}.bz-loading{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(7,12,10,.72);backdrop-filter:blur(8px);z-index:2;transition:opacity .35s}.bz-loading.hide{opacity:0;pointer-events:none}.bz-loader{width:34px;height:34px;border:3px solid rgba(255,255,255,.18);border-top-color:#b8d6a5;border-radius:50%;animation:bzspin .8s linear infinite}@keyframes bzspin{to{transform:rotate(360deg)}}.bz-loading span{font-size:12px;color:#d7e2d2;font-weight:700}
+.bz-lvl{position:absolute;left:0;right:0;bottom:10px;text-align:center;font-size:12px;font-weight:800;color:var(--text-muted);pointer-events:none}.bz-lvl b{color:#fff}
+.bz-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 20px}
+.bz-stat{background:var(--bg-card);border:1px solid var(--card-border);border-radius:18px;padding:12px;text-align:center}
+.bz-stat i{color:var(--pink-main);font-size:16px}.bz-stat b{display:block;font-size:18px;margin:4px 0 1px}.bz-stat span{font-size:10px;color:var(--text-muted);font-weight:700}
+.bz-note{margin:0 20px 12px;font-size:12px;color:var(--text-muted);font-weight:600;line-height:1.5;text-align:center}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+    <div class="top-side"><button class="back-btn" onclick="goBack()" aria-label="Back"><i class="fas fa-chevron-left"></i></button></div>
+    <div class="top-title"><i class="fas fa-seedling"></i> Bonsai</div>
+    <div class="top-side"><i class="fas fa-cloud" id="syncDot"></i></div>
+</div>
+
+<main id="tab-bonsai" class="tab-content"></main>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
+import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
+
+/* ---------- helpers ---------- */
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2, '0');
+function hash(s) { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return Math.abs(h).toString(36); }
+function safeJSON(s, d) { try { const v = JSON.parse(s); return v ?? d; } catch (e) { return d; } }
+function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+function dstr(d = new Date()) { return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; }
+function dateFromStr(s) { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); }
+function parseDT(s) {
+    const m = String(s || '').match(/(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/);
+    if (!m) return new Date(NaN);
+    return new Date(+m[1], +m[2] - 1, +m[3], +(m[4] || 0), +(m[5] || 0));
+}
+function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
+function startOfDay(d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+
+/* ---------- telegram / theme ---------- */
+const tg = window.Telegram?.WebApp || {};
+try {
+    if (tg.expand) tg.expand();
+    if (tg.disableVerticalSwipes) tg.disableVerticalSwipes();
+    if (tg.setHeaderColor) tg.setHeaderColor('secondary_bg_color');
+    if (tg.setBackgroundColor) tg.setBackgroundColor('#050508');
+    tg.ready();
+    if (tg.BackButton) { tg.BackButton.show(); tg.BackButton.onClick(() => { location.href = 'index.html'; }); }
+} catch (e) {}
+window.goBack = () => { location.href = 'index.html'; };
+
+let S = { accent: 'pink', haptics: true, ...safeJSON(lsGet('lunexSettings'), {}) };
+const THEMES = { pink: ['255,71,126', '#4a0d26'], blue: ['64,156,255', '#0d2a4a'], teal: ['0,214,170', '#0a3a33'], purple: ['165,94,255', '#2c0d4a'], orange: ['255,149,0', '#4a2a0d'] };
+function applyTheme() {
+    const t = THEMES[S.accent] || THEMES.pink;
+    document.documentElement.style.setProperty('--accent-rgb', t[0]);
+    document.documentElement.style.setProperty('--accent-bg', t[1]);
+}
+applyTheme();
+function hap(kind = 'light') {
+    if (!S.haptics || !tg.HapticFeedback) return;
+    try {
+        if (kind === 'select') tg.HapticFeedback.selectionChanged();
+        else if (['success', 'error', 'warning'].includes(kind)) tg.HapticFeedback.notificationOccurred(kind);
+        else tg.HapticFeedback.impactOccurred(kind);
+    } catch (e) {}
+}
+
+/* ---------- state ---------- */
+function emptyData() { return { notes: [], reminders: [], category_colors: {}, completed_tasks: 0, completed_log: [], done_events: [] }; }
+let UD = emptyData();
+let userId = "test_developer_id", userName = "Developer";
+if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+    const u = tg.initDataUnsafe.user;
+    userId = String(u.id); userName = u.first_name || "User";
+}
+const curTab = 'bonsai';
+
+function normalize(d) {
+    const o = { ...emptyData(), ...d };
+    ['notes', 'reminders', 'completed_log', 'done_events'].forEach(k => { if (!Array.isArray(o[k])) o[k] = []; });
+    if (!o.category_colors || typeof o.category_colors !== 'object') o.category_colors = {};
+    o.completed_tasks = Number(o.completed_tasks) || 0;
+    const seen = {};
+    o.reminders = o.reminders.filter(r => r && r.datetime).map(r => {
+        if (r.id) return r;
+        const base = 'l' + hash((r.text || '') + r.datetime);
+        seen[base] = (seen[base] || 0) + 1;
+        return { ...r, id: seen[base] > 1 ? base + '_' + seen[base] : base };
+    });
+    return o;
+}
+function setSync(st) { const el = $('syncDot'); if (el) el.className = 'fas fa-cloud ' + st; }
+
+function parseItem(raw) {
+    if (!raw) return { category: "Personal", date: '', content: "", rawText: "" };
+    const m = raw.match(/^\[(.*?)\](?:\s*\{([^\}]+)\})?\s*([\s\S]*)/);
+    if (m) return { category: m[1], date: m[2] || '', content: m[3], rawText: raw };
+    return { category: "Agenda", date: '', content: raw, rawText: raw };
+}
+function occurrences(from, to) {
+    const out = [];
+    for (const r of UD.reminders) {
+        const start = parseDT(r.datetime); if (isNaN(start)) continue;
+        const dur = r.end ? Math.max(0, Math.round((parseDT(r.end) - start) / 60000)) : 0;
+        const p = parseItem(r.text);
+        const rep = r.repeat || 'none';
+        const mk = (s) => ({ id: r.id, start: s, end: new Date(s.getTime() + dur * 60000), dur, allDay: !!r.allDay, cat: p.category, title: p.content, pri: r.priority ?? 1, notes: r.notes || '', rep, key: dstr(s), done: false });
+        if (rep === 'none') {
+            const e = new Date(start.getTime() + Math.max(dur, 1) * 60000);
+            if (start < to && e > from) out.push(mk(start));
+            continue;
+        }
+        const skip = new Set(r.skip || []);
+        let d = addDays(startOfDay(from), -1);
+        if (d < startOfDay(start)) d = startOfDay(start);
+        for (; d < to; d = addDays(d, 1)) {
+            const dow = d.getDay();
+            let ok = false;
+            if (rep === 'daily') ok = true;
+            else if (rep === 'weekdays') ok = dow >= 1 && dow <= 5;
+            else if (rep === 'weekly') ok = dow === start.getDay();
+            else if (rep === 'monthly') ok = d.getDate() === start.getDate();
+            if (!ok) continue;
+            if (r.until && dstr(d) > r.until) break;
+            if (skip.has(dstr(d))) continue;
+            const s = new Date(d.getFullYear(), d.getMonth(), d.getDate(), start.getHours(), start.getMinutes());
+            const o = mk(s);
+            const eEff = new Date(s.getTime() + Math.max(dur, 1) * 60000);
+            if (s < to && eEff > from) out.push(o);
+        }
+    }
+    out.sort((a, b) => (b.allDay - a.allDay) || (a.start - b.start));
+    return out;
+}
+function calcStreak(log) {
+    const set = new Set(log); let streak = 0, cur = new Date();
+    if (!set.has(dstr(cur))) cur.setDate(cur.getDate() - 1);
+    while (set.has(dstr(cur))) { streak++; cur.setDate(cur.getDate() - 1); }
+    return streak;
+}
+function levelInfo() {
+    const xp = (UD.completed_tasks || 0) * 10 + UD.notes.length * 5 + UD.reminders.length * 2;
+    const level = Math.floor(Math.sqrt(xp / 30)) + 1;
+    const cur = 30 * (level - 1) ** 2, next = 30 * level ** 2;
+    const titles = ['Newcomer', 'Starter', 'Planner', 'Organizer', 'Achiever', 'Pro', 'Master', 'Legend'];
+    return { xp, level, cur, next, pct: Math.round((xp - cur) / (next - cur) * 100), title: titles[Math.min(level - 1, titles.length - 1)] };
+}
+
+/* ---------- firebase ---------- */
+const firebaseConfig = {
+    apiKey: "AIzaSyDY8g42qsSkoN36i-DIeptehoDWXSEUlU0",
+    authDomain: "lunex-f5362.firebaseapp.com",
+    projectId: "lunex-f5362",
+    storageBucket: "lunex-f5362.firebasestorage.app",
+    messagingSenderId: "364220464927",
+    appId: "1:364220464927:web:95531c2ac9de3aaa343a2a"
+};
+try {
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    onSnapshot(doc(db, "users", userId), (snap) => {
+        UD = normalize(snap.exists() ? snap.data() : {});
+        if (UD.settings) { S = { ...S, ...UD.settings }; applyTheme(); }
+        setSync(snap.metadata && snap.metadata.fromCache ? '' : 'ok');
+        renderBonsai();
+    }, (error) => { console.error("Firebase error:", error); setSync('err'); });
+} catch (e) { console.error("Firebase init error:", e); }
+
+/* ============================================================
+   PERSONAL 3D BONSAI v2 — realistic, growing, unique per user
+   ============================================================ */
+const BZ = { raf: 0, seed: 1, st: null, pal: null, r: null, sc: null, cam: null, tree: null, sway: null, rot: .6, vel: 0, zoom: 1, drag: false, px: 0, pv: null, p: 1, t0: 0, ptr: new Map(), pd: 1, replay: true, w: 0, h: 0, sig: '', tex: {}, fx: null, fit: null, last: 0 };
+const BZ_ST = [{ g: 0, m: .02 }, { g: .05, m: .1 }, { g: .16, m: .25 }, { g: .34, m: .45 }, { g: .56, m: .68 }, { g: .8, m: .96 }];
+const BZ_XP = i => Math.ceil(2400 * Math.pow(BZ_ST[i].g, 1 / .7));
+const bzStage = g => g < .05 ? 0 : g < .16 ? 1 : g < .34 ? 2 : g < .56 ? 3 : g < .8 ? 4 : 5;
+const BZL = (String(window.Telegram?.WebApp?.initDataUnsafe?.user?.language_code || navigator.language || 'en').toLowerCase().startsWith('ru')) ? 'ru' : 'en';
+const BZT = {
+    en: {
+        title: 'My Bonsai', info: 'Info', load: 'Growing your tree…', hint: 'Drag · pinch to zoom', prev: 'Preview', back: 'Back to my tree', close: 'Close',
+        stages: ['Seed', 'Sprout', 'Sapling', 'Young bonsai', 'Mature bonsai', 'Ancient giant'],
+        sp: { juniper: 'Forest Juniper', sakura: 'Sakura', maple: 'Golden Maple', elm: 'Chinese Elm' },
+        stl: ['Chokkan · formal upright', 'Moyogi · informal upright', 'Shakan · slanting', 'Fukinagashi · windswept'],
+        water: 'Water · streak', light: 'Light · notes', well: 'Wellbeing', tend: 'Tend to overdue tasks',
+        next: (n, x) => `${x} XP to “${n}”`, maxed: 'Your tree has reached its ancient form. A true giant.',
+        over: n => `${n} overdue task${n > 1 ? 's slow' : ' slows'} your tree down. Complete or reschedule to help it flourish.`, ok: 'Your tree is thriving. Keep your rhythm and watch it grow.',
+        sub: 'A living tree, shaped by patience.', uid: 'Tree ID',
+        secs: [
+            ['fa-seedling', 'What is bonsai?', 'Bonsai (盆栽) means “planted in a tray”. It is a centuries-old art from China and Japan: a real tree is grown in a small pot and shaped by pruning, wiring and patient care until it looks like an ancient giant in miniature. A bonsai is never “finished” — it is tended for decades, and the oldest live for 400+ years, passed from generation to generation.'],
+            ['fa-fingerprint', 'Your tree is one of a kind', 'It is generated from your account ID. Species follows what you write about most; trunk curve, branch layout, leaf shades and style are yours alone — no two users share the same tree.'],
+            ['fa-hand-holding-water', 'What it feeds on', '<b>Water</b> — your daily streak.<br><b>Light</b> — your notes.<br><b>Wellbeing</b> — fewer overdue tasks, healthier leaves.<br><br>XP: <b>+10</b> per completed task, <b>+5</b> per note, <b>+2</b> per event. Overdue tasks turn some leaves yellow.'],
+            ['fa-leaf', 'Species', '<b>Juniper</b> — Work · <b>Sakura</b> — Ideas · <b>Maple</b> — Personal · <b>Elm</b> — everything else.'],
+            ['fa-vector-square', 'Classic styles', '<b>Chokkan</b> — straight, formal trunk.<br><b>Moyogi</b> — graceful S-curve.<br><b>Shakan</b> — leaning, as if toward the sun.<br><b>Fukinagashi</b> — swept by constant wind.'],
+            ['fa-lightbulb', 'Did you know?', 'A bonsai that survived the 1945 Hiroshima bombing is still cared for today. In Japanese philosophy, bonsai teaches patience, imperfection (wabi-sabi) and respect for time.']
+        ], grow: 'How it grows', tip: 'Tip: tap the stage chips under the tree to preview how it will look when fully grown.'
+    },
+    ru: {
+        title: 'Мой бонсай', info: 'Инфо', load: 'Выращиваем дерево…', hint: 'Вращайте · щипок — масштаб', prev: 'Просмотр', back: 'Вернуться к моему дереву', close: 'Закрыть',
+        stages: ['Семя', 'Росток', 'Саженец', 'Молодой бонсай', 'Зрелый бонсай', 'Древний гигант'],
+        sp: { juniper: 'Лесной можжевельник', sakura: 'Сакура', maple: 'Золотой клён', elm: 'Китайский вяз' },
+        stl: ['Тёккан · строгий прямой', 'Моёги · свободный прямой', 'Сякан · наклонный', 'Фукинагаси · под ветром'],
+        water: 'Вода · серия', light: 'Свет · заметки', well: 'Здоровье', tend: 'Заняться просроченными',
+        next: (n, x) => `${x} XP до «${n}»`, maxed: 'Ваше дерево достигло древней формы. Настоящий гигант.',
+        over: n => `Просрочено задач: ${n}. Это замедляет рост — выполните или перенесите их.`, ok: 'Дерево процветает. Держите ритм и наблюдайте, как оно растёт.',
+        sub: 'Живое дерево, созданное терпением.', uid: 'ID дерева',
+        secs: [
+            ['fa-seedling', 'Что такое бонсай?', 'Бонсай (盆栽) — «посаженное на подносе». Это многовековое искусство Китая и Японии: настоящее дерево растят в маленьком горшке и формируют обрезкой, проволокой и терпеливым уходом, пока оно не станет похоже на древнего великана в миниатюре. Бонсай никогда не бывает «закончен» — за ним ухаживают десятилетиями, а старейшим больше 400 лет, их передают из поколения в поколение.'],
+            ['fa-fingerprint', 'Ваше дерево — единственное', 'Оно создаётся из ID вашего аккаунта. Вид зависит от того, о чём вы пишете чаще всего; изгиб ствола, расположение веток, оттенки листвы и стиль — только ваши. Двух одинаковых деревьев не бывает.'],
+            ['fa-hand-holding-water', 'Чем оно питается', '<b>Вода</b> — ваша ежедневная серия.<br><b>Свет</b> — ваши заметки.<br><b>Здоровье</b> — чем меньше просрочек, тем здоровее листья.<br><br>XP: <b>+10</b> за задачу, <b>+5</b> за заметку, <b>+2</b> за событие. Просроченные задачи желтят часть листьев.'],
+            ['fa-leaf', 'Виды', '<b>Можжевельник</b> — Работа · <b>Сакура</b> — Идеи · <b>Клён</b> — Личное · <b>Вяз</b> — всё остальное.'],
+            ['fa-vector-square', 'Классические стили', '<b>Тёккан</b> — прямой строгий ствол.<br><b>Моёги</b> — изящный S-изгиб.<br><b>Сякан</b> — наклон, будто к солнцу.<br><b>Фукинагаси</b> — дерево, развеваемое ветром.'],
+            ['fa-lightbulb', 'Знаете ли вы?', 'Бонсай, переживший бомбардировку Хиросимы в 1945 году, живёт и сегодня. В японской философии бонсай учит терпению, несовершенству (ваби-саби) и уважению ко времени.']
+        ], grow: 'Как оно растёт', tip: 'Подсказка: нажимайте на стадии под деревом, чтобы увидеть, каким оно станет.'
+    }
+};
+const bzL = () => BZT[BZL];
+
+(function () {
+    const st = document.createElement('style');
+    st.textContent = `
+.bz-wrap{background:radial-gradient(ellipse at 50% 75%,#2b3d2a 0%,#142019 45%,#080d11 82%)}
+.bz-badge{position:absolute;left:12px;top:12px;z-index:1;padding:6px 10px;border-radius:12px;background:rgba(0,0,0,.38);backdrop-filter:blur(8px);font-size:11px;font-weight:800;color:#e4efdf;pointer-events:none}
+.bz-hint{position:absolute;right:12px;top:14px;z-index:1;font-size:10px;font-weight:700;color:rgba(228,239,223,.55);pointer-events:none}
+.bz-stages{display:flex;gap:8px;overflow-x:auto;padding:12px 20px 2px;scrollbar-width:none}.bz-stages::-webkit-scrollbar{display:none}
+.bz-chip{flex:0 0 auto;padding:8px 12px;border-radius:14px;border:1px solid var(--card-border);background:rgba(255,255,255,.05);font-size:11px;font-weight:800;color:var(--text-muted);cursor:pointer}
+.bz-chip.on{border-color:#b8d6a5;color:#fff;background:rgba(160,200,140,.18)}.bz-chip.lock{opacity:.6}.bz-chip.view{border-color:var(--pink-main);color:#fff}.bz-chip i{margin-right:5px;font-size:10px}
+.bz-back{margin:10px 20px 0;width:calc(100% - 40px);padding:10px;border-radius:14px;border:1px dashed var(--pink-main);background:transparent;color:var(--pink-main);font-weight:800;font-size:12px}
+.bz-modal{position:fixed;inset:0;z-index:9990;background:rgba(5,9,7,.9);backdrop-filter:blur(16px);display:none;overflow-y:auto;padding:max(14px,env(safe-area-inset-top)) 16px 50px;-webkit-overflow-scrolling:touch}
+.bz-modal.open{display:block;animation:bzfade .35s ease}@keyframes bzfade{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.bz-sheet{max-width:560px;margin:0 auto}
+.bz-x{position:sticky;top:0;margin-left:auto;display:flex;width:38px;height:38px;align-items:center;justify-content:center;border-radius:50%;border:1px solid rgba(255,255,255,.18);background:rgba(20,28,24,.9);color:#fff;font-size:16px;z-index:2}
+.bz-hero{text-align:center;padding:26px 18px;margin-top:-18px;border-radius:26px;border:1px solid rgba(174,210,166,.25);background:radial-gradient(ellipse at 50% 0%,rgba(150,200,130,.3),rgba(255,255,255,.04) 70%)}
+.bz-kanji{font-size:54px;font-weight:300;letter-spacing:8px;color:#dcecd2;text-shadow:0 0 30px rgba(160,210,140,.5)}.bz-hero h2{font-size:24px;margin:4px 0}.bz-hero p{color:#b9c8b6;font-size:13px}
+.bz-id{display:inline-block;margin-top:12px;padding:6px 12px;border-radius:12px;background:rgba(0,0,0,.3);font-size:11px;font-weight:800;color:#cfe2c6}
+.bz-sec{margin-top:12px;padding:16px;border-radius:20px;background:rgba(255,255,255,.055);border:1px solid var(--card-border);color:#cbd6ca;font-size:13px;line-height:1.65}
+.bz-sec h3{font-size:14px;color:#fff;margin-bottom:8px;display:flex;align-items:center;gap:9px}.bz-sec h3 i{color:#b8d6a5}.bz-sec b{color:#fff}
+.bz-tl{display:flex;flex-direction:column;gap:10px;margin-top:4px}.bz-tl div{display:flex;align-items:center;gap:12px}
+.bz-dot{width:26px;height:26px;border-radius:50%;flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-size:11px;background:rgba(255,255,255,.08);color:#9aa89a}
+.bz-tl .done .bz-dot{background:#7fae6a;color:#10200f}.bz-tl .cur .bz-dot{background:var(--pink-main);color:#fff;box-shadow:0 0 14px var(--pink-glow)}.bz-tl small{margin-left:auto;color:#8c9a8c;font-weight:700}
+`;
+    document.head.appendChild(st);
+})();
+
+function bonsaiStats() {
+    const lv = levelInfo(), now = new Date(), todayK = dstr(now);
+    const overdue = occurrences(addDays(startOfDay(now), -365), addDays(startOfDay(now), 1)).filter(o => o.rep === 'none' && o.key < todayK).length;
+    const cc = {}; UD.notes.forEach(n => { const c = parseItem(n).category; cc[c] = (cc[c] || 0) + 1; });
+    UD.reminders.forEach(r => { const c = parseItem(r.text).category; cc[c] = (cc[c] || 0) + 1; });
+    const top = Object.entries(cc).sort((a, b) => b[1] - a[1])[0];
+    return { lv, overdue, streak: calcStreak(UD.completed_log), notes: UD.notes.length, growth: Math.min(1, Math.pow(lv.xp / 2400, .7)), dom: top ? top[0] : '' };
+}
+function bonsaiPalette(dom) {
+    const P = {
+        juniper: { k: 'juniper', leaf: [0x3f6b45, 0x4f7d4f, 0x2f5a3c], core: 0x1f3d29, trunk: 0x7a5a40, pot: 0x3c5a6a, fx: 0xf3eea0, ls: .17, tex: 'needle' },
+        sakura: { k: 'sakura', leaf: [0x7fae6a, 0x8dbd78, 0x6d9c5c], flo: [0xffc6d6, 0xffa9c1, 0xffe0ea, 0xf48fb1], core: 0x4a6b3f, trunk: 0x5d4338, pot: 0x9a7b86, fx: 0xffc2d4, ls: .22, tex: 'leaf' },
+        maple: { k: 'maple', leaf: [0xd8452b, 0xe8892c, 0xc2331f, 0xe9b13a, 0x7aa040], core: 0x7a2a1c, trunk: 0x6b4a38, pot: 0x6d3b2f, fx: 0xf0a23c, ls: .34, tex: 'maple' },
+        elm: { k: 'elm', leaf: [0x6aa653, 0x7db85e, 0x5a9246], core: 0x2f5a2e, trunk: 0x7a5c44, pot: 0x586f5b, fx: 0xf5f0a0, ls: .24, tex: 'leaf' }
+    };
+    return dom === 'Work' ? P.juniper : dom === 'Ideas' ? P.sakura : dom === 'Personal' ? P.maple : P.elm;
+}
+function bonsaiRng(seed) { let x = seed || 7; return () => { x = (x * 16807) % 2147483647; return (x - 1) / 2147483646; }; }
+
+function bzTex(kind) {
+    if (BZ.tex[kind]) return BZ.tex[kind];
+    const T = THREE, c = document.createElement('canvas'), x = c.getContext('2d');
+    if (kind === 'bark') {
+        c.width = 128; c.height = 256; x.fillStyle = '#cdbba6'; x.fillRect(0, 0, 128, 256);
+        for (let i = 0; i < 320; i++) { const a = Math.random() * 128, b = Math.random() * 256, l = 20 + Math.random() * 70; x.strokeStyle = Math.random() < .6 ? `rgba(40,28,18,${.12 + Math.random() * .3})` : `rgba(240,225,205,${.1 + Math.random() * .2})`; x.lineWidth = 1 + Math.random() * 2.6; x.beginPath(); x.moveTo(a, b); x.bezierCurveTo(a + 5, b + l * .3, a - 5, b + l * .6, a + 2, b + l); x.stroke(); }
+    } else {
+        c.width = c.height = 128; x.translate(64, 64);
+        if (kind === 'dot') { const g = x.createRadialGradient(0, 0, 0, 0, 0, 60); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(-64, -64, 128, 128); }
+        else if (kind === 'leaf') { x.fillStyle = '#f2f2f2'; x.beginPath(); x.ellipse(0, 0, 30, 58, 0, 0, 7); x.fill(); x.strokeStyle = 'rgba(0,0,0,.28)'; x.lineWidth = 3; x.beginPath(); x.moveTo(0, -54); x.lineTo(0, 56); x.stroke(); for (let i = -40; i < 44; i += 16) { x.lineWidth = 1.6; x.beginPath(); x.moveTo(0, i); x.lineTo(18, i - 12); x.moveTo(0, i); x.lineTo(-18, i - 12); x.stroke(); } }
+        else if (kind === 'maple') { x.fillStyle = '#f2f2f2'; x.beginPath(); for (let i = 0; i < 20; i++) { const a = i / 20 * 6.2832 - 1.57, r = i % 4 === 0 ? 60 : i % 2 ? 26 : 40; x.lineTo(Math.cos(a) * r, Math.sin(a) * r); } x.closePath(); x.fill(); x.strokeStyle = 'rgba(0,0,0,.3)'; x.lineWidth = 2.5; x.beginPath(); x.moveTo(0, 56); x.lineTo(0, -50); x.stroke(); }
+        else if (kind === 'needle') { x.strokeStyle = '#f0f0f0'; x.lineCap = 'round'; for (let i = 0; i < 34; i++) { const a = -1.3 + Math.random() * 2.6, l = 36 + Math.random() * 24; x.lineWidth = 3 + Math.random() * 3; x.beginPath(); x.moveTo(0, 50); x.lineTo(Math.sin(a) * l, 50 - Math.cos(a) * l * 1.6); x.stroke(); } }
+        else if (kind === 'flower') { x.fillStyle = '#f4f4f4'; for (let i = 0; i < 5; i++) { x.save(); x.rotate(i * 1.2566); x.beginPath(); x.ellipse(0, -26, 17, 24, 0, 0, 7); x.fill(); x.restore(); } x.fillStyle = '#b8b8b8'; x.beginPath(); x.arc(0, 0, 8, 0, 7); x.fill(); }
+    }
+    const t = new T.CanvasTexture(c); t.encoding = T.sRGBEncoding; t.anisotropy = 4;
+    if (kind === 'bark') t.wrapS = t.wrapT = T.RepeatWrapping;
+    return BZ.tex[kind] = t;
+}
+
+function bzTube(pts, r0, r1, seg, flare, rnd) {
+    const T = THREE, N = pts.length, pos = [], uv = [], idx = [], nrm = new T.Vector3(1, 0, 0), ph = rnd() * 6.28;
+    let len = 0;
+    for (let i = 0; i < N; i++) {
+        const t = (i < N - 1 ? pts[i + 1].clone().sub(pts[i]) : pts[i].clone().sub(pts[i - 1])).normalize();
+        nrm.sub(t.clone().multiplyScalar(nrm.dot(t))); if (nrm.lengthSq() < 1e-4) nrm.set(0, 0, 1).sub(t.clone().multiplyScalar(t.z)); nrm.normalize();
+        const bn = new T.Vector3().crossVectors(t, nrm); if (i) len += pts[i].distanceTo(pts[i - 1]);
+        const f = i / (N - 1), r = r0 + (r1 - r0) * Math.pow(f, .8);
+        for (let j = 0; j <= seg; j++) {
+            const a = j / seg * 6.2832; let k = 1 + .06 * Math.sin(f * 37 + a * 3 + ph) + .04 * Math.sin(f * 91 + a * 5);
+            if (flare) k *= 1 + flare * Math.exp(-f * 9) * (.55 + .45 * Math.cos(a * 5 + ph));
+            const rr = r * k, c = Math.cos(a), s = Math.sin(a);
+            pos.push(pts[i].x + (nrm.x * c + bn.x * s) * rr, pts[i].y + (nrm.y * c + bn.y * s) * rr, pts[i].z + (nrm.z * c + bn.z * s) * rr);
+            uv.push(j / seg * Math.max(1, Math.round(r0 * 7)), len * 1.3);
+        }
+    }
+    for (let i = 0; i < N - 1; i++) for (let j = 0; j < seg; j++) { const a = i * (seg + 1) + j, b = a + seg + 1; idx.push(a, a + 1, b, b, a + 1, b + 1); }
+    const g = new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new T.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals();
+    g.userData = { rings: N - 1, per: seg * 6 }; return g;
+}
+
+function bzBase(stage, pal) {
+    const T = THREE, g = new T.Group(), R = bonsaiRng(BZ.seed + 5), r = () => R();
+    if (stage < 5) {
+        const pr = [[.01, 0], [.52, 0], [.58, .05], [.8, .34], [.82, .46], [.77, .5], [.72, .46], [.7, .4], [.01, .4]].map(p => new T.Vector2(p[0], p[1]));
+        const pot = new T.Mesh(new T.LatheGeometry(pr, 40), new T.MeshStandardMaterial({ color: pal.pot, roughness: .38, metalness: .08, side: T.DoubleSide }));
+        pot.castShadow = pot.receiveShadow = true; g.add(pot);
+        [0, 1, 2, 3].forEach(i => { const f = new T.Mesh(new T.BoxGeometry(.18, .08, .14), pot.material); const a = i * 1.5708 + .78; f.position.set(Math.cos(a) * .52, -.01, Math.sin(a) * .52); f.rotation.y = -a; g.add(f); });
+        const soil = new T.Mesh(new T.CircleGeometry(.72, 32), new T.MeshStandardMaterial({ color: 0x2c2218, roughness: 1 })); soil.rotation.x = -1.5708; soil.position.y = .44; soil.receiveShadow = true; g.add(soil);
+        const moss = new T.InstancedMesh(new T.SphereGeometry(1, 6, 5), new T.MeshStandardMaterial({ roughness: 1 }), 90), d = new T.Object3D(), col = new T.Color();
+        for (let i = 0; i < 90; i++) { const a = r() * 6.28, rr = Math.sqrt(r()) * .68, s = .05 + r() * .07; d.position.set(Math.cos(a) * rr, .45, Math.sin(a) * rr); d.scale.set(s, s * .45, s); d.updateMatrix(); moss.setMatrixAt(i, d.matrix); moss.setColorAt(i, col.setHex(0x4f7a35).offsetHSL((r() - .5) * .06, 0, (r() - .5) * .12)); }
+        g.add(moss);
+        for (let i = 0; i < 9; i++) { const a = r() * 6.28, rr = .3 + r() * .38, s = .035 + r() * .05, m = new T.Mesh(new T.IcosahedronGeometry(s, 0), new T.MeshStandardMaterial({ color: 0x8a8780, roughness: .9 })); m.position.set(Math.cos(a) * rr, .46, Math.sin(a) * rr); m.castShadow = true; g.add(m); }
+        return { grp: g, by: .45, W: .85 };
+    }
+    const mound = new T.Mesh(new T.SphereGeometry(2.6, 40, 14, 0, 6.2832, 0, 1.5708), new T.MeshStandardMaterial({ color: 0x4d7a38, roughness: 1 })); mound.scale.y = .22; mound.receiveShadow = true; g.add(mound);
+    const rim = new T.Mesh(new T.CylinderGeometry(2.62, 2.7, .22, 40), new T.MeshStandardMaterial({ color: 0x4a3a2a, roughness: 1 })); rim.position.y = -.05; rim.receiveShadow = true; g.add(rim);
+    const gr = new T.InstancedMesh(new T.ConeGeometry(.035, .3, 4), new T.MeshStandardMaterial({ roughness: .9 }), 1100), d = new T.Object3D(), col = new T.Color();
+    for (let i = 0; i < 1100; i++) { const a = r() * 6.28, rr = Math.sqrt(r()) * 2.55, h = .57 * Math.sqrt(Math.max(0, 1 - (rr / 2.6) ** 2)); d.position.set(Math.cos(a) * rr, h + .1, Math.sin(a) * rr); d.rotation.set((r() - .5) * .5, 0, (r() - .5) * .5); d.scale.setScalar(.7 + r() * .9); d.updateMatrix(); gr.setMatrixAt(i, d.matrix); gr.setColorAt(i, col.setHex(0x5f9440).offsetHSL((r() - .5) * .05, 0, (r() - .5) * .16)); }
+    gr.castShadow = true; g.add(gr);
+    for (let i = 0; i < 6; i++) { const a = r() * 6.28, rr = 1.2 + r() * 1.2, m = new T.Mesh(new T.IcosahedronGeometry(.16 + r() * .22, 1), new T.MeshStandardMaterial({ color: 0x86837c, roughness: .95 })); m.scale.y = .6; m.position.set(Math.cos(a) * rr, .57 * Math.sqrt(Math.max(0, 1 - (rr / 2.6) ** 2)) + .02, Math.sin(a) * rr); m.castShadow = m.receiveShadow = true; g.add(m); }
+    return { grp: g, by: .56, W: 2.7 };
+}
+
+function makeBonsaiTree(s, pal, seed, g, by, stage) {
+    const T = THREE, R = bonsaiRng(seed), r = () => R(), grp = new T.Group(), pads = [], tubes = [];
+    const bark = new T.MeshStandardMaterial({ map: bzTex('bark'), bumpMap: bzTex('bark'), bumpScale: 1.4, color: pal.trunk, roughness: .95 });
+    const H = .3 + 5.4 * Math.pow(g, 1.05), r0 = .03 + .42 * Math.pow(g, .9), padR = .1 + .8 * Math.pow(g, .85), style = seed % 4, ph = r() * 6.28;
+    const lean = [0, .05, .3, .4][style] * H * (.8 + r() * .4) * (r() < .5 ? 1 : -1), sw = [.03, .15, .07, .08][style] * H, wind = style === 3 ? (Math.sign(lean) || 1) : 0;
+    const maxD = stage <= 1 ? 0 : stage === 2 ? 1 : stage === 3 ? 2 : 3, nb = [0, 0, 3, 5, 7, 10][stage];
+    function addTube(pts, a, b, seg, flare, t0, t1) {
+        const geo = bzTube(pts, a, b, seg, flare, r), m = new T.Mesh(geo, bark); m.castShadow = m.receiveShadow = true; m.userData = { t0, t1 }; grp.add(m); tubes.push(m); return m;
+    }
+    const tp = []; for (let i = 0; i <= 7; i++) { const f = i / 7; tp.push(new T.Vector3(lean * Math.pow(f, 1.5) + Math.sin(f * 5 + ph) * sw * f, by + H * f, Math.cos(f * 4 + ph) * sw * .6 * f)); }
+    const tc = new T.CatmullRomCurve3(tp), tpts = tc.getPoints(40);
+    addTube(tpts, r0, r0 * .28, 14, stage > 1 ? .9 : .2, 0, .4);
+    function br(p, d, len, rad, dep, t0) {
+        const pts = [p.clone()], dd = d.clone(); let q = p.clone();
+        for (let i = 0; i < 4; i++) { dd.add(new T.Vector3((r() - .5) * .55, (r() - .5) * .3 - .04 * (dep + .5) + .08, (r() - .5) * .55)).normalize(); q = q.clone().add(dd.clone().multiplyScalar(len / 4)); pts.push(q); }
+        const pp = new T.CatmullRomCurve3(pts).getPoints(14), t1 = Math.min(1, t0 + .26); addTube(pp, rad, rad * .45, 6, 0, t0, t1);
+        const tip = pp[pp.length - 1];
+        if (dep >= maxD) { pads.push({ c: tip.clone().add(new T.Vector3(0, .05 * len, 0)), rad: padR * (.75 + r() * .5), t: t1 }); return; }
+        if (dep === maxD - 1) pads.push({ c: tip.clone(), rad: padR * .7, t: t1 });
+        const nc = dep < 1 ? 3 : 2;
+        for (let k = 0; k < nc; k++) {
+            const u = .45 + .5 * (k + r() * .6) / nc, pt = pp[Math.floor(u * (pp.length - 1))], ax = new T.Vector3(r() - .5, (r() - .2) * .4, r() - .5).normalize(), nd = dd.clone().applyAxisAngle(ax, .6 + r() * .7);
+            nd.y = nd.y * .7 + .2; if (wind) nd.x += wind * .5; nd.normalize();
+            br(pt, nd, len * (.55 + r() * .15), rad * .55, dep + 1, Math.min(.75, t0 + .15 + u * .1));
+        }
+    }
+    for (let i = 0; i < nb; i++) {
+        const f = .28 + .62 * (i + r() * .5) / nb, pt = tc.getPoint(Math.min(1, f)), az = i * 2.4 + r() + ph, dir = new T.Vector3(Math.cos(az), .18 + r() * .28 + f * .35, Math.sin(az));
+        if (wind) dir.x += wind * .9; dir.normalize();
+        br(pt, dir, H * (.62 - .35 * f) * (.85 + r() * .3), r0 * (.5 - .25 * f) + .01, 0, Math.min(.75, .18 + f * .22));
+    }
+    const top = tpts[tpts.length - 1]; pads.push({ c: top.clone().add(new T.Vector3(0, padR * .15, 0)), rad: padR * 1.1, t: .45 });
+    const nr = stage < 2 ? 0 : 5 + (r() * 3 | 0);
+    for (let i = 0; i < nr; i++) {
+        const az = i / nr * 6.28 + r(); let L = (.4 + r() * .4) * (.6 + g * 1.6) * (stage === 5 ? 2.2 : 1); if (stage < 5) L = Math.min(L, .6);
+        const rp = []; for (let k = 0; k <= 4; k++) { const f = k / 4; rp.push(new T.Vector3(Math.cos(az) * L * f, by + .09 * (1 - f) * (1 - f) * (.6 + g), Math.sin(az) * L * f)); }
+        addTube(rp, r0 * .6, .012, 6, 0, 0, .25);
+    }
+    // foliage
+    pads.sort((a, b) => a.t - b.t);
+    const lm = new T.MeshStandardMaterial({ map: bzTex(pal.tex), alphaTest: .42, side: T.DoubleSide, roughness: .78 }), dummy = new T.Object3D(), col = new T.Color(), vol = pads.reduce((a, p) => a + p.rad ** 3, 0) || 1;
+    const sak = pal.k === 'sakura', budget = Math.round(stage < 2 ? 90 : 2200 + g * 5200), wilt = Math.min(.4, s.overdue * .06);
+    const nLeaf = Math.round(budget * (sak ? .55 : 1)) + pads.length * 8, leaf = new T.InstancedMesh(new T.PlaneGeometry(1, 1), lm, nLeaf), lt = [];
+    const nFlo = sak ? Math.round(budget * .4) + pads.length * 5 : 0, flo = sak ? new T.InstancedMesh(new T.PlaneGeometry(1, 1), new T.MeshStandardMaterial({ map: bzTex('flower'), alphaTest: .42, side: T.DoubleSide, roughness: .7 }), nFlo) : null, ft = [];
+    const core = new T.InstancedMesh(new T.IcosahedronGeometry(1, 1), new T.MeshStandardMaterial({ color: pal.core, roughness: 1 }), pads.length * 3), ct = [];
+    let li = 0, fi = 0, ci = 0;
+    const place = (mesh, i, c, rad, shell, size, color) => {
+        const v = new T.Vector3(r() - .5, (r() - .5) * .8, r() - .5).normalize(), rr = shell[0] + shell[1] * r();
+        dummy.position.set(c.x + v.x * rad * rr, c.y + v.y * rad * rr * .62, c.z + v.z * rad * rr);
+        dummy.lookAt(dummy.position.x + v.x * 3 + (r() - .5), dummy.position.y + v.y * 3 + (r() - .5), dummy.position.z + v.z * 3 + (r() - .5)); dummy.rotateZ(r() * 6.28); dummy.scale.setScalar(size); dummy.updateMatrix(); mesh.setMatrixAt(i, dummy.matrix); mesh.setColorAt(i, color);
+    };
+    const ls = pal.ls * (.8 + .5 * Math.sqrt(g));
+    pads.forEach(p => {
+        for (let k = 0; k < 3 && ci < pads.length * 3; k++) { const o = new T.Vector3((r() - .5) * p.rad * .5, (r() - .5) * p.rad * .25, (r() - .5) * p.rad * .5); dummy.position.copy(p.c).add(o); dummy.rotation.set(0, 0, 0); dummy.scale.set(p.rad * .62, p.rad * .4, p.rad * .62); dummy.updateMatrix(); core.setMatrixAt(ci, dummy.matrix); ct.push(p.t); ci++; }
+        const n = Math.max(8, Math.round(budget * (sak ? .55 : 1) * p.rad ** 3 / vol));
+        for (let k = 0; k < n && li < nLeaf; k++) {
+            col.setHex(pal.leaf[Math.floor(r() * pal.leaf.length)]).offsetHSL((r() - .5) * .04, (r() - .5) * .1, (r() - .5) * .14);
+            if (r() < wilt) col.setHex(r() < .5 ? 0xb59a3c : 0x7a5a2a);
+            place(leaf, li, p.c, p.rad, [.45, .6], ls * (.7 + r() * .7), col); lt.push(p.t); li++;
+        }
+        if (sak) { const n2 = Math.round(n * .7); for (let k = 0; k < n2 && fi < nFlo; k++) { col.setHex(pal.flo[Math.floor(r() * 4)]); place(flo, fi, p.c, p.rad, [.7, .35], ls * .75, col); ft.push(p.t); fi++; } }
+    });
+    [leaf, flo, core].forEach(m => { if (m) { m.castShadow = true; m.receiveShadow = true; grp.add(m); } });
+    grp.userData = { tubes, leaf, lt, flo, ft, core, ct, hTop: by + H + padR, padR, lean: Math.abs(lean) };
+    return grp;
+}
+
+function bzDispose(o) { o.traverse(n => { if (n.geometry) n.geometry.dispose(); }); }
+function bzBuild(g) {
+    const T = THREE, s = BZ.st, pal = BZ.pal, stage = bzStage(g);
+    if (BZ.tree) { BZ.sc.remove(BZ.tree); bzDispose(BZ.tree); }
+    const root = new T.Group(), base = bzBase(stage, pal), tree = makeBonsaiTree(s, pal, BZ.seed, g, base.by, stage), u = tree.userData;
+    root.add(base.grp, tree); BZ.sc.add(root); BZ.tree = root; BZ.sway = tree;
+    const Ht = u.hTop, Wt = Math.max(base.W, u.padR * 1.8 + u.lean + .5);
+    BZ.fit = { ty: Ht * .46, Ht, Wt }; BZ.p = 0; BZ.t0 = performance.now(); BZ.replay = false; BZ.lc = 0;
+    const sz = Math.max(4, Ht * .8 + Wt), key = BZ.key; key.shadow.camera.left = key.shadow.camera.bottom = -sz; key.shadow.camera.right = key.shadow.camera.top = sz; key.shadow.camera.far = sz * 6; key.shadow.camera.updateProjectionMatrix();
+    key.position.set(-sz * .6, sz * 1.5, sz * .9); key.target.position.set(0, Ht * .4, 0);
+    BZ.fx.material.color.setHex(pal.fx); BZ.fx.material.blending = (pal.k === 'sakura' || pal.k === 'maple') ? T.NormalBlending : T.AdditiveBlending; BZ.fx.visible = stage >= 2; BZ.fx.userData.ext = [Wt + 1.2, Ht + 1]; BZ.fx.userData.fall = pal.k === 'sakura' || pal.k === 'maple';
+    const a = BZ.fx.geometry.attributes.position; for (let i = 0; i < a.count; i++) a.setXYZ(i, (Math.random() - .5) * 2 * BZ.fx.userData.ext[0], Math.random() * BZ.fx.userData.ext[1], (Math.random() - .5) * 2 * BZ.fx.userData.ext[0]); a.needsUpdate = true;
+    bzGrow(0);
+}
+function bzGrow(p) {
+    const u = BZ.sway.userData, e = 1 - Math.pow(1 - p, 2), v = Math.min(1, e * 1.1);
+    u.tubes.forEach(m => { const d = m.userData, l = Math.max(0, Math.min(1, (e - d.t0) / (d.t1 - d.t0))), sm = l * l * (3 - 2 * l), gd = m.geometry.userData; m.visible = sm > 0; m.geometry.setDrawRange(0, Math.floor(sm * gd.rings) * gd.per); });
+    const cnt = a => { let k = 0; while (k < a.length && a[k] <= v) k++; return k; };
+    u.leaf.count = cnt(u.lt); u.core.count = cnt(u.ct); if (u.flo) u.flo.count = cnt(u.ft);
+}
+function setupBonsai3D() {
+    const cv = $('bonsaiCv'); if (!cv || !window.THREE) return false;
+    try {
+        const T = THREE, w = cv.clientWidth, h = cv.clientHeight; BZ.w = w; BZ.h = h;
+        BZ.r = new T.WebGLRenderer({ canvas: cv, antialias: true, alpha: true }); BZ.r.setPixelRatio(Math.min(2, devicePixelRatio || 1)); BZ.r.setSize(w, h, false);
+        BZ.r.shadowMap.enabled = true; BZ.r.shadowMap.type = T.PCFSoftShadowMap; BZ.r.outputEncoding = T.sRGBEncoding; BZ.r.toneMapping = T.ACESFilmicToneMapping; BZ.r.toneMappingExposure = 1.15;
+        BZ.sc = new T.Scene(); BZ.sc.fog = new T.Fog(0x101a17, 10, 40); BZ.cam = new T.PerspectiveCamera(34, w / h, .1, 120);
+        BZ.sc.add(new T.HemisphereLight(0xdfe9ff, 0x2a2218, .8));
+        const key = new T.DirectionalLight(0xfff0d8, 1.6); key.castShadow = true; key.shadow.mapSize.set(innerWidth < 500 ? 1024 : 2048, innerWidth < 500 ? 1024 : 2048); key.shadow.bias = -.0006; key.shadow.normalBias = .03; BZ.sc.add(key, key.target); BZ.key = key;
+        const rim = new T.DirectionalLight(0xaecbff, .55); rim.position.set(4, 5, -6); BZ.sc.add(rim);
+        const fill = new T.PointLight(0xa8c69a, .5, 30); fill.position.set(4, 3, 4); BZ.sc.add(fill);
+        const floor = new T.Mesh(new T.CircleGeometry(12, 48), new T.MeshStandardMaterial({ color: 0x131b17, roughness: 1 })); floor.rotation.x = -1.5708; floor.position.y = -.16; floor.receiveShadow = true; BZ.sc.add(floor);
+        const slab = new T.Mesh(new T.CylinderGeometry(3.4, 3.5, .16, 56), new T.MeshStandardMaterial({ color: 0x2b3430, roughness: .8 })); slab.position.y = -.08; slab.receiveShadow = true; BZ.sc.add(slab);
+        const pg = new T.BufferGeometry(); pg.setAttribute('position', new T.Float32BufferAttribute(new Float32Array(75 * 3), 3));
+        BZ.fx = new T.Points(pg, new T.PointsMaterial({ size: .1, map: bzTex('dot'), transparent: true, depthWrite: false, opacity: .85 })); BZ.sc.add(BZ.fx);
+        const cn = () => { const a = [...BZ.ptr.values()]; return Math.hypot(a[0].clientX - a[1].clientX, a[0].clientY - a[1].clientY) || 1; };
+        cv.onpointerdown = e => { BZ.ptr.set(e.pointerId, e); BZ.px = e.clientX; BZ.drag = true; cv.setPointerCapture(e.pointerId); if (BZ.ptr.size === 2) BZ.pd = cn(); };
+        cv.onpointermove = e => { if (!BZ.ptr.has(e.pointerId)) return; BZ.ptr.set(e.pointerId, e); if (BZ.ptr.size === 2) { const d = cn(); BZ.zoom = Math.min(1.7, Math.max(.5, BZ.zoom * BZ.pd / d)); BZ.pd = d; } else { const dx = e.clientX - BZ.px; BZ.px = e.clientX; BZ.rot -= dx * .008; BZ.vel = -dx * .008; } };
+        cv.onpointerup = cv.onpointercancel = e => { BZ.ptr.delete(e.pointerId); if (!BZ.ptr.size) BZ.drag = false; };
+        cv.addEventListener('wheel', e => { e.preventDefault(); BZ.zoom = Math.min(1.7, Math.max(.5, BZ.zoom * (1 + e.deltaY * .001))); }, { passive: false });
+        return true;
+    } catch (e) { console.warn('3D bonsai unavailable', e); return false; }
+}
+function bzInfoHTML() {
+    const L = bzL(), s = BZ.st, cs = bzStage(s.growth), k = BZ.pal.k, id = '#' + (BZ.seed % 65536).toString(16).toUpperCase().padStart(4, '0');
+    const tl = L.stages.map((n, i) => `<div class="${i < cs ? 'done' : i === cs ? 'cur' : ''}"><span class="bz-dot"><i class="fas ${i <= cs ? 'fa-check' : 'fa-lock'}"></i></span><span style="color:${i <= cs ? '#fff' : ''};font-weight:700">${n}</span><small>${BZ_XP(i)} XP</small></div>`).join('');
+    const secs = L.secs.map((x, i) => `<div class="bz-sec"><h3><i class="fas ${x[0]}"></i>${x[1]}</h3>${x[2]}${i === 1 ? `<br><br><b>${L.sp[k]}</b> · ${L.stl[BZ.seed % 4]}` : ''}</div>${i === 2 ? `<div class="bz-sec"><h3><i class="fas fa-tree"></i>${L.grow}</h3><div class="bz-tl">${tl}</div></div>` : ''}`).join('');
+    return `<div class="bz-sheet"><button class="bz-x" onclick="closeBonsaiInfo()" aria-label="${L.close}"><i class="fas fa-times"></i></button><div class="bz-hero"><div class="bz-kanji">盆栽</div><h2>Bonsai</h2><p>${L.sub}</p><span class="bz-id">${L.uid} ${id} · ${L.sp[k]}</span></div>${secs}<div class="bz-note" style="margin:14px 0 0">${L.tip}</div></div>`;
+}
+window.toggleBonsaiInfo = function () {
+    let m = $('bzInfo'); if (!m) { m = document.createElement('div'); m.id = 'bzInfo'; m.className = 'bz-modal'; m.onclick = e => { if (e.target === m) closeBonsaiInfo(); }; document.body.appendChild(m); }
+    m.innerHTML = bzInfoHTML(); m.scrollTop = 0; m.classList.add('open'); hap('light');
+};
+window.closeBonsaiInfo = () => $('bzInfo')?.classList.remove('open');
+window.bzPreview = function (i) { hap('light'); const cs = bzStage(BZ.st.growth); BZ.pv = i === cs ? null : BZ_ST[i].m; BZ.replay = true; renderBonsai(); };
+function renderBonsai() {
+    if (curTab !== 'bonsai') return;
+    const L = bzL(), s = bonsaiStats(), pal = bonsaiPalette(s.dom); BZ.st = s; BZ.pal = pal; const order = Math.max(0, 100 - s.overdue * 12);
+    if (!$('bonsaiCv')) {
+        $('tab-bonsai').innerHTML = `<div class="bz-head"><h2 class="section-title" style="margin:0"><span><i class="fas fa-seedling"></i> ${L.title}</span><span id="bzName" style="font-size:11px"></span></h2><button class="bz-info" onclick="toggleBonsaiInfo()"><i class="fas fa-info-circle"></i> ${L.info}</button></div><div class="bz-wrap"><canvas id="bonsaiCv" aria-label="3D bonsai"></canvas><div class="bz-badge" id="bzBadge"></div><div class="bz-hint">${L.hint}</div><div class="bz-loading" id="bzLoading"><div class="bz-loader"></div><span>${L.load}</span></div><div class="bz-lvl" id="bzLvl"></div></div><div class="bz-stages" id="bzStages"></div><div id="bzBackWrap"></div><div class="bz-stats" id="bzStats" style="margin-top:12px"></div><div class="bz-note" id="bzNote"></div><div style="padding:0 20px"><button class="btn btn-primary" style="width:100%" onclick="pruneBonsai()"><i class="fas fa-seedling"></i> ${L.tend}</button></div>`;
+        BZ.seed = parseInt(hash(String(userId)), 36) % 99991 || 7; BZ.r = null; BZ.tree = null; BZ.replay = true;
+        const ok = setupBonsai3D(); setTimeout(() => $('bzLoading')?.classList.add('hide'), ok ? 900 : 400);
+    }
+    const g = BZ.pv != null ? BZ.pv : s.growth, sig = `${s.lv.xp}:${s.overdue}:${g}:${pal.k}`;
+    if (BZ.r && (BZ.replay || sig !== BZ.sig)) { bzBuild(g); BZ.sig = sig; if (BZ.replay === false && !BZ.entered) { BZ.entered = true; } }
+    const cs = bzStage(s.growth), vs = bzStage(g);
+    $('bzName').innerText = `${L.sp[pal.k]} · ${String(userName || 'You').split(' ')[0]}`;
+    $('bzBadge').innerHTML = `<i class="fas fa-seedling"></i> ${L.stages[vs]} · ${L.sp[pal.k]}${BZ.pv != null ? ' · ' + L.prev : ''}`;
+    $('bzLvl').innerHTML = `<b>Lv ${s.lv.level}</b> · ${s.lv.xp} XP · ${Math.round(s.growth * 100)}%`;
+    $('bzStages').innerHTML = L.stages.map((n, i) => `<button class="bz-chip ${i === cs ? 'on' : ''} ${i > cs ? 'lock' : ''} ${BZ.pv != null && i === vs ? 'view' : ''}" onclick="bzPreview(${i})"><i class="fas ${i > cs ? 'fa-lock' : i === cs ? 'fa-seedling' : 'fa-check'}"></i>${n}</button>`).join('');
+    $('bzBackWrap').innerHTML = BZ.pv != null ? `<button class="bz-back" onclick="bzPreview(${cs})"><i class="fas fa-undo"></i> ${L.back}</button>` : '';
+    $('bzStats').innerHTML = `<div class="bz-stat"><i class="fas fa-tint"></i><b>${s.streak}</b><span>${L.water}</span></div><div class="bz-stat"><i class="fas fa-sun"></i><b>${s.notes}</b><span>${L.light}</span></div><div class="bz-stat"><i class="fas fa-heart"></i><b>${order}%</b><span>${L.well}</span></div>`;
+    const nx = cs < 5 ? L.next(L.stages[cs + 1], Math.max(0, BZ_XP(cs + 1) - s.lv.xp)) : L.maxed;
+    $('bzNote').innerHTML = `${nx}<br>${s.overdue ? L.over(s.overdue) : L.ok}`;
+    if (!BZ.raf) bonsaiLoop();
+}
+window.pruneBonsai = function () { hap('medium'); location.href = 'index.html'; };
+function bonsaiLoop() {
+    if (curTab !== 'bonsai' || !$('bonsaiCv')) { BZ.raf = 0; BZ.replay = true; BZ.last = 0; return; }
+    BZ.raf = requestAnimationFrame(bonsaiLoop);
+    if (!BZ.r || !BZ.tree) return;
+    const now = performance.now(), dt = Math.min(.05, (now - (BZ.last || now)) / 1000); BZ.last = now;
+    const cv = BZ.r.domElement, w = cv.clientWidth, h = cv.clientHeight;
+    if (w > 0 && (w !== BZ.w || h !== BZ.h)) { BZ.w = w; BZ.h = h; BZ.r.setSize(w, h, false); BZ.cam.aspect = w / h; BZ.cam.updateProjectionMatrix(); }
+    if (BZ.p < 1) { BZ.p = Math.min(1, BZ.p + dt / 3.8); bzGrow(BZ.p); }
+    if (!BZ.drag) { BZ.rot += BZ.vel; BZ.vel *= .94; BZ.rot += .0016; }
+    const f = BZ.fit, asp = BZ.cam.aspect || 1, tn = Math.tan(17 * Math.PI / 180);
+    let dist = Math.max((f.Ht * .5 + .9 + f.Wt * .15) / tn, f.Wt / (tn * Math.min(1, asp))) * 1.12 * BZ.zoom;
+    const ip = Math.min(1, (now - BZ.t0) / 2800), ie = 1 - Math.pow(1 - ip, 3), el = .2 + (1 - ie) * .55, az = BZ.rot + (1 - ie) * 1.3; dist *= 1 + (1 - ie) * .8;
+    BZ.cam.position.set(Math.sin(az) * Math.cos(el) * dist, f.ty + Math.sin(el) * dist, Math.cos(az) * Math.cos(el) * dist); BZ.cam.lookAt(0, f.ty, 0);
+    BZ.sc.fog.near = dist * 1.3; BZ.sc.fog.far = dist * 3.5;
+    const t = now * .001; BZ.sway.rotation.z = Math.sin(t * .9) * .005; BZ.sway.rotation.x = Math.cos(t * .7) * .004;
+    if (BZ.fx.visible) { const a = BZ.fx.geometry.attributes.position, ex = BZ.fx.userData.ext, fall = BZ.fx.userData.fall; for (let i = 0; i < a.count; i++) { let y = a.getY(i), x = a.getX(i); if (fall) { y -= dt * (.25 + (i % 5) * .05); x += Math.sin(t + i) * dt * .3; if (y < 0) y = ex[1]; } else { y += Math.sin(t * .6 + i) * dt * .12; x += Math.cos(t * .5 + i * 2) * dt * .1; } a.setXY(i, x, y); } a.needsUpdate = true; }
+    BZ.r.render(BZ.sc, BZ.cam);
+}
+
+
+/* ---------- boot ---------- */
+renderBonsai();
+setInterval(renderBonsai, 60000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) renderBonsai(); });
+</script>
+</body>
+</html>
