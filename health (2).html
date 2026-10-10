@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#050508">
+<title>Lunex · Health</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<style>
+:root{--accent-rgb:255,71,126;--accent-bg:#4a0d26;--pink:rgb(var(--accent-rgb));--glow:rgba(var(--accent-rgb),.5);--bg:#050508;--card:rgba(25,25,30,.6);--modal:rgba(18,18,22,.98);--line:rgba(255,255,255,.08);--ink:#fff;--mute:#a0a0b0;--green:#2ecc71;--red:#ff5d5d;--moon:#b8a7ff;--dawn:#ffc58a;--water:#46c6ff}
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+body{background:radial-gradient(circle at 50% 0%,var(--accent-bg) 0%,var(--bg) 45%) fixed;background-color:var(--bg);color:var(--ink);min-height:100vh;overflow-x:hidden;padding-bottom:120px;overscroll-behavior:none;max-width:560px;margin:auto}
+.top{display:flex;justify-content:space-between;align-items:center;padding:max(14px,env(safe-area-inset-top)) 18px 10px;position:sticky;top:0;z-index:50;backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px)}
+.ico-btn{width:40px;height:40px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.06);border:1px solid var(--line);font-size:15px}
+.ico-btn:active{transform:scale(.9)}
+.ttl{font-size:17px;font-weight:800;display:flex;align-items:center;gap:8px}.ttl i{color:var(--pink);font-size:14px}
+#sync{font-size:15px;color:var(--mute)}#sync.ok{color:var(--green)}#sync.err{color:var(--red)}
+.tab{display:none;animation:fi .3s ease;padding-bottom:20px}.tab.on{display:block}
+@keyframes fi{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+h2.st{font-size:13px;font-weight:700;color:var(--mute);margin:22px 20px 12px;text-transform:uppercase;letter-spacing:1px;display:flex;justify-content:space-between;align-items:center}
+.date{margin:6px 20px 14px}.date small{display:block;font-size:12px;color:var(--mute);font-weight:700;text-transform:uppercase;letter-spacing:.8px}.date b{font-size:24px;font-weight:800}
+.card{margin:0 20px 12px;background:var(--card);border:1px solid var(--line);border-radius:24px;padding:16px;backdrop-filter:blur(10px)}
+.card.tight{padding:6px 16px}
+.hero{text-align:center;padding:20px 16px}
+.ringbox{position:relative;width:200px;height:200px;margin:2px auto 10px}.ringbox svg{width:100%;height:100%}
+.ringtxt{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ringtxt b{font-size:38px;font-weight:300;letter-spacing:-1px;font-variant-numeric:tabular-nums}.ringtxt span{font-size:12px;color:var(--mute);font-weight:700;margin-top:2px;text-transform:uppercase;letter-spacing:.5px}
+.cap{font-size:12px;color:var(--mute);font-weight:800;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
+.times{font-size:15px;font-weight:700;margin-bottom:16px;color:#fff;font-variant-numeric:tabular-nums}
+.btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:17px;border-radius:20px;font-size:16px;font-weight:800;background:var(--pink);color:#fff;box-shadow:0 5px 20px var(--glow);transition:.2s}
+.btn:active{transform:scale(.97)}.btn.moon{background:var(--moon);color:#14102b;box-shadow:0 5px 20px rgba(184,167,255,.35)}.btn.dawn{background:var(--dawn);color:#2b1a08;box-shadow:0 5px 20px rgba(255,197,138,.3)}
+.btn.ghost{background:rgba(255,255,255,.06);color:#fff;border:1px solid var(--line);box-shadow:none;padding:14px;font-size:14px}.btn.danger{color:var(--red);background:rgba(255,50,50,.08);border:1px solid rgba(255,50,50,.3);box-shadow:none}
+.link{display:block;margin:12px auto 0;color:var(--mute);font-size:13px;font-weight:600;text-decoration:underline;text-underline-offset:3px;padding:6px}
+.hint{color:var(--mute);font-size:12px;font-weight:600;text-align:center;margin-top:10px;line-height:1.5}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 20px 12px}.grid2 .card{margin:0}
+.tile{cursor:pointer;transition:.2s;position:relative;overflow:hidden}.tile:active{transform:scale(.96);border-color:var(--pink)}
+.tile .ti{font-size:11px;font-weight:800;color:var(--mute);text-transform:uppercase;letter-spacing:.6px;display:flex;align-items:center;gap:6px}.tile .ti i{color:var(--c,var(--pink))}
+.tile .tv{font-size:24px;font-weight:800;margin:8px 0 2px;font-variant-numeric:tabular-nums}.tile .tv small{font-size:12px;color:var(--mute);font-weight:700}
+.tile .ts{font-size:11px;color:var(--mute);font-weight:600}
+.pbar{height:6px;border-radius:5px;background:rgba(255,255,255,.08);overflow:hidden;margin-top:10px}.pbar i{display:block;height:100%;border-radius:5px;background:var(--c,var(--pink));transition:width .6s}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 20px 12px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:12px 6px;text-align:center}.kpi b{display:block;font-size:19px;font-weight:800;font-variant-numeric:tabular-nums}.kpi span{font-size:9.5px;color:var(--mute);text-transform:uppercase;font-weight:800;letter-spacing:.4px}
+.seg{display:flex;background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:16px;padding:3px}.seg button{flex:1;padding:9px 6px;border-radius:13px;font-size:13px;font-weight:700;color:var(--mute);transition:.2s}.seg button.on{background:var(--pink);color:#fff;box-shadow:0 4px 14px var(--glow)}
+.seg.m{margin:0 20px 12px}
+.bars{display:flex;align-items:flex-end;gap:5px;height:130px;position:relative}.bar{flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;min-width:0}
+.bar em{font-style:normal;font-size:10px;font-weight:800;margin-bottom:3px;color:var(--mute)}.bar i{display:block;width:100%;max-width:30px;border-radius:7px 7px 3px 3px;background:linear-gradient(0deg,rgba(var(--accent-rgb),.5),var(--pink));min-height:3px}
+.bar.low i{background:#4a4470}.bar.none i{background:rgba(255,255,255,.08)}.bar small{font-size:9px;color:var(--mute);font-weight:700;margin-top:6px;height:11px;white-space:nowrap}
+.bar.moon i{background:linear-gradient(0deg,rgba(184,167,255,.5),var(--moon))}.bar.water i{background:linear-gradient(0deg,rgba(70,198,255,.45),var(--water))}
+.goalln{position:absolute;left:0;right:0;border-top:1px dashed rgba(255,255,255,.25);pointer-events:none}
+.ctitle{font-size:13px;font-weight:800;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center}.ctitle span{font-size:11px;color:var(--mute);font-weight:700}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:1px solid rgba(255,255,255,.06);min-height:54px}.row:last-child{border:0}
+.row .t{font-size:15px;font-weight:700}.row .s{color:var(--mute);font-size:12px;margin-top:2px;font-weight:500;line-height:1.4}
+.pill{font-size:13px;padding:8px 14px;border-radius:14px;background:rgba(255,255,255,.07);border:1px solid var(--line);font-weight:700;white-space:nowrap}.pill.go{background:var(--pink);border-color:var(--pink);color:#fff;box-shadow:0 3px 12px var(--glow)}
+.step{display:flex;align-items:center;gap:10px}.step b{min-width:48px;text-align:center;font-weight:800;font-variant-numeric:tabular-nums}
+.tin{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:14px;padding:10px 12px;color:#fff;font-size:16px;font-weight:700;outline:none;color-scheme:dark;width:120px;text-align:center}.tin:focus{border-color:var(--pink)}
+.night{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:13px 0;border-bottom:1px solid rgba(255,255,255,.06);width:100%;text-align:left}.night:last-child{border:0}
+.night .l{min-width:0}.night .l b{font-weight:800;font-size:14px}.night .l div{font-size:12px;color:var(--mute);margin-top:3px;font-variant-numeric:tabular-nums}
+.night .r{text-align:right;flex-shrink:0}.night .r b{display:block;font-weight:800;font-variant-numeric:tabular-nums}.night .r small{font-size:11px;font-weight:800}
+.tag{font-size:10px;font-weight:800;color:var(--dawn);margin-left:6px;letter-spacing:.3px}
+.sc-g{color:var(--green)}.sc-y{color:var(--dawn)}.sc-r{color:var(--red)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}.chips.sc{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.chips.sc::-webkit-scrollbar{display:none}
+.chip{padding:9px 14px;border-radius:18px;background:rgba(255,255,255,.05);border:1px solid var(--line);font-size:13px;font-weight:700;white-space:nowrap;transition:.2s;user-select:none}.chip:active{transform:scale(.95)}.chip.on{border-color:var(--pink);color:var(--pink);background:rgba(var(--accent-rgb),.1);box-shadow:0 0 12px var(--glow)}
+.chip i{margin-right:6px}
+.emo{display:flex;justify-content:space-between;gap:6px;margin:6px 0 4px}.emo button{flex:1;font-size:28px;padding:10px 0;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid transparent;transition:.2s;filter:grayscale(.8);opacity:.7}.emo button.on{filter:none;opacity:1;border-color:var(--pink);background:rgba(var(--accent-rgb),.12);transform:scale(1.08)}
+.water-top{display:flex;align-items:center;gap:16px}.wglass{width:74px;height:104px;border-radius:12px 12px 20px 20px;border:2px solid rgba(70,198,255,.5);position:relative;overflow:hidden;flex-shrink:0;background:rgba(70,198,255,.05)}
+.wglass i{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(0deg,#2a9fd6,var(--water));transition:height .7s;opacity:.9}
+.water-top b{font-size:30px;font-weight:800;font-variant-numeric:tabular-nums}.water-top small{display:block;font-size:12px;color:var(--mute);font-weight:700;margin-top:2px}
+.wbtns{display:flex;gap:8px;margin-top:14px}.wbtns .btn{padding:13px;font-size:14px;border-radius:16px;box-shadow:none;background:rgba(70,198,255,.14);border:1px solid rgba(70,198,255,.4);color:#fff}
+.hab{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid rgba(255,255,255,.06)}.hab:last-child{border:0}
+.hab .hi{width:38px;height:38px;border-radius:13px;background:rgba(var(--accent-rgb),.15);display:flex;align-items:center;justify-content:center;color:var(--pink);flex-shrink:0}
+.hab .hn{flex:1;min-width:0}.hab .hn b{font-size:14px;font-weight:700;display:block}.hab .hn small{font-size:11px;color:var(--mute);font-weight:700}
+.cb{width:28px;height:28px;border-radius:9px;border:2px solid var(--mute);display:flex;align-items:center;justify-content:center;transition:.25s;flex-shrink:0}.cb i{opacity:0;font-size:12px}.hab.done .cb{background:var(--pink);border-color:var(--pink);box-shadow:0 0 10px var(--glow)}.hab.done .cb i{opacity:1}.hab.done b{opacity:.5;text-decoration:line-through}
+.week{display:flex;gap:6px;margin-top:12px}.week div{flex:1;text-align:center;font-size:18px}.week small{display:block;font-size:9px;color:var(--mute);font-weight:800;margin-top:3px}
+.ins{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:13px;line-height:1.5;font-weight:500}.ins:last-child{border:0}.ins i{color:var(--pink);margin-top:3px;width:18px;text-align:center}.ins b{font-weight:800}
+.banner{margin:0 20px 12px;padding:14px 16px;border-radius:22px;background:linear-gradient(135deg,rgba(184,167,255,.22),rgba(184,167,255,.04));border:1px solid rgba(184,167,255,.4);display:flex;align-items:center;gap:14px}
+.banner .bi{width:42px;height:42px;border-radius:14px;background:rgba(184,167,255,.25);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}.banner small{font-size:10px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--mute)}.banner b{display:block;font-size:15px;font-weight:800;margin-top:2px}
+.calc-r{display:flex;justify-content:space-between;align-items:center;padding:11px 14px;border-radius:16px;background:rgba(255,255,255,.05);margin-top:8px;font-weight:800;font-variant-numeric:tabular-nums}.calc-r small{color:var(--mute);font-weight:700;font-size:11px}.calc-r.best{border:1px solid var(--pink);background:rgba(var(--accent-rgb),.1)}
+details.dt{font-size:13px;color:var(--mute);line-height:1.6}details.dt summary{cursor:pointer;color:var(--pink);font-weight:700;padding:10px 0;font-size:13px}details.dt ol{padding-left:18px}
+.empty{text-align:center;color:var(--mute);font-size:13px;font-weight:600;padding:22px 20px;line-height:1.5}
+.sw{display:flex;gap:12px;margin-top:6px}.sw div{width:34px;height:34px;border-radius:50%;background:rgb(var(--s));border:3px solid transparent;cursor:pointer;box-shadow:0 0 12px rgba(var(--s),.5);transition:.2s}.sw div.on{border-color:#fff;transform:scale(1.12)}
+.switch{position:relative;width:50px;height:30px;flex-shrink:0}.switch input{opacity:0;width:0;height:0;position:absolute}.sl{position:absolute;inset:0;background:rgba(255,255,255,.12);border-radius:30px;transition:.3s;cursor:pointer}.sl::before{content:'';position:absolute;width:24px;height:24px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.3s}.switch input:checked+.sl{background:var(--pink)}.switch input:checked+.sl::before{transform:translateX(20px)}
+.perm{font-size:11px;font-weight:700;margin-top:3px;color:var(--mute)}.perm.ok{color:var(--green)}.perm.no{color:var(--red)}
+nav{position:fixed;bottom:0;left:0;right:0;padding:0 0 max(18px,env(safe-area-inset-bottom));background:linear-gradient(0deg,var(--bg) 70%,transparent);z-index:100;display:flex;justify-content:center;pointer-events:none}
+nav .bar5{display:flex;justify-content:space-between;width:92%;max-width:520px;background:var(--modal);border:1px solid var(--line);border-radius:32px;padding:7px 10px;backdrop-filter:blur(20px);box-shadow:0 10px 30px rgba(0,0,0,.5);pointer-events:auto}
+nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;font-weight:700;color:var(--mute);padding:7px 2px;transition:.3s}nav button i{font-size:18px}nav button.on{color:var(--pink);text-shadow:0 0 10px var(--glow);transform:translateY(-2px)}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(8px);z-index:999;display:none}.ov.on{display:block}
+.sheet{position:fixed;bottom:-110%;left:0;right:0;margin:auto;max-width:560px;background:var(--modal);border-top:1px solid var(--line);border-radius:30px 30px 0 0;padding:30px 22px max(26px,env(safe-area-inset-bottom));z-index:1000;transition:bottom .4s cubic-bezier(.16,1,.3,1);max-height:92vh;overflow-y:auto}.sheet.on{bottom:0}
+.sheet h3{font-size:19px;font-weight:800;margin-bottom:14px}.x{position:absolute;top:16px;right:18px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;color:var(--mute);font-size:14px}
+.fl{font-size:11px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--mute);margin:14px 0 6px}
+input[type=datetime-local],input[type=text],textarea,input[type=number]{display:block;width:100%;background:rgba(255,255,255,.04);color:#fff;border:1px solid var(--line);border-radius:18px;padding:14px;font-size:15px;font-weight:600;outline:none;color-scheme:dark;resize:none}
+input:focus,textarea:focus{border-color:var(--pink)}
+.acts{display:flex;gap:10px;margin-top:20px}.acts .btn{padding:15px}
+#nm{position:fixed;inset:0;background:#000;z-index:2000;display:none;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:30px;text-align:center}#nm.on{display:flex}#nm .c{font-size:64px;font-weight:200;color:#2c3250}#nm p{color:#2c3250;font-size:14px;max-width:280px}#nm .btn{background:#12162a;color:#4a5280;max-width:260px;box-shadow:none}
+.toast{position:fixed;top:max(14px,env(safe-area-inset-top));left:50%;transform:translate(-50%,-160%);width:calc(100% - 40px);max-width:420px;background:var(--modal);border:1px solid rgba(46,204,113,.35);padding:12px 18px;border-radius:18px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:10px;z-index:6000;box-shadow:0 10px 30px rgba(0,0,0,.5);backdrop-filter:blur(15px);transition:transform .4s cubic-bezier(.16,1,.3,1)}.toast i{color:var(--green)}.toast.on{transform:translate(-50%,0)}
+svg.ln{width:100%;height:110px;display:block}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style></head><body>
+<div class="top">
+ <button class="ico-btn" onclick="location.href='index.html'" aria-label="Назад"><i class="fas fa-chevron-left"></i></button>
+ <div class="ttl"><i class="fas fa-heartbeat"></i> Health</div>
+ <div class="ico-btn" style="background:transparent;border:0"><i class="fas fa-cloud" id="sync"></i></div>
+</div>
+
+<main id="t-today" class="tab on"></main>
+<main id="t-sleep" class="tab"></main>
+<main id="t-track" class="tab"></main>
+<main id="t-stats" class="tab"></main>
+<main id="t-set" class="tab"></main>
+
+<nav><div class="bar5" id="nav"></div></nav>
+
+<div class="ov" id="ov" onclick="closeAll()"></div>
+
+<div class="sheet" id="shSleep"><div class="x" onclick="closeAll()"><i class="fas fa-times"></i></div>
+ <h3 id="shT"></h3>
+ <div class="fl">Лёг спать</div><input type="datetime-local" id="fBed">
+ <div class="fl">Проснулся</div><input type="datetime-local" id="fWake">
+ <div class="fl">Как выспались</div><div class="chips" id="fQ"></div>
+ <div class="fl">Что было накануне</div><div class="chips" id="fTags"></div>
+ <div class="fl">Заметка</div><textarea id="fNote" rows="2" placeholder="Необязательно"></textarea>
+ <div class="acts"><button class="btn danger" id="shDel" style="flex:0 0 auto;width:auto;padding:15px 20px" onclick="delSleep()"><i class="fas fa-trash-alt"></i></button><button class="btn" onclick="saveSleep()">Сохранить</button></div>
+</div>
+
+<div class="sheet" id="shHab"><div class="x" onclick="closeAll()"><i class="fas fa-times"></i></div>
+ <h3>Новая привычка</h3>
+ <input type="text" id="hName" placeholder="Например: Зарядка" autocomplete="off">
+ <div class="fl">Иконка</div><div class="chips" id="hIcons"></div>
+ <div class="acts"><button class="btn" onclick="saveHabit()">Добавить</button></div>
+</div>
+
+<div id="nm"><div class="c" id="nmc"></div><p>Точный режим: положите телефон на кровать экраном вверх. Касаться не нужно.</p><button class="btn" onclick="wake()">Проснулся</button></div>
+<div class="toast" id="toast"><i class="fas fa-check-circle"></i><span id="toastT"></span></div>
+<input type="file" id="shFile" accept=".csv,text/csv" multiple hidden>
+<input type="file" id="jsFile" accept=".json,application/json" hidden>
+
+<script>
+const $=id=>document.getElementById(id),pad=n=>String(n).padStart(2,'0');
+const ls={g:k=>{try{return localStorage.getItem(k)}catch(e){return null}},s:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}}};
+const tg=window.Telegram?.WebApp||{};
+try{tg.expand&&tg.expand();tg.disableVerticalSwipes&&tg.disableVerticalSwipes();tg.ready&&tg.ready();tg.setBackgroundColor&&tg.setBackgroundColor('#050508');tg.setHeaderColor&&tg.setHeaderColor('#050508')}catch(e){}
+if(tg.BackButton){try{tg.BackButton.show();tg.BackButton.onClick(()=>{if(document.querySelector('.sheet.on'))closeAll();else location.href='index.html'})}catch(e){}}
+const hap=k=>{try{tg.HapticFeedback&&(k==='ok'?tg.HapticFeedback.notificationOccurred('success'):tg.HapticFeedback.impactOccurred('light'))}catch(e){}};
+/* тема из основного приложения */
+const THEMES={pink:['255,71,126','#4a0d26'],blue:['64,156,255','#0d2a4a'],teal:['0,214,170','#0a3a33'],purple:['165,94,255','#2c0d4a'],orange:['255,149,0','#4a2a0d']};
+function applyTheme(a){const t=THEMES[a]||THEMES.pink;document.documentElement.style.setProperty('--accent-rgb',t[0]);document.documentElement.style.setProperty('--accent-bg',t[1])}
+try{applyTheme((JSON.parse(ls.g('lunexSettings'))||{}).accent)}catch(e){}
+
+const WD=['Вс','Пн','Вт','Ср','Чт','Пт','Сб'],WDF=['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
+const MG=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+
+/* ---------- данные ---------- */
+const DEF=()=>({v:3,ts:0,goal:8,bed:1380,wake:420,water:2000,glass:250,hour12:false,sessions:[],active:null,perm:{},wat:{},mood:{},wt:{},
+ habits:[{id:'h1',n:'Витамины',i:'fa-capsules'},{id:'h2',n:'Прогулка',i:'fa-person-walking'},{id:'h3',n:'Без экрана перед сном',i:'fa-mobile-screen'}],hlog:{}});
+let DB=(()=>{let d=DEF(),r;try{r=JSON.parse(ls.g('lunexHealthV3'))}catch(e){}
+ if(!r){try{r=JSON.parse(ls.g('lunexSleepV2'))}catch(e){}}
+ if(!r){try{const o=JSON.parse(ls.g('lunexSleepV1'));r={sessions:(o.sessions||[]).filter(s=>s.start&&s.end).map(s=>({id:'o'+s.start,start:s.start,end:s.end,src:'old'}))}}catch(e){}}
+ return Object.assign(d,r||{})})();
+let pushT;
+const save=(quiet)=>{if(!quiet)DB.ts=Date.now();ls.s('lunexHealthV3',JSON.stringify(DB));clearTimeout(pushT);if(!quiet)pushT=setTimeout(()=>window.cloudPush&&window.cloudPush(DB),1500)};
+window.cloudPull=h=>{if(!h||typeof h!=='object')return;if((h.ts||0)>DB.ts){DB=Object.assign(DEF(),h);save(true);render()}else if((h.ts||0)<DB.ts)window.cloudPush&&window.cloudPush(DB)};
+
+/* ---------- утилиты времени ---------- */
+const dk=t=>{const d=new Date(t);return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())};
+const dFrom=k=>{const[a,b,c]=k.split('-').map(Number);return new Date(a,b-1,c)};
+const addD=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};
+const fMin=m=>{m=((Math.round(m)%1440)+1440)%1440;const h=Math.floor(m/60),mm=m%60;return DB.hour12?`${h%12||12}:${pad(mm)} ${h>=12?'PM':'AM'}`:`${pad(h)}:${pad(mm)}`};
+const fT=t=>{const d=new Date(t);return fMin(d.getHours()*60+d.getMinutes())};
+const dur=m=>{m=Math.max(0,Math.round(m));return Math.floor(m/60)+'ч '+pad(m%60)+'м'};
+const toLI=t=>{const d=new Date(t);return dk(t)+'T'+pad(d.getHours())+':'+pad(d.getMinutes())};
+const hm=m=>`${pad(Math.floor(m/60))}:${pad(m%60)}`;const unhm=s=>{const[a,b]=(s||'0:0').split(':').map(Number);return(a||0)*60+(b||0)};
+const mins=s=>(s.end-s.start)/6e4;
+const normBed=m=>m<720?m+1440:m;
+const bedMin=s=>{const d=new Date(s.start);return normBed(d.getHours()*60+d.getMinutes())};
+const GM=()=>DB.goal*60;
+const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:0;
+const std=a=>{if(a.length<2)return 0;const m=avg(a);return Math.sqrt(avg(a.map(x=>(x-m)**2)))};
+
+/* ---------- ночи и оценка ---------- */
+function nights(){const m={};DB.sessions.forEach(s=>{const k=dk(s.end);if(!m[k]||mins(s)>mins(m[k]))m[k]=s});return m}
+function lastNight(){return Object.values(nights()).sort((a,b)=>b.end-a.end)[0]}
+function score(s){const d=mins(s),g=GM();let a=Math.min(d/g,1)*50;if(d>g+120)a-=Math.min(10,(d-g-120)/12);
+ const diff=Math.abs(bedMin(s)-normBed(DB.bed));const b=Math.max(0,25-diff/6);const q=s.q?s.q/5*25:15;return Math.max(0,Math.min(100,Math.round(a+b+q)))}
+const scCls=v=>v>=80?'sc-g':v>=60?'sc-y':'sc-r';
+function series(n){const m=nights(),o=[];for(let i=n-1;i>=0;i--){const d=addD(new Date(),-i);o.push({d,k:dk(d),s:m[dk(d)]})}return o}
+function regularity(list){if(list.length<3)return null;return Math.max(0,Math.round(100-std(list.map(bedMin))*.9))}
+function debt(n){return series(n).filter(x=>x.s).reduce((a,x)=>a+Math.max(0,GM()-mins(x.s)),0)}
+
+/* ---------- сон: отметки ---------- */
+function sleep(){if(DB.active)return;DB.active={start:Date.now()};save();hap('ok');render();toast('Спокойной ночи. Экран можно выключить')}
+function wake(){const a=DB.active;if(!a)return;const end=Date.now();stopPrecise();DB.active=null;
+ if(end-a.start<20*6e4){save();render();return toast('Меньше 20 минут — не записано')}
+ const id='s'+a.start;DB.sessions.push({id,start:a.start,end,src:a.precise?'precise':'tap',rest:a.rest});save();hap('ok');render();toast('Доброе утро! Сон сохранён');setTimeout(()=>openSleep(id),600)}
+
+/* точный режим */
+let wl=null,mvT=null,mvMax=0,lastMag=null,clkT=null;
+const onDM=e=>{const a=e.accelerationIncludingGravity;if(!a||a.x==null)return;const m=Math.hypot(a.x,a.y,a.z);if(lastMag!=null)mvMax=Math.max(mvMax,Math.abs(m-lastMag));lastMag=m};
+async function startPrecise(){if(DB.perm.motion!=='ok'){await askMotion();if(DB.perm.motion!=='ok')return toast('Разрешите датчики движения в Настройках')}
+ DB.active={start:Date.now(),precise:true,rest:0};save();runPrecise();render()}
+async function runPrecise(){addEventListener('devicemotion',onDM);
+ mvT=setInterval(()=>{if(DB.active&&mvMax>.6){DB.active.rest=(DB.active.rest||0)+1;save(true)}mvMax=0},6e4);
+ try{wl=await navigator.wakeLock.request('screen')}catch(e){}
+ $('nm').classList.add('on');const t=()=>$('nmc').textContent=fT(Date.now());t();clkT=setInterval(t,15000)}
+function stopPrecise(){removeEventListener('devicemotion',onDM);clearInterval(mvT);clearInterval(clkT);try{wl&&wl.release()}catch(e){}wl=null;$('nm').classList.remove('on')}
+const setP=(k,v)=>{DB.perm[k]=v;save();render()};
+async function askMotion(){try{if(typeof DeviceMotionEvent!=='undefined'&&DeviceMotionEvent.requestPermission){if(await DeviceMotionEvent.requestPermission()!=='granted')return setP('motion','no')}
+ const ok=await new Promise(res=>{let d=0;const fin=v=>{if(d)return;d=1;removeEventListener('devicemotion',f);res(v)};const f=e=>{const a=e.accelerationIncludingGravity;if(a&&a.x!=null)fin(true)};addEventListener('devicemotion',f);setTimeout(()=>fin(false),1500)});
+ setP('motion',ok?'ok':'no')}catch(e){setP('motion','no')}}
+async function askWake(){try{const l=await navigator.wakeLock.request('screen');l.release();setP('wake','ok')}catch(e){setP('wake','no')}}
+
+/* ---------- Samsung Health CSV ---------- */
+function csv(t){const R=[];let r=[],f='',q=false;for(let i=0;i<t.length;i++){const c=t[i];if(q){if(c=='"'){if(t[i+1]=='"'){f+='"';i++}else q=false}else f+=c}else if(c=='"')q=true;else if(c==','){r.push(f);f=''}else if(c=='\n'||c=='\r'){if(c=='\r'&&t[i+1]=='\n')i++;r.push(f);f='';R.push(r);r=[]}else f+=c}if(f||r.length){r.push(f);R.push(r)}return R}
+$('shFile').onchange=async e=>{let n=0;
+ for(const fl of e.target.files){const R=csv(await fl.text());const hi=R.findIndex(r=>r.some(c=>/(^|\.)start_time$/.test(c)));if(hi<0)continue;
+  const H=R[hi],col=x=>H.findIndex(c=>c===x||c.endsWith('.'+x));if(col('stage')>=0)continue;
+  const si=col('start_time'),ei=col('end_time');if(si<0||ei<0)continue;
+  const P=v=>Date.parse(v.trim().replace(' ','T')+(/Z|[+-]\d\d:?\d\d$/.test(v.trim())?'':'Z'));
+  for(const r of R.slice(hi+1)){const a=P(r[si]||''),b=P(r[ei]||'');if(!(b>a))continue;const m=(b-a)/6e4;if(m<30||m>1200)continue;
+   if(DB.sessions.some(s=>Math.abs(s.start-a)<6e5))continue;DB.sessions.push({id:'h'+a,start:a,end:b,src:'samsung'});n++}}
+ e.target.value='';DB.sessions.sort((x,y)=>x.start-y.start);save();render();toast(n?'Импортировано ночей: '+n:'Не нашёл данных сна в файлах')};
+
+/* ---------- ссылки для рутин ---------- */
+const base=()=>location.origin+location.pathname;
+function copy(a){const u=base()+'#'+a;(navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(()=>toast('Ссылка скопирована'),()=>prompt('Скопируйте ссылку:',u))}
+function intent(){const h=(location.hash||'').slice(1)||tg.initDataUnsafe?.start_param||new URLSearchParams(location.search).get('act');
+ if(h==='sleep'&&!DB.active)sleep();else if(h==='wake'&&DB.active)wake();
+ if(location.hash)history.replaceState(null,'',location.pathname+location.search)}
+
+/* ---------- трекеры ---------- */
+const TK=()=>dk(Date.now());
+function addWater(v){const k=TK();DB.wat[k]=Math.max(0,(DB.wat[k]||0)+v);save();hap('light');render();if(v>0&&DB.wat[k]>=DB.water&&DB.wat[k]-v<DB.water){toast('Норма воды выполнена 💧');hap('ok')}}
+function setMood(m){const k=TK();DB.mood[k]=Object.assign({},DB.mood[k],{m});save();hap('light');render()}
+function setEnergy(e){const k=TK();DB.mood[k]=Object.assign({},DB.mood[k],{e});save();hap('light');render()}
+function saveWeight(){const v=parseFloat(($('wIn').value||'').replace(',','.'));if(!(v>20&&v<400))return toast('Введите вес от 20 до 400 кг');DB.wt[TK()]=Math.round(v*10)/10;save();hap('ok');render();toast('Вес записан')}
+function togH(id){const k=TK(),a=DB.hlog[k]||[];DB.hlog[k]=a.includes(id)?a.filter(x=>x!==id):[...a,id];save();hap('light');render()}
+function habStreak(id){let n=0,d=new Date();if(!(DB.hlog[dk(d)]||[]).includes(id))d=addD(d,-1);while((DB.hlog[dk(d)]||[]).includes(id)){n++;d=addD(d,-1)}return n}
+const HICONS=['fa-capsules','fa-person-walking','fa-dumbbell','fa-book','fa-brain','fa-mobile-screen','fa-mug-hot','fa-apple-whole','fa-leaf','fa-sun','fa-pills','fa-tooth'];
+let hIc='fa-leaf';
+function openHab(){$('hName').value='';hIc='fa-leaf';paintHI();openSheet('shHab')}
+function paintHI(){$('hIcons').innerHTML=HICONS.map(i=>`<div class="chip ${i===hIc?'on':''}" onclick="hIc='${i}';paintHI()"><i class="fas ${i}" style="margin:0"></i></div>`).join('')}
+function saveHabit(){const n=$('hName').value.trim();if(!n)return toast('Введите название');DB.habits.push({id:'h'+Date.now().toString(36),n,i:hIc});save();closeAll();render();hap('ok')}
+function delHab(id){if(!confirm('Удалить привычку?'))return;DB.habits=DB.habits.filter(h=>h.id!==id);save();render()}
+function habPct(k){const n=DB.habits.length;if(!n)return null;const a=(DB.hlog[k]||[]).filter(i=>DB.habits.some(h=>h.id===i)).length;return a/n}
+
+/* ---------- итоговый балл дня ---------- */
+function dayScore(){const k=TK(),parts=[];const n=nights()[k];if(n)parts.push([score(n),.4]);
+ parts.push([Math.min(100,(DB.wat[k]||0)/DB.water*100),.25]);const h=habPct(k);if(h!==null)parts.push([h*100,.25]);
+ const mo=DB.mood[k];if(mo&&mo.m)parts.push([mo.m*20,.1]);const w=parts.reduce((a,p)=>a+p[1],0);return w?Math.round(parts.reduce((a,p)=>a+p[0]*p[1],0)/w):0}
+
+/* ---------- компоненты ---------- */
+function ring(f,main,sub,sz){const r=88,c=2*Math.PI*r;return`<div class="ringbox" style="${sz?`width:${sz}px;height:${sz}px`:''}"><svg viewBox="0 0 216 216"><defs><linearGradient id="g${sz||0}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b8a7ff"/><stop offset="1" stop-color="#ffc58a"/></linearGradient></defs><circle cx="108" cy="108" r="${r}" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="12"/><circle cx="108" cy="108" r="${r}" fill="none" stroke="url(#g${sz||0})" stroke-width="12" stroke-linecap="round" stroke-dasharray="${c*Math.min(Math.max(f,0),1)} ${c}" transform="rotate(-90 108 108)"/></svg><div class="ringtxt"><b>${main}</b><span>${sub}</span></div></div>`}
+function bars(vals,labels,goal,max,fmt,cls){const gb=goal?(goal/max)*100*.78:0;return`<div class="bars">${vals.map((v,i)=>{const h=v==null?3:Math.max(4,Math.min(v/max,1)*78);const low=goal&&v!=null&&v<goal*.9;return`<div class="bar ${v==null?'none':low?'low':''} ${cls||''}">${v!=null?`<em>${fmt(v)}</em>`:''}<i style="height:${h}%"></i><small>${labels[i]||''}</small></div>`}).join('')}${goal?`<div class="goalln" style="bottom:calc(${gb}% + 17px)"></div>`:''}</div>`}
+function line(pts,color){if(pts.length<2)return'<div class="empty" style="padding:14px">Нужно минимум 2 записи</div>';const vs=pts.map(p=>p.v),mn=Math.min(...vs)-.5,mx=Math.max(...vs)+.5,W=300,H=100;
+ const X=i=>8+i/(pts.length-1)*(W-16),Y=v=>H-8-(v-mn)/(mx-mn||1)*(H-24);const d=pts.map((p,i)=>(i?'L':'M')+X(i).toFixed(1)+' '+Y(p.v).toFixed(1)).join(' ');
+ return`<svg class="ln" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><path d="${d} L${X(pts.length-1)} ${H} L${X(0)} ${H} Z" fill="${color}" opacity=".12"/><path d="${d}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>${pts.map((p,i)=>`<circle cx="${X(i)}" cy="${Y(p.v)}" r="3.5" fill="${color}"/>`).join('')}</svg>`}
+
+/* ---------- экран «Сегодня» ---------- */
+function vToday(){const now=new Date(),a=DB.active,k=TK();const hr=now.getHours();const gr=hr<5?'Доброй ночи':hr<12?'Доброе утро':hr<18?'Добрый день':'Добрый вечер';
+ let h=`<div class="date"><small>${WDF[now.getDay()]}, ${now.getDate()} ${MG[now.getMonth()]}</small><b>${gr}</b></div>`;
+ /* напоминание об отбое */
+ const nm=now.getHours()*60+now.getMinutes(),bd=((DB.bed-nm)+1440)%1440;
+ if(!a&&bd<=60&&bd>=0)h+=`<div class="banner"><div class="bi"><i class="fas fa-moon"></i></div><div><small>Скоро отбой</small><b>${bd<=1?'Пора ложиться':'Через '+bd+' мин · '+fMin(DB.bed)}</b></div></div>`;
+ else if(!a)h+=`<div class="banner"><div class="bi"><i class="fas fa-bed"></i></div><div><small>Режим сна</small><b>Отбой ${fMin(DB.bed)} · подъём ${fMin(DB.wake)}</b></div></div>`;
+ /* герой */
+ h+=`<div class="card hero">`;
+ if(a){const m=(Date.now()-a.start)/6e4;
+  h+=`<div class="cap">Вы спите с ${fT(a.start)}</div>${ring(m/GM(),dur(m),'цель '+DB.goal+'ч')}<button class="btn dawn" onclick="wake()"><i class="fas fa-sun"></i> Я проснулся</button><p class="hint">${a.precise?'Точный режим: экран включён':'Экран можно выключить — время считается по часам'}</p><button class="link" onclick="openActWake()">Проснулся раньше? Указать время</button>`}
+ else{const n=lastNight();
+  h+=n?`<div class="cap">${dk(n.end)===k?'Эта ночь':'Последняя ночь'} · <span class="${scCls(score(n))}">оценка ${score(n)}</span></div>${ring(mins(n)/GM(),dur(mins(n)),'из '+DB.goal+'ч')}<div class="times">${fT(n.start)} → ${fT(n.end)}</div>`
+  :`<div class="cap">Пока нет записей</div>${ring(0,'—','из '+DB.goal+'ч')}<div class="times">&nbsp;</div>`;
+  h+=`<button class="btn moon" onclick="sleep()"><i class="fas fa-moon"></i> Ложусь спать</button><p class="hint">Нажмите и выключайте экран. Утром — «Проснулся».</p><button class="link" onclick="startPrecise()">Точный режим с датчиками</button>`}
+ h+=`</div>`;
+ /* плитки */
+ const w=DB.wat[k]||0,mo=DB.mood[k]||{},hp=habPct(k),wt=Object.keys(DB.wt).sort().pop();
+ h+=`<div class="grid2">
+ <div class="card tile" style="--c:var(--water)" onclick="addWater(DB.glass)"><div class="ti"><i class="fas fa-droplet"></i>Вода</div><div class="tv">${(w/1000).toFixed(2).replace(/\.?0+$/,'')||'0'}<small> / ${DB.water/1000} л</small></div><div class="ts">Нажмите: +${DB.glass} мл</div><div class="pbar"><i style="width:${Math.min(100,w/DB.water*100)}%"></i></div></div>
+ <div class="card tile" onclick="go('track')"><div class="ti"><i class="fas fa-circle-check"></i>Привычки</div><div class="tv">${hp===null?'—':Math.round(hp*100)+'<small>%</small>'}</div><div class="ts">${DB.habits.length?(DB.hlog[k]||[]).filter(i=>DB.habits.some(x=>x.id===i)).length+' из '+DB.habits.length:'Добавьте первую'}</div><div class="pbar"><i style="width:${(hp||0)*100}%"></i></div></div>
+ <div class="card tile" style="--c:var(--dawn)" onclick="go('track')"><div class="ti"><i class="fas fa-face-smile"></i>Настроение</div><div class="tv" style="font-size:30px">${mo.m?['😞','🙁','😐','🙂','😄'][mo.m-1]:'—'}</div><div class="ts">${mo.m?'Энергия '+(mo.e||'—')+'/5':'Отметить сейчас'}</div></div>
+ <div class="card tile" style="--c:var(--green)" onclick="go('track')"><div class="ti"><i class="fas fa-weight-scale"></i>Вес</div><div class="tv">${wt?DB.wt[wt]:'—'}<small>${wt?' кг':''}</small></div><div class="ts">${wt?(wt===k?'Сегодня':'от '+dFrom(wt).getDate()+' '+MG[dFrom(wt).getMonth()]):'Записать'}</div></div>
+ </div>`;
+ /* балл дня */
+ const ds=dayScore();
+ h+=`<div class="card" style="display:flex;align-items:center;gap:16px"><div style="width:84px;height:84px;flex-shrink:0">${ring(ds/100,ds,'',84).replace('font-size:38px','')}</div><div style="min-width:0"><div class="cap" style="margin-bottom:4px">Индекс дня</div><div style="font-size:13px;color:var(--mute);line-height:1.5;font-weight:600">Сон, вода, привычки и настроение в одном числе. ${ds>=80?'Отличный день!':ds>=50?'Хорошо идёте.':'Есть куда расти — начните со стакана воды.'}</div></div></div>`;
+ /* неделя */
+ const s7=series(7);h+=`<h2 class="st"><span>Сон за неделю</span><span>${s7.filter(x=>x.s).length?'ср. '+dur(avg(s7.filter(x=>x.s).map(x=>mins(x.s)))):''}</span></h2><div class="card">${bars(s7.map(x=>x.s?mins(x.s)/60:null),s7.map(x=>WD[x.d.getDay()]),DB.goal,DB.goal*1.25,v=>v.toFixed(1),'moon')}</div>`;
+ return h}
+
+/* ---------- экран «Сон» ---------- */
+let slR=7,calcWake=null;
+function vSleep(){const s=series(slR),have=s.filter(x=>x.s),all=Object.values(nights()),rec=all.sort((a,b)=>b.end-a.end).slice(0,14);
+ const rg=regularity(rec),dbt=debt(7);let h=`<div class="date"><small>Сон</small><b>Ваш режим</b></div>`;
+ h+=`<div class="kpis"><div class="kpi"><b>${have.length?dur(avg(have.map(x=>mins(x.s)))):'—'}</b><span>В среднем</span></div><div class="kpi"><b>${rg===null?'—':rg+'%'}</b><span>Режим</span></div><div class="kpi"><b class="${dbt>120?'sc-r':dbt>0?'sc-y':'sc-g'}">${dbt?dur(dbt):'0'}</b><span>Долг за 7д</span></div></div>`;
+ h+=`<div class="seg m"><button class="${slR===7?'on':''}" onclick="slR=7;render()">7 дней</button><button class="${slR===14?'on':''}" onclick="slR=14;render()">14 дней</button><button class="${slR===30?'on':''}" onclick="slR=30;render()">30 дней</button></div>`;
+ const lab=s.map((x,i)=>slR===7?WD[x.d.getDay()]:(i%(slR>14?5:2)===0||i===s.length-1?x.d.getDate():''));
+ h+=`<div class="card"><div class="ctitle">Продолжительность <span>цель ${DB.goal} ч</span></div>${bars(s.map(x=>x.s?mins(x.s)/60:null),lab,DB.goal,DB.goal*1.25,v=>slR>14?'':v.toFixed(1),'moon')}</div>`;
+ if(have.length>=2){const bm=have.map(x=>bedMin(x.s)),wm=have.map(x=>{const d=new Date(x.s.end);return d.getHours()*60+d.getMinutes()});
+  h+=`<div class="card tight"><div class="row"><div class="t">Обычно ложитесь</div><b>${fMin(avg(bm))}</b></div><div class="row"><div class="t">Обычно встаёте</div><b>${fMin(avg(wm))}</b></div><div class="row"><div class="t">Средняя оценка сна</div><b class="${scCls(avg(have.map(x=>score(x.s))))}">${Math.round(avg(have.map(x=>score(x.s))))}</b></div></div>`}
+ /* калькулятор */
+ const cw=calcWake??DB.wake,now=new Date();
+ h+=`<h2 class="st"><span>Калькулятор сна</span><span>циклы по 90 мин</span></h2><div class="card"><div class="fl" style="margin-top:0">Хочу проснуться в</div><div style="display:flex;gap:10px;align-items:center"><input class="tin" type="time" value="${hm(cw)}" onchange="calcWake=unhm(this.value);render()"><span style="font-size:12px;color:var(--mute);font-weight:600;line-height:1.4">Лягте в одно из этих времён — проснётесь в конце цикла</span></div>`;
+ [6,5,4].forEach((c,i)=>{const b=cw-c*90-15;h+=`<div class="calc-r ${i===0?'best':''}"><span><i class="fas fa-moon" style="color:var(--moon);margin-right:8px"></i>${fMin(b)}</span><small>${c} цикл. · ${c*1.5} ч</small></div>`});
+ const nm=now.getHours()*60+now.getMinutes();h+=`<div class="fl">Если лечь сейчас, вставайте в</div><div class="chips">${[4,5,6].map(c=>`<div class="chip" style="cursor:default"><i class="fas fa-sun" style="color:var(--dawn)"></i>${fMin(nm+15+c*90)}</div>`).join('')}</div></div>`;
+ /* ночи */
+ h+=`<h2 class="st"><span>Ночи</span><span></span></h2><div class="card tight">${rec.length?rec.map(s=>{const d=new Date(s.end),sc=score(s);return`<button class="night" onclick="openSleep('${s.id}')"><span class="l"><b>${WD[d.getDay()]}, ${d.getDate()} ${MG[d.getMonth()]}</b>${s.src==='samsung'?'<span class="tag">SAMSUNG</span>':''}${s.q?`<span class="tag">${'★'.repeat(s.q)}</span>`:''}<div>${fT(s.start)} → ${fT(s.end)}</div></span><span class="r"><b>${dur(mins(s))}</b><small class="${scCls(sc)}">оценка ${sc}</small></span></button>`}).join(''):'<div class="empty">Здесь появятся ваши ночи.</div>'}</div><div style="margin:0 20px"><button class="btn ghost" onclick="openSleep('new')"><i class="fas fa-plus"></i> Добавить ночь вручную</button></div>`;
+ return h}
+
+/* ---------- экран «Трекеры» ---------- */
+function vTrack(){const k=TK(),w=DB.wat[k]||0,mo=DB.mood[k]||{};let h=`<div class="date"><small>Трекеры</small><b>Каждый день</b></div>`;
+ /* вода */
+ h+=`<div class="card"><div class="ctitle"><span><i class="fas fa-droplet" style="color:var(--water);margin-right:8px"></i>Вода</span><span>норма ${DB.water} мл</span></div><div class="water-top"><div class="wglass"><i style="height:${Math.min(100,w/DB.water*100)}%"></i></div><div><b>${w} мл</b><small>${Math.round(w/DB.water*100)}% от нормы · ${Math.max(0,Math.ceil((DB.water-w)/DB.glass))} стак. осталось</small></div></div>
+ <div class="wbtns"><button class="btn" onclick="addWater(-DB.glass)" style="flex:0 0 56px"><i class="fas fa-minus"></i></button><button class="btn" onclick="addWater(DB.glass)">+${DB.glass}</button><button class="btn" onclick="addWater(500)">+500</button></div></div>`;
+ /* настроение */
+ const w7=series(7).map(x=>{const m=DB.mood[x.k];return`<div>${m&&m.m?['😞','🙁','😐','🙂','😄'][m.m-1]:'·'}<small>${WD[x.d.getDay()]}</small></div>`}).join('');
+ h+=`<div class="card"><div class="ctitle"><span><i class="fas fa-face-smile" style="color:var(--dawn);margin-right:8px"></i>Настроение</span><span>сегодня</span></div><div class="emo">${['😞','🙁','😐','🙂','😄'].map((e,i)=>`<button class="${mo.m===i+1?'on':''}" onclick="setMood(${i+1})">${e}</button>`).join('')}</div>
+ <div class="fl">Энергия</div><div class="chips">${[1,2,3,4,5].map(i=>`<div class="chip ${mo.e===i?'on':''}" onclick="setEnergy(${i})"><i class="fas fa-bolt"></i>${i}</div>`).join('')}</div><div class="week">${w7}</div></div>`;
+ /* вес */
+ const wk=Object.keys(DB.wt).sort(),pts=wk.slice(-14).map(x=>({v:DB.wt[x]})),cur=wk.length?DB.wt[wk[wk.length-1]]:null,first=wk.length>1?DB.wt[wk[0]]:null;
+ h+=`<div class="card"><div class="ctitle"><span><i class="fas fa-weight-scale" style="color:var(--green);margin-right:8px"></i>Вес</span><span>${cur?cur+' кг'+(first!=null?' · '+((cur-first)>0?'+':'')+(cur-first).toFixed(1):''):''}</span></div>
+ <div style="display:flex;gap:10px"><input type="number" id="wIn" inputmode="decimal" step="0.1" placeholder="кг" value="${DB.wt[k]||''}" style="flex:1"><button class="btn" style="flex:0 0 auto;width:auto;padding:14px 22px" onclick="saveWeight()">Записать</button></div>${pts.length>1?`<div style="margin-top:14px">${line(pts,'#2ecc71')}</div>`:''}</div>`;
+ /* привычки */
+ const done=DB.hlog[k]||[];
+ h+=`<h2 class="st"><span>Привычки</span><span>${done.filter(i=>DB.habits.some(x=>x.id===i)).length}/${DB.habits.length}</span></h2><div class="card tight">${DB.habits.length?DB.habits.map(x=>{const st=habStreak(x.id);return`<div class="hab ${done.includes(x.id)?'done':''}"><div class="hi"><i class="fas ${x.i}"></i></div><div class="hn" onclick="togH('${x.id}')"><b>${x.n}</b><small>${st?'🔥 '+st+' дн. подряд':'Начните серию'}</small></div><div class="cb" onclick="togH('${x.id}')"><i class="fas fa-check"></i></div><div style="color:var(--mute);padding:6px;font-size:13px" onclick="delHab('${x.id}')"><i class="fas fa-xmark"></i></div></div>`}).join(''):'<div class="empty">Пока пусто</div>'}</div><div style="margin:0 20px"><button class="btn ghost" onclick="openHab()"><i class="fas fa-plus"></i> Новая привычка</button></div>`;
+ return h}
+
+/* ---------- экран «Статистика» ---------- */
+let stR=7;
+function vStats(){const s=series(stR),have=s.filter(x=>x.s),lab=s.map((x,i)=>stR===7?WD[x.d.getDay()]:(i%5===0||i===s.length-1?x.d.getDate():''));
+ let h=`<div class="date"><small>Статистика</small><b>Обзор</b></div><div class="seg m"><button class="${stR===7?'on':''}" onclick="stR=7;render()">7 дней</button><button class="${stR===30?'on':''}" onclick="stR=30;render()">30 дней</button></div>`;
+ const avS=have.length?avg(have.map(x=>mins(x.s))):0,wv=s.map(x=>DB.wat[x.k]||0),wd=wv.filter(x=>x>0),mv=s.map(x=>DB.mood[x.k]?.m).filter(Boolean),hv=s.map(x=>habPct(x.k)).filter(x=>x!==null);
+ h+=`<div class="kpis"><div class="kpi"><b>${have.length?dur(avS):'—'}</b><span>Сон</span></div><div class="kpi"><b>${wd.length?(avg(wd)/1000).toFixed(1)+' л':'—'}</b><span>Вода</span></div><div class="kpi"><b>${mv.length?avg(mv).toFixed(1):'—'}</b><span>Настроение</span></div></div>`;
+ h+=`<div class="card"><div class="ctitle">Сон <span>${have.length} ночей</span></div>${bars(s.map(x=>x.s?mins(x.s)/60:null),lab,DB.goal,DB.goal*1.25,v=>stR>7?'':v.toFixed(1),'moon')}</div>`;
+ h+=`<div class="card"><div class="ctitle">Оценка сна <span>0–100</span></div>${bars(s.map(x=>x.s?score(x.s):null),lab,0,100,v=>stR>7?'':v)}</div>`;
+ h+=`<div class="card"><div class="ctitle">Вода <span>норма ${DB.water/1000} л</span></div>${bars(wv.map(v=>v||null),lab,DB.water,DB.water*1.25,v=>stR>7?'':(v/1000).toFixed(1),'water')}</div>`;
+ const mp=s.map(x=>DB.mood[x.k]?.m?{v:DB.mood[x.k].m}:null).filter(Boolean);if(mp.length>1)h+=`<div class="card"><div class="ctitle">Настроение <span>1–5</span></div>${line(mp,'#ffc58a')}</div>`;
+ if(hv.length)h+=`<div class="card tight"><div class="row"><div class="t">Выполнение привычек</div><b>${Math.round(avg(hv)*100)}%</b></div><div class="row"><div class="t">Лучшая серия</div><b>${Math.max(0,...DB.habits.map(x=>habStreak(x.id)))} дн.</b></div></div>`;
+ /* инсайты */
+ const ins=insights();h+=`<h2 class="st"><span>Инсайты</span><span></span></h2><div class="card tight">${ins.length?ins.map(i=>`<div class="ins"><i class="fas ${i[0]}"></i><div>${i[1]}</div></div>`).join(''):'<div class="empty">Нужно больше данных — ведите записи несколько дней, и тут появятся закономерности.</div>'}</div>`;
+ return h}
+const TAGS=[['coffee','Кофе','fa-mug-hot'],['sport','Спорт','fa-dumbbell'],['alcohol','Алкоголь','fa-wine-glass'],['screen','Экран перед сном','fa-mobile-screen'],['stress','Стресс','fa-face-frown'],['late','Поздний ужин','fa-utensils']];
+function insights(){const o=[],all=Object.values(nights());
+ TAGS.forEach(([id,n,ic])=>{const a=all.filter(s=>(s.tags||[]).includes(id)),b=all.filter(s=>!(s.tags||[]).includes(id));
+  if(a.length>=3&&b.length>=3){const d=avg(a.map(mins))-avg(b.map(mins));if(Math.abs(d)>=15)o.push([ic,`С отметкой «${n}» вы спите на <b>${Math.round(Math.abs(d))} мин ${d<0?'меньше':'больше'}</b>.`])}});
+ const mo=[];all.forEach(s=>{const m=DB.mood[dk(s.end)];if(m&&m.m)mo.push({d:mins(s),m:m.m})});
+ const g=mo.filter(x=>x.d>=GM()*.95),l=mo.filter(x=>x.d<GM()*.95);if(g.length>=3&&l.length>=3){const d=avg(g.map(x=>x.m))-avg(l.map(x=>x.m));if(Math.abs(d)>=.3)o.push(['fa-face-smile',`После полноценного сна настроение ${d>0?'выше':'ниже'} на <b>${Math.abs(d).toFixed(1)}</b> балла.`])}
+ const rec=all.sort((a,b)=>b.end-a.end).slice(0,14),rg=regularity(rec);if(rg!==null)o.push(['fa-clock',rg>=75?`Режим стабильный (<b>${rg}%</b>) — так и держите.`:`Время отбоя «гуляет» (<b>${rg}%</b>). Ложитесь в одно и то же время ±30 мин.`]);
+ const d7=debt(7);if(d7>180)o.push(['fa-battery-quarter',`Накоплен недосып <b>${dur(d7)}</b> за неделю. Лягте пораньше на 30–45 минут.`]);
+ const dw=[0,0,0,0,0,0,0],dc=[0,0,0,0,0,0,0];all.forEach(s=>{const w=new Date(s.end).getDay();dw[w]+=mins(s);dc[w]++});const av=dw.map((v,i)=>dc[i]>1?v/dc[i]:null);const ok=av.map((v,i)=>v==null?null:[v,i]).filter(Boolean);if(ok.length>=4){ok.sort((a,b)=>a[0]-b[0]);o.push(['fa-calendar-day',`Меньше всего вы спите в <b>${WDF[ok[0][1]].toLowerCase()}</b> (${dur(ok[0][0])}), больше всего — в ${WDF[ok[ok.length-1][1]].toLowerCase()}.`])}
+ return o}
+
+/* ---------- экран «Настройки» ---------- */
+function stepper(label,sub,val,fn){return`<div class="row"><div><div class="t">${label}</div><div class="s">${sub}</div></div><div class="step"><button class="pill" onclick="${fn}(-1)">−</button><b>${val}</b><button class="pill" onclick="${fn}(1)">+</button></div></div>`}
+function permRow(k,t,s,fn){const v=DB.perm[k];return`<div class="row"><div><div class="t">${t}</div><div class="s">${s}</div><div class="perm ${v||''}">${v==='ok'?'Разрешено':v==='no'?'Нет доступа':'Не запрошено'}</div></div><button class="pill ${v==='ok'?'':'go'}" onclick="${fn}()">${v==='ok'?'Проверить':'Разрешить'}</button></div>`}
+function vSet(){let a='pink';try{a=(JSON.parse(ls.g('lunexSettings'))||{}).accent||'pink'}catch(e){}
+ return`<div class="date"><small>Настройки</small><b>Под себя</b></div>
+<h2 class="st">Время сна</h2><div class="card tight">
+${stepper('Цель сна','Часов за ночь',DB.goal+' ч','chGoal')}
+<div class="row"><div><div class="t">Отбой</div><div class="s">Во сколько хотите ложиться</div></div><input class="tin" type="time" value="${hm(DB.bed)}" onchange="DB.bed=unhm(this.value);save();render()"></div>
+<div class="row"><div><div class="t">Подъём</div><div class="s">Во сколько хотите вставать</div></div><input class="tin" type="time" value="${hm(DB.wake)}" onchange="DB.wake=unhm(this.value);save();render()"></div>
+<div class="row"><div><div class="t">Окно сна</div><div class="s">Получается при таком режиме</div></div><b>${dur(((DB.wake-DB.bed)+1440)%1440)}</b></div>
+<div class="row"><div><div class="t">12-часовой формат</div><div class="s">AM / PM вместо 24 часов</div></div><label class="switch"><input type="checkbox" ${DB.hour12?'checked':''} onchange="DB.hour12=this.checked;save();render()"><span class="sl"></span></label></div></div>
+<h2 class="st">Вода</h2><div class="card tight">
+${stepper('Дневная норма','Шаг 250 мл',DB.water+' мл','chWater')}
+${stepper('Размер стакана','Для кнопки «+»',DB.glass+' мл','chGlass')}</div>
+<h2 class="st">Оформление</h2><div class="card"><div class="t" style="font-weight:700;font-size:15px">Акцентный цвет</div><div class="s" style="color:var(--mute);font-size:12px;margin:2px 0 10px">Общий с главным приложением</div><div class="sw">${Object.entries(THEMES).map(([k,v])=>`<div class="${a===k?'on':''}" style="--s:${v[0]}" onclick="setAccent('${k}')"></div>`).join('')}</div></div>
+<h2 class="st">Samsung</h2><div class="card tight">
+<div class="row"><div><div class="t">Импорт из Samsung Health</div><div class="s">CSV-файл сна из «Загрузить личные данные»</div></div><button class="pill go" onclick="$('shFile').click()">Файл</button></div>
+<details class="dt"><summary>Как получить файл</summary><ol><li>Samsung Health → ⋮ → Настройки</li><li>«Загрузить личные данные» → подтвердите</li><li>Распакуйте архив и выберите <i>com.samsung.shealth.sleep…csv</i></li></ol><p style="margin-top:8px">Напрямую читать Samsung Health из веб-страницы Android не позволяет.</p></details>
+<div class="row"><div><div class="t">Автозапуск через «Режимы и рутины»</div><div class="s">Режим сна включён → «Лёг». Будильник выключен → «Проснулся»</div></div></div>
+<div class="row" style="gap:8px"><button class="pill" onclick="copy('sleep')">Ссылка «Лёг»</button><button class="pill" onclick="copy('wake')">Ссылка «Проснулся»</button></div>
+<details class="dt"><summary>Как настроить</summary><ol><li>Samsung → Режимы и рутины → Рутины → «+»</li><li>Условие: режим сна или остановка будильника</li><li>Действие: открыть ссылку</li></ol><p style="margin-top:8px">В Telegram добавьте к ссылке на мини-приложение <i>?startapp=sleep</i> или <i>?startapp=wake</i>.</p></details></div>
+<h2 class="st">Разрешения</h2><p style="margin:-4px 20px 10px;font-size:12px;color:var(--mute);font-weight:600">Нужны только для точного режима.</p><div class="card tight">
+${permRow('motion','Датчики движения','Считает ворочания ночью','askMotion')}${permRow('wake','Не гасить экран','Чтобы датчики работали всю ночь','askWake')}</div>
+<p class="hint" style="margin:10px 30px;text-align:left">Когда экран выключен, браузер усыпляет страницу: датчики и напоминания не работают. Поэтому обычный режим опирается на время нажатий, а напоминание об отбое показывается при открытии приложения.</p>
+<h2 class="st">Данные</h2><div class="card tight">
+<div class="row"><div class="t">Синхронизация</div><b id="syncTxt" style="font-size:13px;color:var(--mute)">${syncState}</b></div>
+<div class="row"><div class="t">Экспорт (JSON)</div><button class="pill" onclick="exportData()">Скачать</button></div>
+<div class="row"><div class="t">Восстановить из файла</div><button class="pill" onclick="$('jsFile').click()">Выбрать</button></div>
+<div class="row"><div class="t" style="color:var(--red)">Удалить все записи</div><button class="pill" style="color:var(--red)" onclick="wipe()">Удалить</button></div></div>
+<p class="empty" style="font-size:11px">Lunex Health v2.0 · made with ♥</p>`}
+const chGoal=d=>{DB.goal=Math.min(12,Math.max(5,DB.goal+d*.5));save();render()};
+const chWater=d=>{DB.water=Math.min(5000,Math.max(1000,DB.water+d*250));save();render()};
+const chGlass=d=>{DB.glass=Math.min(500,Math.max(100,DB.glass+d*50));save();render()};
+function setAccent(k){try{const s=JSON.parse(ls.g('lunexSettings'))||{};s.accent=k;ls.s('lunexSettings',JSON.stringify(s))}catch(e){}applyTheme(k);render()}
+function exportData(){const b=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='lunex_health_backup.json';document.body.appendChild(a);a.click();setTimeout(()=>{a.remove();URL.revokeObjectURL(u)},1500)}
+$('jsFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=x=>{try{const d=JSON.parse(x.target.result);if(!Array.isArray(d.sessions))throw 0;if(confirm('Заменить все данные этой копией?')){DB=Object.assign(DEF(),d);save();render();toast('Данные восстановлены')}}catch(err){toast('Это не резервная копия Health')}e.target.value=''};r.readAsText(f)};
+function wipe(){if(!confirm('Удалить все записи сна, воды, настроения и привычек?'))return;const k=DB;DB=Object.assign(DEF(),{goal:k.goal,bed:k.bed,wake:k.wake,water:k.water,glass:k.glass,hour12:k.hour12,habits:k.habits});save();render();toast('Записи удалены')}
+
+/* ---------- шторка ночи ---------- */
+let ctx=null,shQ=0,shTags=[];
+function openSheet(id){$('ov').classList.add('on');$(id).classList.add('on');try{tg.BackButton&&tg.BackButton.show()}catch(e){}}
+function closeAll(){document.querySelectorAll('.sheet').forEach(s=>s.classList.remove('on'));$('ov').classList.remove('on');ctx=null}
+function paintSh(){$('fQ').innerHTML=[1,2,3,4,5].map(i=>`<div class="chip ${shQ===i?'on':''}" onclick="shQ=shQ===${i}?0:${i};paintSh()"><i class="fas fa-star"></i>${i}</div>`).join('');
+ $('fTags').innerHTML=TAGS.map(([id,n,ic])=>`<div class="chip ${shTags.includes(id)?'on':''}" onclick="togTag('${id}')"><i class="fas ${ic}"></i>${n}</div>`).join('')}
+function togTag(id){shTags=shTags.includes(id)?shTags.filter(x=>x!==id):[...shTags,id];paintSh()}
+function openActWake(){ctx='act';$('shT').textContent='Когда вы проснулись?';$('fBed').value=toLI(DB.active.start);$('fWake').value=toLI(Date.now());shQ=0;shTags=[];$('fNote').value='';$('shDel').style.display='none';paintSh();openSheet('shSleep')}
+function openSleep(id){const n=new Date();let b,w,s=DB.sessions.find(x=>x.id===id);
+ if(id==='new'){b=new Date(n.getFullYear(),n.getMonth(),n.getDate()-1,Math.floor(DB.bed/60)%24,DB.bed%60).getTime();w=new Date(n.getFullYear(),n.getMonth(),n.getDate(),Math.floor(DB.wake/60),DB.wake%60).getTime();$('shT').textContent='Новая ночь';shQ=0;shTags=[];$('fNote').value=''}
+ else if(s){b=s.start;w=s.end;$('shT').textContent='Как вы спали?';shQ=s.q||0;shTags=[...(s.tags||[])];$('fNote').value=s.note||''}else return;
+ ctx=id;$('fBed').value=toLI(b);$('fWake').value=toLI(w);$('shDel').style.display=s?'':'none';paintSh();openSheet('shSleep')}
+function saveSleep(){const b=new Date($('fBed').value).getTime(),w=new Date($('fWake').value).getTime(),m=(w-b)/6e4;
+ if(!(m>=20&&m<=1200))return toast('Сон должен быть от 20 минут до 20 часов');
+ const ex={q:shQ||undefined,tags:shTags.length?shTags:undefined,note:$('fNote').value.trim()||undefined};
+ if(ctx==='act'){const a=DB.active;stopPrecise();DB.active=null;DB.sessions.push(Object.assign({id:'s'+b,start:b,end:w,src:a.precise?'precise':'tap',rest:a.rest},ex))}
+ else if(ctx==='new')DB.sessions.push(Object.assign({id:'m'+b,start:b,end:w,src:'manual'},ex));
+ else{const s=DB.sessions.find(x=>x.id===ctx);s.start=b;s.end=w;s.q=ex.q;s.tags=ex.tags;s.note=ex.note}
+ save();closeAll();render();hap('ok')}
+function delSleep(){if(!confirm('Удалить эту ночь?'))return;DB.sessions=DB.sessions.filter(x=>x.id!==ctx);save();closeAll();render()}
+
+/* ---------- каркас ---------- */
+let tab='today',syncState='Локально';
+const NAV=[['today','fa-house','Сегодня'],['sleep','fa-moon','Сон'],['track','fa-droplet','Трекеры'],['stats','fa-chart-simple','Статистика'],['set','fa-sliders','Ещё']];
+function go(t){tab=t;hap('light');render();scrollTo(0,0)}
+function render(){const V={today:vToday,sleep:vSleep,track:vTrack,stats:vStats,set:vSet};
+ document.querySelectorAll('.tab').forEach(e=>e.classList.remove('on'));const el=$('t-'+tab);
+ const y=scrollY,ae=document.activeElement;if(ae&&ae.tagName==='INPUT'&&ae.id==='wIn')return;
+ el.innerHTML=V[tab]();el.classList.add('on');
+ $('nav').innerHTML=NAV.map(([k,i,l])=>`<button class="${k===tab?'on':''}" onclick="go('${k}')"><i class="fas ${i}"></i>${l}</button>`).join('')}
+let tt;function toast(t){$('toastT').textContent=t;$('toast').classList.add('on');clearTimeout(tt);tt=setTimeout(()=>$('toast').classList.remove('on'),2600)}
+window.setSync=(st,txt)=>{$('sync').className='fas fa-cloud '+st;syncState=txt;const e=$('syncTxt');if(e)e.textContent=txt};
+
+setInterval(()=>{if(!document.querySelector('.sheet.on')&&(tab==='today'||tab==='sleep'))render()},30000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){intent();render()}});
+addEventListener('hashchange',intent);
+if(DB.active&&DB.active.precise)DB.active.precise=false;
+render();intent();
+</script>
+
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
+import{getFirestore,doc,onSnapshot,setDoc}from"https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
+try{
+ const tg=window.Telegram?.WebApp;const uid=tg?.initDataUnsafe?.user?.id?String(tg.initDataUnsafe.user.id):"test_developer_id";
+ const app=initializeApp({apiKey:"AIzaSyDY8g42qsSkoN36i-DIeptehoDWXSEUlU0",authDomain:"lunex-f5362.firebaseapp.com",projectId:"lunex-f5362",storageBucket:"lunex-f5362.firebasestorage.app",messagingSenderId:"364220464927",appId:"1:364220464927:web:95531c2ac9de3aaa343a2a"});
+ const ref=doc(getFirestore(app),"users",uid);
+ window.cloudPush=async d=>{try{await setDoc(ref,{health:JSON.parse(JSON.stringify(d))},{mergeFields:['health']});window.setSync('ok','Синхронизировано')}catch(e){window.setSync('err','Ошибка синхронизации')}};
+ onSnapshot(ref,s=>{window.setSync('ok','Синхронизировано');const h=s.exists()?s.data().health:null;if(h)window.cloudPull(h);else window.cloudPush(JSON.parse(localStorage.getItem('lunexHealthV3')||'{}'))},e=>window.setSync('err','Нет доступа к облаку'));
+}catch(e){window.setSync&&window.setSync('err','Облако недоступно')}
+</script>
+</body></html>
